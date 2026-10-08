@@ -1,0 +1,8 @@
+{
+  "liteToken": "tata_sess_eyJlbWFpbCI6InRlc3RfbGl0ZUBleGFtcGxlLmNvbSIsImlhdCI6MTc5MDc1NDA2NzQ0NiwiZXhwIjoxNzkzMzQ2MDY3NDQ2LCJub25jZSI6Ijc4NzNlZDQxMDU2NGE4MjEifQ.bda22b754b3157af73edf9a215d3cda0a1988218b534dba5e6b913d9cb1ed0ae",
+  "proToken": "tata_sess_eyJlbWFpbCI6InRlc3RfcHJvQGV4YW1wbGUuY29tIiwiaWF0IjoxNzkwNzU0MDY3NDQ2LCJleHAiOjE3OTMzNDYwNjc0NDYsIm5vbmNlIjoiNGI0Y2IzZWI0ODQwMGQwZiJ9.985339d16444aaed0e1eeb6f5a370b441f05aa81ed001c425dc472d32660b184",
+  "proMaxToken": "tata_sess_eyJlbWFpbCI6InRlc3RfcHJvbWF4QGV4YW1wbGUuY29tIiwiaWF0IjoxNzkwNzU0MDY3NDQ2LCJleHAiOjE3OTMzNDYwNjc0NDYsIm5vbmNlIjoiMGYwZTc3M2NiYTM1M2E0MSJ9.40488127168dd8d92d242ca62afa2bc1615302179b24a271ebea038f5adb462f",
+  "liteEmail": "test_lite@example.com",
+  "proEmail": "test_pro@example.com",
+  "proMaxEmail": "test_promax@example.com"
+}

@@ -1,0 +1,8 @@
+{
+  "tata_sess_eyJlbWFpbCI6InRlc3RfdXNlcl9oYXJkZW5pbmdAdGF0YS5sb2NhbCIsImlhdCI6MTc5MDkzMzE3NTczNSwiZXhwIjoxNzkzNTI1MTc1NzM1LCJub25jZSI6IjBlOGI2MzQwYmM3ODc5NTAifQ.81f46d0cb419fc1902d19f7fc020817fbcb658842d28dd78be450064b8a28191": {
+    "token": "tata_sess_eyJlbWFpbCI6InRlc3RfdXNlcl9oYXJkZW5pbmdAdGF0YS5sb2NhbCIsImlhdCI6MTc5MDkzMzE3NTczNSwiZXhwIjoxNzkzNTI1MTc1NzM1LCJub25jZSI6IjBlOGI2MzQwYmM3ODc5NTAifQ.81f46d0cb419fc1902d19f7fc020817fbcb658842d28dd78be450064b8a28191",
+    "email": "test_user_hardening@tata.local",
+    "createdAt": 1790933175735,
+    "expiresAt": 1793525175735
+  }
+}

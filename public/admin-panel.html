@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Tata Noto — Admin Panel</title>
+<style>
+  :root {
+    --slate-950: #020617;
+    --slate-900: #0f172a;
+    --slate-800: #1e293b;
+    --slate-700: #334155;
+    --slate-600: #475569;
+    --slate-500: #64748b;
+    --slate-400: #94a3b8;
+    --slate-300: #cbd5e1;
+    --slate-100: #f1f5f9;
+
+    --bg: var(--slate-950);
+    --panel: var(--slate-900);
+    --panel-2: var(--slate-800);
+    --border: var(--slate-800);
+    --text: var(--slate-100);
+    --text-dim: var(--slate-400);
+
+    --accent-a: #f59e0b;
+    --accent-b: #f97316;
+    --accent: #f59e0b;
+
+    --green: #34d399;
+    --red: #fb7185;
+    --yellow: #fbbf24;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  .mono { font-family: "JetBrains Mono", ui-monospace, monospace; }
+  .center-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+  .login-box { background: var(--panel); border: 1px solid var(--border); border-radius: 24px; padding: 32px; width: 320px; }
+  .login-box h1 { font-size: 18px; margin: 0 0 4px; font-weight: 700; }
+  .login-box p { color: var(--text-dim); font-size: 13px; margin: 0 0 20px; }
+  input, select, textarea {
+    width: 100%; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--border);
+    background: var(--panel-2); color: var(--text); font-size: 14px; margin-bottom: 12px; font-family: inherit;
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: none; border-color: var(--accent-a); box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+  }
+  button {
+    cursor: pointer; border: none; border-radius: 12px; padding: 10px 16px; font-size: 14px;
+    font-weight: 600; font-family: inherit; background: linear-gradient(135deg, var(--accent-a), var(--accent-b)); color: #fff;
+  }
+  button.secondary { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); }
+  button.ghost { background: transparent; color: var(--text-dim); border: 1px solid var(--border); padding: 6px 12px; font-size: 12.5px; }
+  button.ghost.active-sort { color: var(--accent-a); border-color: var(--accent-a); }
+  button.danger { background: var(--red); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .error-text { color: var(--red); font-size: 13px; margin-top: 8px; min-height: 16px; }
+
+  .app { display: none; }
+  .app.visible { display: block; }
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 24px; border-bottom: 1px solid var(--border); background: var(--panel);
+  }
+  header h1 { font-size: 16px; margin: 0; font-weight: 700; }
+  header .tag { color: var(--accent-a); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  main { padding: 24px; max-width: 1100px; margin: 0 auto; }
+
+  .tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+  .tab-btn { background: var(--panel); color: var(--text-dim); border: 1px solid var(--border); font-weight: 500; }
+  .tab-btn.active { background: linear-gradient(135deg, var(--accent-a), var(--accent-b)); color: #fff; border-color: transparent; }
+
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 24px; padding: 20px; margin-bottom: 16px; }
+  .card h2 { font-size: 14px; margin: 0 0 16px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+  .card-row { display: grid; grid-template-columns: 1.3fr 1fr; gap: 16px; }
+  @media (max-width: 720px) { .card-row { grid-template-columns: 1fr; } }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 4px; }
+  .stat-box { background: var(--panel-2); border: 1px solid var(--border); border-radius: 16px; padding: 14px; }
+  .stat-box .num { font-size: 22px; font-weight: 700; font-family: "JetBrains Mono", monospace; }
+  .stat-box .label { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+
+  .warning-box {
+    background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.3);
+    color: var(--yellow); border-radius: 16px; padding: 12px 14px; font-size: 12.5px; margin-top: 14px; line-height: 1.5;
+  }
+
+  .chart-wrap { display: flex; align-items: flex-end; gap: 4px; height: 120px; margin-top: 8px; }
+  .chart-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
+  .chart-bar {
+    width: 100%; max-width: 22px; background: linear-gradient(180deg, var(--accent-a), var(--accent-b));
+    border-radius: 4px 4px 0 0; min-height: 2px;
+  }
+  .chart-label { font-size: 9px; color: var(--text-dim); margin-top: 4px; writing-mode: vertical-rl; text-orientation: mixed; }
+  .chart-count { font-size: 10px; color: var(--text-dim); margin-bottom: 2px; font-family: "JetBrains Mono", monospace; }
+
+  .mini-list { display: flex; flex-direction: column; gap: 8px; }
+  .mini-item { display: flex; justify-content: space-between; align-items: center; background: var(--panel-2); border-radius: 12px; padding: 8px 12px; font-size: 12.5px; }
+  .mini-item .mini-main { font-family: "JetBrains Mono", monospace; }
+  .mini-item .mini-sub { color: var(--text-dim); font-size: 11px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); }
+  td { font-family: "JetBrains Mono", monospace; font-size: 12.5px; }
+  th { color: var(--text-dim); font-weight: 500; font-size: 12px; font-family: "Plus Jakarta Sans", sans-serif; }
+  th.sortable { cursor: pointer; user-select: none; }
+  th.sortable:hover { color: var(--text); }
+  th .sort-arrow { font-size: 10px; margin-left: 3px; color: var(--accent-a); }
+  tr:hover td { background: var(--panel-2); cursor: pointer; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; font-family: "Plus Jakarta Sans", sans-serif; }
+  .badge.premium { background: rgba(245,158,11,0.15); color: var(--accent-a); }
+  .badge.free { background: rgba(148,163,184,0.15); color: var(--text-dim); }
+
+  .toolbar { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .toolbar input { margin-bottom: 0; flex: 1; min-width: 160px; }
+
+  .pagination { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; font-size: 12.5px; color: var(--text-dim); }
+  .pagination .pg-controls { display: flex; gap: 6px; }
+  .pagination button { padding: 6px 12px; font-size: 12.5px; }
+
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(2,6,23,0.75); align-items: center; justify-content: center; z-index: 50; padding: 16px; }
+  .modal-overlay.visible { display: flex; }
+  .modal { background: var(--panel); border: 1px solid var(--border); border-radius: 24px; padding: 24px; width: 480px; max-width: 92vw; max-height: 85vh; overflow-y: auto; }
+  .modal h3 { margin: 0 0 4px; font-size: 16px; font-family: "JetBrains Mono", monospace; }
+  .modal .sub { color: var(--text-dim); font-size: 12.5px; margin-bottom: 16px; }
+  .kv-row { display: flex; justify-content: space-between; font-size: 13px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+  .kv-row .k { color: var(--text-dim); }
+  .modal-actions { display: flex; gap: 8px; margin-top: 18px; justify-content: flex-end; }
+  .txn-list { margin-top: 10px; max-height: 180px; overflow-y: auto; }
+  .txn-item { font-size: 12px; padding: 8px; background: var(--panel-2); border-radius: 12px; margin-bottom: 6px; font-family: "JetBrains Mono", monospace; }
+  .cms-row { background: var(--panel-2); border-radius: 16px; padding: 12px; margin-bottom: 10px; }
+  .cms-row .cms-key { font-family: "JetBrains Mono", monospace; font-size: 12.5px; color: var(--accent-a); font-weight: 600; margin-bottom: 6px; word-break: break-all; }
+  .cms-row textarea { min-height: 50px; resize: vertical; margin-bottom: 6px; }
+  .cms-row .cms-meta { font-size: 11px; color: var(--text-dim); margin-bottom: 6px; }
+  .cms-row .cms-actions { display: flex; gap: 8px; }
+  .cms-row .cms-actions button { padding: 6px 12px; font-size: 12.5px; }
+  .empty-state { color: var(--text-dim); font-size: 13px; text-align: center; padding: 24px; }
+  .toast {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: var(--panel-2); border: 1px solid var(--border); padding: 10px 18px; border-radius: 16px; font-size: 13px; display: none; z-index: 100;
+  }
+  .toast.visible { display: block; }
+  .copy-btn { background: none; border: none; padding: 0 0 0 6px; color: var(--text-dim); font-size: 11px; cursor: pointer; }
+</style>
+</head>
+<body>
+
+  <div class="center-screen" id="loginScreen">
+    <div class="login-box">
+      <h1>🔒 Tata Noto — Admin</h1>
+      <p>Masukkan password admin untuk melanjutkan.</p>
+      <input type="password" id="passwordInput" placeholder="Password admin" autocomplete="current-password" />
+      <button id="loginBtn" style="width:100%">Masuk</button>
+      <div class="error-text" id="loginError"></div>
+    </div>
+  </div>
+
+  <div class="app" id="app">
+    <header>
+      <div>
+        <h1>Tata Noto — Admin Panel</h1>
+        <span class="tag">Internal use only</span>
+      </div>
+      <button class="secondary" id="logoutBtn">Keluar</button>
+    </header>
+    <main>
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+        <button class="tab-btn" data-tab="accounts">Akun</button>
+        <button class="tab-btn" data-tab="audit">Log Perubahan</button>
+        <button class="tab-btn" data-tab="cms">Konten Aplikasi</button>
+      </div>
+
+      <!-- TAB: DASHBOARD -->
+      <div class="tab-panel" id="tab-dashboard">
+        <div class="card">
+          <h2>Ringkasan</h2>
+          <div class="stat-grid" id="dashStats"><div class="empty-state">Memuat...</div></div>
+        </div>
+        <div class="card-row">
+          <div class="card">
+            <h2>Tren Pendaftaran (14 hari)</h2>
+            <div class="chart-wrap" id="signupChart"></div>
+          </div>
+          <div class="card">
+            <h2>Status Sistem</h2>
+            <div class="mini-list" id="sysStatusList"></div>
+          </div>
+        </div>
+        <div class="card-row">
+          <div class="card">
+            <h2>Pendaftar Terbaru</h2>
+            <div class="mini-list" id="recentSignupsList"><div class="empty-state">Memuat...</div></div>
+          </div>
+          <div class="card">
+            <h2>Aktivitas Premium Terbaru</h2>
+            <div class="mini-list" id="recentActivityList"><div class="empty-state">Memuat...</div></div>
+          </div>
+        </div>
+        <div class="warning-box" id="dashWarning" style="display:none"></div>
+      </div>
+
+      <!-- TAB: ACCOUNTS -->
+      <div class="tab-panel" id="tab-accounts" style="display:none">
+        <div class="card">
+          <h2>Daftar Akun</h2>
+          <div class="toolbar">
+            <input type="text" id="searchInput" placeholder="Cari email atau nama..." />
+            <button id="searchBtn">Cari</button>
+            <button class="secondary" id="exportBtn">⬇ Export CSV</button>
+          </div>
+          <div id="accountsTableWrap"><div class="empty-state">Memuat...</div></div>
+          <div class="pagination" id="accountsPagination"></div>
+        </div>
+      </div>
+
+      <!-- TAB: AUDIT -->
+      <div class="tab-panel" id="tab-audit" style="display:none">
+        <div class="card">
+          <h2>Riwayat Perubahan Manual Premium</h2>
+          <div class="toolbar">
+            <input type="text" id="auditSearchInput" placeholder="Cari berdasarkan email atau alasan..." />
+            <button id="auditSearchBtn">Cari</button>
+          </div>
+          <div id="auditWrap"><div class="empty-state">Memuat...</div></div>
+          <div class="pagination" id="auditPagination"></div>
+        </div>
+      </div>
+
+      <!-- TAB: CMS KONTEN APLIKASI -->
+      <div class="tab-panel" id="tab-cms" style="display:none">
+        <div class="card">
+          <h2>Tambah Konten Baru</h2>
+          <div class="warning-box" style="margin-top:0;margin-bottom:14px">⚠️ Data konten di sini masih tersimpan sementara (in-memory) sampai dimigrasikan ke storage persisten — sama seperti peringatan di tab Dashboard.</div>
+          <input type="text" id="cmsNewKey" placeholder="Key (contoh: home.tagline) — huruf, angka, titik, underscore, strip" />
+          <textarea id="cmsNewValue" placeholder="Isi teksnya..." style="min-height:60px;resize:vertical"></textarea>
+          <div class="error-text" id="cmsAddError"></div>
+          <button id="cmsAddBtn">+ Tambah Konten</button>
+        </div>
+        <div class="card">
+          <h2>Daftar Konten Tersimpan</h2>
+          <div id="cmsListWrap"><div class="empty-state">Memuat...</div></div>
+        </div>
+        <div class="card">
+          <h2>Riwayat Perubahan Konten (10 terakhir)</h2>
+          <div class="mini-list" id="cmsAuditList"><div class="empty-state">Memuat...</div></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- MODAL: ACCOUNT DETAIL -->
+  <div class="modal-overlay" id="accountModal" role="dialog" aria-modal="true" aria-labelledby="modalEmail">
+    <div class="modal">
+      <h3 id="modalEmail">-</h3>
+      <div class="sub" id="modalName">-</div>
+      <div class="kv-row"><span class="k">Status</span><span id="modalStatus">-</span></div>
+      <div class="kv-row" id="modalBlockRow" style="display:none;color:var(--red)"><span class="k">Status Blokir</span><span id="modalBlockDetail">-</span></div>
+      <div class="kv-row"><span class="k">Terdaftar</span><span id="modalCreatedAt">-</span></div>
+      <div class="kv-row"><span class="k">Login terakhir</span><span id="modalLastLogin">-</span></div>
+
+      <h2 style="margin-top:18px;font-size:13px;color:var(--text-dim);text-transform:uppercase">Kelola Akses Akun (Blokir)</h2>
+      <div style="background:var(--panel-2);border-radius:16px;padding:14px;border:1px solid var(--border);margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+          <div>
+            <div id="blockStatusText" style="font-weight:600;font-size:13px">Status Akses: Aktif</div>
+            <div id="blockStatusSub" style="font-size:12px;color:var(--text-dim);margin-top:2px">Akun dapat menggunakan seluruh layanan Tata.</div>
+          </div>
+          <button id="toggleBlockBtn" class="danger" style="padding:6px 14px;font-size:13px">⛔ Blokir Akun</button>
+        </div>
+      </div>
+
+      <h2 style="margin-top:18px;font-size:13px;color:var(--text-dim);text-transform:uppercase">Riwayat Transaksi</h2>
+      <div class="txn-list" id="modalTxnList"></div>
+
+      <h2 style="margin-top:18px;font-size:13px;color:var(--text-dim);text-transform:uppercase">Ubah Status Premium Manual</h2>
+      <select id="premiumSelect">
+        <option value="true">Aktifkan Premium</option>
+        <option value="false">Nonaktifkan Premium</option>
+      </select>
+      <textarea id="reasonInput" placeholder="Alasan perubahan (wajib diisi, untuk keperluan audit)" style="min-height:60px;resize:vertical"></textarea>
+      <div class="error-text" id="modalError"></div>
+
+      <div class="modal-actions">
+        <button class="secondary" id="closeModalBtn">Tutup</button>
+        <button id="saveModalBtn">Simpan Perubahan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: CONFIRM (generic) -->
+  <div class="modal-overlay" id="confirmModal" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <div class="modal" style="width:380px">
+      <h3 id="confirmTitle">Konfirmasi</h3>
+      <div class="sub" id="confirmMessage">Apakah kamu yakin?</div>
+      <div class="modal-actions">
+        <button class="secondary" id="confirmCancelBtn">Batal</button>
+        <button id="confirmOkBtn">Ya, Lanjutkan</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script src="./admin-panel.js"></script>
+</body>
+</html>

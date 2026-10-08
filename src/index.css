@@ -1,0 +1,817 @@
+/* Self-hosted fonts via @fontsource (100% offline & privacy-first, zero Google Fonts requests) */
+@import "@fontsource/plus-jakarta-sans/400.css";
+@import "@fontsource/plus-jakarta-sans/500.css";
+@import "@fontsource/plus-jakarta-sans/600.css";
+@import "@fontsource/plus-jakarta-sans/700.css";
+@import "@fontsource/plus-jakarta-sans/800.css";
+
+@import "@fontsource/jetbrains-mono/400.css";
+@import "@fontsource/jetbrains-mono/500.css";
+@import "@fontsource/jetbrains-mono/600.css";
+
+@import "@fontsource/playfair-display/400.css";
+@import "@fontsource/playfair-display/400-italic.css";
+@import "@fontsource/playfair-display/600.css";
+@import "@fontsource/playfair-display/700.css";
+
+@import "@fontsource/quicksand/400.css";
+@import "@fontsource/quicksand/500.css";
+@import "@fontsource/quicksand/600.css";
+@import "@fontsource/quicksand/700.css";
+
+@import "@fontsource/caveat/400.css";
+@import "@fontsource/caveat/700.css";
+
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --breakpoint-xs: 400px;
+}
+
+@layer base {
+  html, body {
+    color-scheme: dark;
+    overscroll-behavior: none;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    min-height: 100dvh;
+    height: 100%;
+    background-color: #020617;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+}
+
+@layer utilities {
+  /* Hide scrollbar for mobile/touch-only if explicitly requested */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Custom visible & sleek scrollbar for desktop and all scrollable areas */
+  .custom-scrollbar::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track,
+  body::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.25);
+    border-radius: 9999px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb,
+  body::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.35);
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover,
+  body::-webkit-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.65);
+  }
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.35) rgba(15, 23, 42, 0.25);
+  }
+
+  /* On desktop viewports (md / 768px+), ensure scrollbars are ALWAYS visible and easy to scroll/drag */
+  @media (min-width: 768px) {
+    .no-scrollbar::-webkit-scrollbar {
+      display: block !important;
+      width: 8px !important;
+      height: 8px !important;
+    }
+    .no-scrollbar::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.25) !important;
+      border-radius: 9999px !important;
+    }
+    .no-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.35) !important;
+      border-radius: 9999px !important;
+      border: 2px solid transparent !important;
+      background-clip: padding-box !important;
+    }
+    .no-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: rgba(148, 163, 184, 0.65) !important;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: auto !important;
+      scrollbar-width: thin !important;
+      scrollbar-color: rgba(148, 163, 184, 0.35) rgba(15, 23, 42, 0.25) !important;
+    }
+  }
+}
+
+.light-theme {
+  --color-emerald-400: #059669;
+  --color-rose-400: #e11d48;
+  --color-indigo-400: #4f46e5;
+  --color-orange-400: #ea580c;
+  --color-amber-400: #d97706;
+  --color-cyan-400: #0891b2;
+  --color-teal-400: #0d9488;
+  --color-teal-500: #0f766e;
+  
+  --color-emerald-500: #047857;
+  --color-rose-500: #be123c;
+  --color-indigo-500: #4338ca;
+  --color-orange-500: #c2410c;
+
+  color-scheme: light;
+  --color-slate-950: #f8fafc;
+  --color-slate-900: #ffffff;
+  --color-slate-850: #f1f5f9;
+  --color-slate-800: #e2e8f0;
+  --color-slate-750: #cbd5e1;
+  --color-slate-700: #cbd5e1;
+  --color-slate-600: #94a3b8;
+  --color-slate-500: #64748b;
+  --color-slate-400: #475569;
+  --color-slate-300: #334155;
+  --color-slate-200: #1e293b;
+  --color-slate-100: #0f172a;
+  --color-slate-50: #020617;
+
+  --color-indigo-50: #eef2ff;
+  --color-indigo-100: #e0e7ff;
+  --color-indigo-200: #c7d2fe;
+  --color-indigo-300: #4338ca;
+  --color-indigo-600: #4f46e5;
+}
+
+.pink-theme {
+  --color-emerald-400: #059669;
+  --color-rose-400: #e11d48;
+  --color-orange-400: #ea580c;
+  --color-amber-400: #d97706;
+  --color-cyan-400: #0891b2;
+  
+  --color-emerald-500: #047857;
+  --color-rose-500: #be123c;
+  --color-orange-500: #c2410c;
+
+  color-scheme: light;
+  --color-slate-950: #fdf2f8; /* pink-50 base bg */
+  --color-slate-900: #fce7f3; /* pink-100 card bg */
+  --color-slate-800: #fbcfe8; /* pink-200 container/border */
+  --color-slate-700: #f9a8d4; /* pink-300 divider */
+  --color-slate-600: #f472b6; /* pink-400 accent highlight */
+  --color-slate-500: #be185d; /* pink-700 crisp muted text & icons */
+  --color-slate-400: #9d174d; /* pink-800 high-contrast secondary text */
+  --color-slate-300: #831843; /* pink-900 main sub-headings */
+  --color-slate-200: #701a3c; /* deep pink body text */
+  --color-slate-100: #500724; /* pink-950 dark heading text */
+  --color-slate-50: #250211;  /* darkest pink */
+  
+  --color-indigo-300: #be185d;
+  --color-indigo-400: #be185d; /* pink-700 */
+  --color-indigo-500: #9d174d; /* pink-800 */
+  --color-indigo-600: #831843; /* pink-900 */
+}
+
+.cool-theme {
+  background-color: #04060b;
+  background-image: radial-gradient(circle at 15% 50%, rgba(6, 182, 212, 0.08), transparent 25%),
+                    radial-gradient(circle at 85% 30%, rgba(255, 107, 0, 0.08), transparent 25%);
+
+  --color-emerald-400: #06b6d4; /* Neon Cyan */
+  --color-rose-400: #ef4444;    /* Crimson Red */
+  --color-orange-400: #ff6b00;  /* Cool Orange */
+  --color-amber-400: #f59e0b;
+  --color-cyan-400: #00f0ff;    /* Cyber Cyan */
+  
+  --color-emerald-500: #0891b2;
+  --color-rose-500: #dc2626;
+  --color-orange-500: #e05300;
+
+  color-scheme: dark;
+  --color-slate-950: #050811;   /* Base deep cyber dark blue */
+  --color-slate-900: rgba(13, 19, 36, 0.85); /* Translucent deep blue glass */
+  --color-slate-800: rgba(22, 32, 59, 0.75);  /* Translucent card glass */
+  --color-slate-700: rgba(38, 51, 89, 0.65);  /* Cyber borders */
+  --color-slate-600: #64748b;   /* Cool gray-blue */
+  --color-slate-500: #94a3b8;   /* Muted gray text */
+  --color-slate-400: #cbd5e1;   /* Readable text */
+  --color-slate-300: #e2e8f0;   /* Bright text */
+  --color-slate-200: #f1f5f9;   /* Highlight text */
+  --color-slate-100: #f8fafc;   /* Headings */
+  --color-slate-50: #ffffff;
+  
+  --color-indigo-400: #ff6b00; /* Cool Orange main accent */
+  --color-indigo-500: #ff5500;
+  --color-indigo-600: #cc4400;
+}
+
+.cute-theme {
+  background-color: #fdf8eb;
+  background-image: radial-gradient(circle at 20% 20%, rgba(244, 114, 182, 0.15), transparent 40%),
+                    radial-gradient(circle at 80% 80%, rgba(251, 146, 60, 0.15), transparent 40%);
+
+  --color-emerald-400: #059669;
+  --color-rose-400: #e11d48;    /* Cute Rose */
+  --color-orange-400: #ea580c;  /* Warm Peach */
+  --color-amber-400: #d97706;
+  --color-cyan-400: #0891b2;
+  
+  --color-emerald-500: #059669;
+  --color-rose-500: #e11d48;
+  --color-orange-500: #f97316;
+
+  color-scheme: light;
+  --color-slate-950: #fdf8eb;   /* Soft warm ivory cream background */
+  --color-slate-900: rgba(253, 244, 227, 0.85); /* Warm light cream second bg */
+  --color-slate-800: rgba(250, 235, 215, 0.8);  /* Cream card */
+  --color-slate-700: rgba(254, 215, 170, 0.7);  /* Warm divider */
+  --color-slate-600: #856543;   /* Muted caramel */
+  --color-slate-500: #6a4d2c;   /* Soft chestnut brown */
+  --color-slate-400: #51371b;   /* Warm hazelnut brown */
+  --color-slate-300: #38230f;   /* Rich cocoa brown */
+  --color-slate-200: #221204;   /* Dark chocolate */
+  --color-slate-100: #150a02;   /* Deep espresso brown headings */
+  --color-slate-50: #000000;
+  
+  --color-indigo-300: #be185d;
+  --color-indigo-400: #db2777; /* Cute Pink accent */
+  --color-indigo-500: #ec4899;
+  --color-indigo-600: #db2777;
+}
+
+.organic-theme,
+.pro-max-theme {
+  background-color: #F7F3E9;
+  background-image: radial-gradient(circle at 10% 15%, rgba(195, 94, 64, 0.05), transparent 40%),
+                    radial-gradient(circle at 90% 85%, rgba(75, 114, 88, 0.06), transparent 40%),
+                    radial-gradient(circle at 50% 50%, rgba(199, 136, 24, 0.03), transparent 60%);
+
+  --color-emerald-400: #4B7258; /* Sage Green */
+  --color-emerald-500: #3E614A;
+  --color-rose-400: #C35E40;    /* Warm Terracotta Clay */
+  --color-rose-500: #A84A2E;
+  --color-orange-400: #D26E4B;  /* Earth Terracotta */
+  --color-orange-500: #BE5B39;
+  --color-amber-400: #C78818;   /* Warm Honey Amber */
+  --color-amber-500: #B0740E;
+  --color-cyan-400: #3C7A72;    /* Warm Earth Teal */
+  --color-teal-400: #497868;
+  --color-teal-500: #3B6354;
+
+  color-scheme: light;
+  --color-slate-950: #F7F3E9;   /* Main background - warm linen cream */
+  --color-slate-900: #ECE4D4;   /* Secondary background / surface container */
+  --color-slate-850: #E4DAC6;   /* Subtle elevated surface */
+  --color-slate-800: #DDD0BA;   /* Card surface & container borders */
+  --color-slate-750: #D2C3AA;   /* Container divider */
+  --color-slate-700: #C9B89C;   /* Divider / subtle border */
+  --color-slate-600: #9B876F;   /* Soft warm stone */
+  --color-slate-500: #78644E;   /* Muted icons & labels */
+  --color-slate-400: #574431;   /* Secondary readable body text */
+  --color-slate-300: #392B1C;   /* Primary readable body text */
+  --color-slate-200: #241A0F;   /* Deep high-contrast dark body text */
+  --color-slate-100: #140C05;   /* Deep roast espresso headings */
+  --color-slate-50: #000000;
+
+  --color-indigo-50: #FBF5F2;
+  --color-indigo-100: #F5E6E0;
+  --color-indigo-200: #E8CCBF;
+  --color-indigo-300: #D26E4B;  /* Terracotta */
+  --color-indigo-400: #C35E40;  /* Warm Terracotta primary accent */
+  --color-indigo-500: #A84A2E;  /* Deep Terracotta */
+  --color-indigo-600: #8E3B22;
+  --color-indigo-700: #742E18;
+  --color-indigo-800: #5D2513;
+  --color-indigo-900: #491D0E;
+  --color-indigo-950: #2A0F07;
+}
+
+.simple-theme {
+  background-color: #141210;
+  background-image: radial-gradient(circle at 50% 0%, rgba(217, 119, 6, 0.08), transparent 55%),
+                    radial-gradient(circle at 100% 100%, rgba(16, 185, 129, 0.05), transparent 50%);
+
+  --color-emerald-400: #34d399; /* Sage Emerald */
+  --color-rose-400: #fb7185;    /* Warm Terra Rose */
+  --color-orange-400: #fb923c;  /* Warm Apricot */
+  --color-amber-400: #f59e0b;   /* Warm Amber */
+  --color-cyan-400: #38bdf8;
+  
+  --color-emerald-500: #10b981;
+  --color-rose-500: #f43f5e;
+  --color-orange-500: #f97316;
+
+  color-scheme: dark;
+  --color-slate-950: #141210;   /* Deep organic warm charcoal */
+  --color-slate-900: rgba(28, 25, 22, 0.92); /* Soft warm earth card */
+  --color-slate-800: rgba(38, 34, 30, 0.85);  /* Soft warm container */
+  --color-slate-700: rgba(54, 48, 42, 0.75);  /* Subtle warm border */
+  --color-slate-600: #786d60;   /* Warm muted stone */
+  --color-slate-500: #9e9080;   /* Soft label text */
+  --color-slate-400: #c2b4a3;   /* Secondary body text */
+  --color-slate-300: #e2d6c6;   /* Bright readable text */
+  --color-slate-200: #f2ebe0;   /* Soft warm white text */
+  --color-slate-100: #fbf7f0;   /* Warm ivory headings */
+  --color-slate-50: #ffffff;
+  
+  --color-indigo-300: #fbbf24;
+  --color-indigo-400: #f59e0b; /* Warm Amber main accent */
+  --color-indigo-500: #d97706;
+  --color-indigo-600: #b45309;
+}
+
+.simple-theme .prose-invert,
+.simple-theme .prose {
+  --tw-prose-body: var(--color-slate-200);
+  --tw-prose-headings: var(--color-slate-100);
+  --tw-prose-lead: var(--color-slate-300);
+  --tw-prose-links: var(--color-amber-400);
+  --tw-prose-bold: var(--color-slate-100);
+  --tw-prose-counters: var(--color-slate-400);
+  --tw-prose-bullets: var(--color-slate-400);
+  --tw-prose-hr: var(--color-slate-700);
+  --tw-prose-quotes: var(--color-slate-200);
+  --tw-prose-quote-borders: var(--color-slate-700);
+  --tw-prose-captions: var(--color-slate-400);
+  --tw-prose-code: var(--color-slate-100);
+  --tw-prose-pre-code: var(--color-slate-100);
+  --tw-prose-pre-bg: var(--color-slate-800);
+  --tw-prose-th-borders: var(--color-slate-700);
+  --tw-prose-td-borders: var(--color-slate-800);
+  color: var(--color-slate-200);
+}
+
+.pink-theme .prose-invert,
+.light-theme .prose-invert,
+.cute-theme .prose-invert,
+.organic-theme .prose-invert,
+.pro-max-theme .prose-invert,
+.pink-theme .prose,
+.light-theme .prose,
+.cute-theme .prose,
+.organic-theme .prose,
+.pro-max-theme .prose {
+  --tw-prose-body: var(--color-slate-200);
+  --tw-prose-headings: var(--color-slate-100);
+  --tw-prose-lead: var(--color-slate-300);
+  --tw-prose-links: var(--color-indigo-600);
+  --tw-prose-bold: var(--color-slate-100);
+  --tw-prose-counters: var(--color-slate-400);
+  --tw-prose-bullets: var(--color-slate-400);
+  --tw-prose-hr: var(--color-slate-700);
+  --tw-prose-quotes: var(--color-slate-200);
+  --tw-prose-quote-borders: var(--color-slate-700);
+  --tw-prose-captions: var(--color-slate-400);
+  --tw-prose-code: var(--color-slate-100);
+  --tw-prose-pre-code: var(--color-slate-100);
+  --tw-prose-pre-bg: var(--color-slate-800);
+  --tw-prose-th-borders: var(--color-slate-700);
+  --tw-prose-td-borders: var(--color-slate-800);
+
+  --tw-prose-invert-body: var(--color-slate-200);
+  --tw-prose-invert-headings: var(--color-slate-100);
+  --tw-prose-invert-lead: var(--color-slate-300);
+  --tw-prose-invert-links: var(--color-indigo-600);
+  --tw-prose-invert-bold: var(--color-slate-100);
+  --tw-prose-invert-counters: var(--color-slate-400);
+  --tw-prose-invert-bullets: var(--color-slate-400);
+  --tw-prose-invert-hr: var(--color-slate-700);
+  --tw-prose-invert-quotes: var(--color-slate-200);
+  --tw-prose-invert-quote-borders: var(--color-slate-700);
+  --tw-prose-invert-captions: var(--color-slate-400);
+  --tw-prose-invert-code: var(--color-slate-100);
+  --tw-prose-invert-pre-code: var(--color-slate-100);
+  --tw-prose-invert-pre-bg: var(--color-slate-800);
+  --tw-prose-invert-th-borders: var(--color-slate-700);
+  --tw-prose-invert-td-borders: var(--color-slate-800);
+  color: var(--color-slate-200);
+}
+
+.pink-theme .prose-invert p,
+.light-theme .prose-invert p,
+.cute-theme .prose-invert p,
+.organic-theme .prose-invert p,
+.pro-max-theme .prose-invert p,
+.pink-theme .prose p,
+.light-theme .prose p,
+.cute-theme .prose p,
+.organic-theme .prose p,
+.pro-max-theme .prose p,
+.pink-theme .prose-invert li,
+.light-theme .prose-invert li,
+.cute-theme .prose-invert li,
+.organic-theme .prose-invert li,
+.pro-max-theme .prose-invert li,
+.pink-theme .prose-invert span,
+.light-theme .prose-invert span,
+.cute-theme .prose-invert span,
+.organic-theme .prose-invert span,
+.pro-max-theme .prose-invert span,
+.pink-theme .prose-invert strong,
+.light-theme .prose-invert strong,
+.cute-theme .prose-invert strong,
+.organic-theme .prose-invert strong,
+.pro-max-theme .prose-invert strong,
+.pink-theme .prose-invert h1,
+.pink-theme .prose-invert h2,
+.pink-theme .prose-invert h3,
+.pink-theme .prose-invert h4,
+.pink-theme .prose-invert h5,
+.pink-theme .prose-invert h6 {
+  color: var(--color-slate-100) !important;
+}
+
+.pink-theme .prose-invert code,
+.light-theme .prose-invert code,
+.cute-theme .prose-invert code,
+.organic-theme .prose-invert code,
+.pro-max-theme .prose-invert code {
+  color: var(--color-slate-100) !important;
+  background-color: var(--color-slate-800) !important;
+}
+
+.wallpaper-theme {
+  --color-emerald-400: #10b981;
+  --color-rose-400: #ef4444;
+  --color-orange-400: #f97316;
+  --color-amber-400: #f59e0b;
+  --color-cyan-400: #06b6d4;
+  
+  --color-emerald-500: #059669;
+  --color-rose-500: #dc2626;
+  --color-orange-500: #ea580c;
+
+  color-scheme: dark;
+  --color-slate-950: rgba(2, 6, 23, 0.45);  /* Very translucent base for high blur */
+  --color-slate-900: rgba(15, 23, 42, 0.65); /* Acrylic panel */
+  --color-slate-800: rgba(30, 41, 59, 0.55); /* Translucent Glass Card */
+  --color-slate-700: rgba(51, 65, 85, 0.5);
+  --color-slate-600: #94a3b8;
+  --color-slate-500: #38bdf8;
+  --color-slate-400: #94a3b8;
+  --color-slate-300: #cbd5e1;
+  --color-slate-200: #e2e8f0;
+  --color-slate-100: #f1f5f9;
+  --color-slate-50: #ffffff;
+}
+
+/* Accent Color Options for Wallpaper Custom Theme */
+.wallpaper-theme.wallpaper-accent-blue {
+  --color-indigo-50: #f0f9ff;
+  --color-indigo-100: #e0f2fe;
+  --color-indigo-200: #bae6fd;
+  --color-indigo-300: #7dd3fc;
+  --color-indigo-400: #38bdf8;
+  --color-indigo-500: #0ea5e9;
+  --color-indigo-600: #0284c7;
+  --color-indigo-700: #0369a1;
+  --color-indigo-800: #075985;
+  --color-indigo-900: #0c4a6e;
+  --color-indigo-950: #082f49;
+
+  --color-sky-300: #7dd3fc;
+  --color-sky-400: #38bdf8;
+  --color-sky-500: #0ea5e9;
+  --color-sky-600: #0284c7;
+
+  --color-blue-300: #7dd3fc;
+  --color-blue-400: #38bdf8;
+  --color-blue-500: #0ea5e9;
+  --color-blue-600: #0284c7;
+
+  --color-slate-500: #38bdf8;
+}
+
+.wallpaper-theme.wallpaper-accent-emerald {
+  --color-indigo-50: #ecfdf5;
+  --color-indigo-100: #d1fae5;
+  --color-indigo-200: #a7f3d0;
+  --color-indigo-300: #6ee7b7;
+  --color-indigo-400: #34d399;
+  --color-indigo-500: #10b981;
+  --color-indigo-600: #059669;
+  --color-indigo-700: #047857;
+  --color-indigo-800: #065f46;
+  --color-indigo-900: #064e3b;
+  --color-indigo-950: #022c22;
+
+  --color-sky-300: #6ee7b7;
+  --color-sky-400: #34d399;
+  --color-sky-500: #10b981;
+  --color-sky-600: #059669;
+
+  --color-blue-300: #6ee7b7;
+  --color-blue-400: #34d399;
+  --color-blue-500: #10b981;
+  --color-blue-600: #059669;
+
+  --color-slate-500: #34d399;
+}
+
+.wallpaper-theme.wallpaper-accent-rose {
+  --color-indigo-50: #fff1f2;
+  --color-indigo-100: #ffe4e6;
+  --color-indigo-200: #fecdd3;
+  --color-indigo-300: #fca5a5;
+  --color-indigo-400: #fb7185;
+  --color-indigo-500: #f43f5e;
+  --color-indigo-600: #e11d48;
+  --color-indigo-700: #be123c;
+  --color-indigo-800: #9f1239;
+  --color-indigo-900: #881337;
+  --color-indigo-950: #4c0519;
+
+  --color-sky-300: #fca5a5;
+  --color-sky-400: #fb7185;
+  --color-sky-500: #f43f5e;
+  --color-sky-600: #e11d48;
+
+  --color-blue-300: #fca5a5;
+  --color-blue-400: #fb7185;
+  --color-blue-500: #f43f5e;
+  --color-blue-600: #e11d48;
+
+  --color-slate-500: #fb7185;
+}
+
+.wallpaper-theme.wallpaper-accent-violet {
+  --color-indigo-50: #faf5ff;
+  --color-indigo-100: #f3e8ff;
+  --color-indigo-200: #e9d5ff;
+  --color-indigo-300: #d8b4fe;
+  --color-indigo-400: #c084fc;
+  --color-indigo-500: #a855f7;
+  --color-indigo-600: #9333ea;
+  --color-indigo-700: #7e22ce;
+  --color-indigo-800: #6b21a8;
+  --color-indigo-900: #581c87;
+  --color-indigo-950: #3b0764;
+
+  --color-sky-300: #d8b4fe;
+  --color-sky-400: #c084fc;
+  --color-sky-500: #a855f7;
+  --color-sky-600: #9333ea;
+
+  --color-blue-300: #d8b4fe;
+  --color-blue-400: #c084fc;
+  --color-blue-500: #a855f7;
+  --color-blue-600: #9333ea;
+
+  --color-slate-500: #c084fc;
+}
+
+.wallpaper-theme.wallpaper-accent-amber {
+  --color-indigo-50: #fffbeb;
+  --color-indigo-100: #fef3c7;
+  --color-indigo-200: #fde68a;
+  --color-indigo-300: #fde047;
+  --color-indigo-400: #fbbf24;
+  --color-indigo-500: #f59e0b;
+  --color-indigo-600: #d97706;
+  --color-indigo-700: #b45309;
+  --color-indigo-800: #92400e;
+  --color-indigo-900: #78350f;
+  --color-indigo-950: #451a03;
+
+  --color-sky-300: #fde047;
+  --color-sky-400: #fbbf24;
+  --color-sky-500: #f59e0b;
+  --color-sky-600: #d97706;
+
+  --color-blue-300: #fde047;
+  --color-blue-400: #fbbf24;
+  --color-blue-500: #f59e0b;
+  --color-blue-600: #d97706;
+
+  --color-slate-500: #fbbf24;
+}
+
+.wallpaper-theme.wallpaper-accent-cyan {
+  --color-indigo-50: #ecfeff;
+  --color-indigo-100: #cffaff;
+  --color-indigo-200: #a5f3fc;
+  --color-indigo-300: #67e8f9;
+  --color-indigo-400: #22d3ee;
+  --color-indigo-500: #06b6d4;
+  --color-indigo-600: #0891b2;
+  --color-indigo-700: #0e7490;
+  --color-indigo-800: #155e75;
+  --color-indigo-900: #164e63;
+  --color-indigo-950: #083344;
+
+  --color-sky-300: #67e8f9;
+  --color-sky-400: #22d3ee;
+  --color-sky-500: #06b6d4;
+  --color-sky-600: #0891b2;
+
+  --color-blue-300: #67e8f9;
+  --color-blue-400: #22d3ee;
+  --color-blue-500: #06b6d4;
+  --color-blue-600: #0891b2;
+
+  --color-slate-500: #22d3ee;
+}
+
+.wallpaper-theme.wallpaper-accent-pink {
+  --color-indigo-50: #fdf2f8;
+  --color-indigo-100: #fce7f3;
+  --color-indigo-200: #fbcfe8;
+  --color-indigo-300: #f9a8d4;
+  --color-indigo-400: #f472b6;
+  --color-indigo-500: #ec4899;
+  --color-indigo-600: #db2777;
+  --color-indigo-700: #be185d;
+  --color-indigo-800: #9d174d;
+  --color-indigo-900: #831843;
+  --color-indigo-950: #500724;
+
+  --color-sky-300: #f9a8d4;
+  --color-sky-400: #f472b6;
+  --color-sky-500: #ec4899;
+  --color-sky-600: #db2777;
+
+  --color-blue-300: #f9a8d4;
+  --color-blue-400: #f472b6;
+  --color-blue-500: #ec4899;
+  --color-blue-600: #db2777;
+
+  --color-slate-500: #f472b6;
+}
+
+.wallpaper-theme.wallpaper-accent-lime {
+  --color-indigo-50: #f7fee7;
+  --color-indigo-100: #ecfccb;
+  --color-indigo-200: #d9f99d;
+  --color-indigo-300: #bef264;
+  --color-indigo-400: #a3e635;
+  --color-indigo-500: #84cc16;
+  --color-indigo-600: #65a30d;
+  --color-indigo-700: #4d7c0f;
+  --color-indigo-800: #3f6212;
+  --color-indigo-900: #365314;
+  --color-indigo-950: #1a2e05;
+
+  --color-sky-300: #bef264;
+  --color-sky-400: #a3e635;
+  --color-sky-500: #84cc16;
+  --color-sky-600: #65a30d;
+
+  --color-blue-300: #bef264;
+  --color-blue-400: #a3e635;
+  --color-blue-500: #84cc16;
+  --color-blue-600: #65a30d;
+
+  --color-slate-500: #a3e635;
+}
+
+[contenteditable]:empty:before {
+  content: attr(data-placeholder);
+  color: var(--color-slate-400, #475569);
+  pointer-events: none;
+  display: inline-block;
+}
+
+.font-style-sans {
+  font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif !important;
+}
+.font-style-serif {
+  font-family: "Playfair Display", Georgia, serif !important;
+}
+.font-style-mono {
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace !important;
+}
+.font-style-rounded {
+  font-family: "Quicksand", sans-serif !important;
+}
+.font-style-handwritten {
+  font-family: "Caveat", cursive, sans-serif !important;
+}
+
+/* Performance & Hardware Acceleration Optimizations */
+*, ::before, ::after {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.screen-transition {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Fast touch scrolling optimization */
+.no-scrollbar, .custom-scrollbar {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Printable Bank Statement Print Media Styling */
+@media print {
+  body {
+    background-color: #ffffff !important;
+    color: #020617 !important;
+  }
+  .no-print, header, nav, button, .no-print * {
+    display: none !important;
+  }
+  .printable-bank-statement {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    background: #ffffff !important;
+    color: #020617 !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  .printable-bank-statement * {
+    color: #020617 !important;
+    background: transparent !important;
+    border-color: #cbd5e1 !important;
+  }
+  .printable-bank-statement table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+  .printable-bank-statement th, .printable-bank-statement td {
+    border: 1px solid #94a3b8 !important;
+    padding: 6px 10px !important;
+  }
+}
+
+.note-editor-area {
+  font-weight: 400 !important;
+}
+.note-editor-area div,
+.note-editor-area p,
+.note-editor-area span {
+  font-weight: 400;
+}
+.note-editor-area b,
+.note-editor-area strong,
+.note-editor-area b *,
+.note-editor-area strong * {
+  font-weight: 700 !important;
+}
+.note-editor-area i,
+.note-editor-area em {
+  font-style: italic;
+}
+.note-editor-area u {
+  text-decoration: underline;
+}
+.note-editor-area strike,
+.note-editor-area s {
+  text-decoration: line-through;
+}
+
+.note-editor-area img {
+  max-width: 100%;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: block;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+.note-editor-area img:hover {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+  filter: brightness(1.05);
+}
+
+/* ========================================================
+   PRO MAX & ORGANIC THEME: Tactile warm paper/linen styling
+   ======================================================== */
+.organic-theme,
+.pro-max-theme {
+  background-color: #F7F3E9 !important;
+  color: #26170D !important;
+  background-image: 
+    radial-gradient(#DECBB5 0.75px, transparent 0.75px), 
+    radial-gradient(#DECBB5 0.75px, #F7F3E9 0.75px);
+  background-size: 30px 30px;
+  background-position: 0 0, 15px 15px;
+}
+
+.organic-theme ::selection,
+.pro-max-theme ::selection {
+  background: #E8CFBC;
+  color: #24150A;
+}
+
+

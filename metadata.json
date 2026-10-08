@@ -1,0 +1,11 @@
+{
+  "name": "Tata",
+  "description": "Offline-first, privacy-focused productivity app with notes, tasks, calendar, finance tracking, and optional stateless AI assistance.",
+  "requestFramePermissions": [
+    "camera",
+    "identity-credentials-get"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "TATAPROMAX": {
+    "code": "TATAPROMAX",
+    "type": "free",
+    "tier": "pro_max",
+    "planName": "Tata Pro Max Seumur Hidup (Voucher Promo)",
+    "durationDays": null,
+    "maxUses": 999999,
+    "usedCount": 0,
+    "usedBy": []
+  },
+  "TATAGRATIS": {
+    "code": "TATAGRATIS",
+    "type": "free",
+    "tier": "pro_max",
+    "planName": "Tata Pro Max Seumur Hidup (Voucher Promo)",
+    "durationDays": null,
+    "maxUses": 999999,
+    "usedCount": 0,
+    "usedBy": []
+  },
+  "TATABEBAS": {
+    "code": "TATABEBAS",
+    "type": "free",
+    "tier": "pro_max",
+    "planName": "Tata Pro Max Seumur Hidup (Voucher Promo)",
+    "durationDays": null,
+    "maxUses": 999999,
+    "usedCount": 0,
+    "usedBy": []
+  },
+  "DISKON20": {
+    "code": "DISKON20",
+    "type": "discount",
+    "discountType": "percent",
+    "discountValue": 20,
+    "maxUses": 100,
+    "usedCount": 0,
+    "usedBy": []
+  },
+  "DISKON_SEKALI": {
+    "code": "DISKON_SEKALI",
+    "type": "discount",
+    "discountType": "fixed",
+    "discountValue": 10000,
+    "maxUses": 100,
+    "usedCount": 0,
+    "usedBy": []
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "test_user_hardening@tata.local": {
+    "userId": "tata_test_user_hardening",
+    "email": "test_user_hardening@tata.local",
+    "name": "User Hardening Test",
+    "avatarUrl": "",
+    "isPremium": false,
+    "premiumType": "free",
+    "createdAt": "2026-10-02T09:26:15.735Z",
+    "lastLoginAt": "2026-10-02T09:26:15.735Z"
+  }
+}
