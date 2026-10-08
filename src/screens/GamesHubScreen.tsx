@@ -4,8 +4,8 @@ import { useAppStore } from '../store';
 import { useTranslation } from '../translations';
 import { getOrganicThemePalette } from '../components/home/organicThemePalettes';
 
-export default function GamesHubScreen({ onSelectGame, onBack }: { onSelectGame: (game: 'game' | 'tictactoe' | 'puzzle' | 'tetris' | 'memory' | 'space-invaders') => void, onBack: () => void }) {
-  const { lang, appTheme } = useAppStore();
+export default function GamesHubScreen({ onSelectGame, onBack, appTheme }: { onSelectGame: (game: 'game' | 'tictactoe' | 'puzzle' | 'tetris' | 'memory' | 'space-invaders') => void, onBack: () => void, appTheme?: string }) {
+  const { lang } = useAppStore();
   const t = useTranslation(lang);
   const palette = React.useMemo(() => {
     const storedTheme = typeof window !== 'undefined' ? localStorage.getItem('tata_theme') : null;

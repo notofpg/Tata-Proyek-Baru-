@@ -72,7 +72,8 @@ const MOTIVATION_QUOTES = [
 
 export default function HomeScreen({ appTheme, setAppTheme, onOpenNote, onNavigate }: HomeProps) {
   const store = useAppStore();
-  const { notes, tasks, moods, setMood, user, toggleTask, deleteTask, deleteNote, streak, lang, updateTask, checkInDaily, isLiteMode, appVersion, searchQuery, setSearchQuery, handleRefreshApp, isRefreshing, transactions, savingsBalance, savingsTarget, debts, tataAccount, isAccountPremium } = store;
+  const { notes, tasks, moods, setMood, user, toggleTask, deleteTask, deleteNote, streak, lang, updateTask, checkInDaily, isLiteMode, appVersion, handleRefreshApp, isRefreshing, transactions, savingsBalance, savingsTarget, debts, tataAccount, isAccountPremium } = store;
+  const [searchQuery, setSearchQuery] = useState('');
   
   // Strictly compute mode flags to prevent any mode mixing
   const isLite = appVersion === 'lite' || isLiteMode;
@@ -102,9 +103,9 @@ export default function HomeScreen({ appTheme, setAppTheme, onOpenNote, onNaviga
 
   const trimmedQuery = (searchQuery || '').trim();
   const searchResults = useMemo(() => {
-    if (!trimmedQuery) return [];
+    if (isProMax || !trimmedQuery) return [];
     return executeUniversalSearch(trimmedQuery, store, lang);
-  }, [trimmedQuery, store.notes, store.tasks, store.transactions, store.moods, store.savingsGoals, store.debts, lang]);
+  }, [isProMax, trimmedQuery, store.notes, store.tasks, store.transactions, store.moods, store.savingsGoals, store.debts, lang]);
 
   // If query gets entered, make sure search bar is visible
   useEffect(() => {
@@ -369,6 +370,21 @@ export default function HomeScreen({ appTheme, setAppTheme, onOpenNote, onNaviga
   };
 
   const { activeTasksCount, pinnedTasks, pinnedNotes, disciplineTask, totalTasks, progressPercent, completedCount, frontStreak, walletCash, activeTasksList, recentNotesList } = useMemo(() => {
+    if (isProMax) {
+      return {
+        activeTasksCount: 0,
+        pinnedTasks: [],
+        pinnedNotes: [],
+        disciplineTask: null,
+        totalTasks: 0,
+        progressPercent: 0,
+        completedCount: 0,
+        frontStreak: 0,
+        walletCash: 0,
+        activeTasksList: [],
+        recentNotesList: []
+      };
+    }
     const actTasks = tasks.filter(t => !t.completed && !t.isDiscipline && !t.disciplineData);
     const pTasks = tasks.filter(t => t.pinned && !t.isDiscipline && !t.disciplineData).slice(0, 5);
     const pNotes = notes.filter(n => n.pinned).slice(0, 5);
@@ -572,7 +588,7 @@ export default function HomeScreen({ appTheme, setAppTheme, onOpenNote, onNaviga
               {isLite ? (
                 <LiteStickerIcon variant="bell" size="xs" />
               ) : (
-                <Bell className="w-4 h-4 text-slate-200" />
+                <Bell className="w-4 h-4 text-current" />
               )}
               {notificationsCount > 0 && (
                 <span className="absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 rounded-full bg-rose-500 text-white text-[9.5px] font-black flex items-center justify-center shadow-xs ring-2 ring-slate-900 animate-pulse">
@@ -936,7 +952,11 @@ export default function HomeScreen({ appTheme, setAppTheme, onOpenNote, onNaviga
         ) : (
           <div 
             style={bannerWallpaper ? { backgroundImage: `url(${bannerWallpaper})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
-            className={`relative w-full rounded-[2rem] p-6 sm:p-8 flex flex-col justify-between mb-8 overflow-hidden ${bannerWallpaper ? "text-white shadow-md cursor-pointer select-none" : "bg-slate-900 border border-slate-800 text-slate-50 shadow-sm"}`}
+            className={`relative w-full rounded-[2rem] p-6 sm:p-8 flex flex-col justify-between mb-8 overflow-hidden ${
+              bannerWallpaper 
+                ? "text-white shadow-md cursor-pointer select-none" 
+                : `${palette.cardHero} ${palette.cardHeroBorder} ${palette.titleText} shadow-sm border`
+            }`}
             onDoubleClick={() => {
               if (bannerWallpaper) {
                 setCropperImageSrc(bannerWallpaper);
@@ -967,9 +987,9 @@ export default function HomeScreen({ appTheme, setAppTheme, onOpenNote, onNaviga
                 ) : null}
 
                 <div className="flex-1 min-w-0">
-                  <p className={`text-[11px] sm:text-xs font-bold tracking-wider uppercase mb-1 ${bannerWallpaper ? "text-indigo-100 drop-shadow-sm" : "text-slate-400"}`}>{getGreeting()}</p>
-                  <h2 className={`text-xl sm:text-3xl font-black mb-0.5 sm:mb-1 tracking-tight truncate ${bannerWallpaper ? "text-white drop-shadow-sm" : "text-slate-100"}`}>{t('focusToday')}</h2>
-                  <p className={`text-xs sm:text-sm font-medium mt-1 sm:mt-2 flex items-center gap-1.5 sm:gap-2 ${bannerWallpaper ? "text-indigo-50" : "text-slate-400"}`}>
+                  <p className={`text-[11px] sm:text-xs font-bold tracking-wider uppercase mb-1 ${bannerWallpaper ? "text-indigo-100 drop-shadow-sm" : palette.subText}`}>{getGreeting()}</p>
+                  <h2 className={`text-xl sm:text-3xl font-black mb-0.5 sm:mb-1 tracking-tight truncate ${bannerWallpaper ? "text-white drop-shadow-sm" : palette.titleText}`}>{t('focusToday')}</h2>
+                  <p className={`text-xs sm:text-sm font-medium mt-1 sm:mt-2 flex items-center gap-1.5 sm:gap-2 ${bannerWallpaper ? "text-indigo-50" : palette.subText}`}>
                     <span className="w-2.5 h-2.5 rounded-full bg-yellow-300 shadow-[0_0_8px_rgba(253,224,71,0.8)]"></span>
                     <span className="truncate">{activeTasksCount} {t('remainingTask')}</span>
                   </p>
@@ -979,12 +999,16 @@ export default function HomeScreen({ appTheme, setAppTheme, onOpenNote, onNaviga
               {/* Streak Badge */}
               <div 
                 onClick={() => setShowStreakSplash(true)}
-                className={`flex-none flex flex-col items-center justify-center rounded-2xl px-3 py-2 sm:px-5 sm:py-4 cursor-pointer transition-all hover:scale-105 shadow-sm ${bannerWallpaper ? "bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20" : "bg-slate-800 border border-slate-700"}`} 
+                className={`flex-none flex flex-col items-center justify-center rounded-2xl px-3 py-2 sm:px-5 sm:py-4 cursor-pointer transition-all hover:scale-105 shadow-sm ${
+                  bannerWallpaper 
+                    ? "bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20" 
+                    : `${palette.streakCard} ${palette.streakBorder} border`
+                }`} 
                 title={completedCount === 0 ? (lang === 'id' ? '0 hari (Padam - belum ada tugas selesai hari ini)' : '0 days (Extinguished - no tasks finished today)') : `${frontStreak} hari berturut-turut!`}
               >
                 <Flame className={`w-5 h-5 sm:w-6 sm:h-6 drop-shadow-sm mb-1 ${completedCount === 0 ? 'text-slate-500 fill-slate-500/50' : 'text-orange-400 fill-orange-400'}`} />
-                <span className={`text-lg sm:text-xl font-black leading-none mb-0.5 sm:mb-1 ${bannerWallpaper ? "text-white" : (completedCount === 0 ? "text-slate-400" : "text-slate-100")}`}>{frontStreak}</span>
-                <span className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest ${bannerWallpaper ? "text-indigo-100 opacity-90" : "text-slate-500"}`}>
+                <span className={`text-lg sm:text-xl font-black leading-none mb-0.5 sm:mb-1 ${bannerWallpaper ? "text-white" : (completedCount === 0 ? palette.subText : palette.titleText)}`}>{frontStreak}</span>
+                <span className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest ${bannerWallpaper ? "text-indigo-100 opacity-90" : palette.subText}`}>
                   {completedCount === 0 ? (lang === 'id' ? 'Padam' : 'Extinguished') : 'Streak'}
                 </span>
               </div>
@@ -992,15 +1016,15 @@ export default function HomeScreen({ appTheme, setAppTheme, onOpenNote, onNaviga
             
             <div className="relative z-10 w-full">
               <div className="flex justify-between items-end mb-3">
-                <span className={`text-[10px] font-bold uppercase tracking-widest ${bannerWallpaper ? "text-indigo-100" : "text-slate-400"}`}>Progress</span>
-                <span className={`text-xs font-black ${bannerWallpaper ? "text-white" : "text-slate-200"}`}>{progressPercent}%</span>
+                <span className={`text-[10px] font-bold uppercase tracking-widest ${bannerWallpaper ? "text-indigo-100" : palette.subText}`}>Progress</span>
+                <span className={`text-xs font-black ${bannerWallpaper ? "text-white" : palette.titleText}`}>{progressPercent}%</span>
               </div>
-              <div className={`h-2.5 w-full rounded-full overflow-hidden shadow-inner ${bannerWallpaper ? "bg-black/20" : "bg-slate-950"}`}>
+              <div className={`h-2.5 w-full rounded-full overflow-hidden shadow-inner ${bannerWallpaper ? "bg-black/20" : palette.progressBarTrack}`}>
                 <motion.div 
                   initial={{ width: 0 }}
                   animate={{ width: `${progressPercent}%` }}
                   transition={{ type: 'spring', stiffness: 100, damping: 15, mass: 1, delay: 0.1 }}
-                  className={`h-full rounded-full ${bannerWallpaper ? "bg-white" : "bg-indigo-500"}`} 
+                  className={`h-full rounded-full ${bannerWallpaper ? "bg-white" : palette.progressBarFill}`} 
                   id="tata-lite-progress"
                 />
               </div>

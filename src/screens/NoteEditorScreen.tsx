@@ -1484,8 +1484,8 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
                 onClick={() => applyBasicFormat('bold')}
                 className={`px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 transition-all cursor-pointer ${
                   activeFormats.bold 
-                    ? isOrganic ? `${palette.brandBg} shadow-md` : 'bg-indigo-600 text-white shadow-md border border-indigo-400' 
-                    : isOrganic ? `${palette.chipInactive} ${palette.subText} hover:${palette.titleText}` : 'bg-slate-800 text-slate-300 hover:bg-slate-750 hover:text-white'
+                    ? `${palette.brandBg} shadow-md` 
+                    : `${palette.chipInactive} ${palette.subText} hover:${palette.titleText}`
                 }`}
                 title={lang === 'id' ? 'Tebal (Bold)' : 'Bold'}
               >
@@ -1499,8 +1499,8 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
                 onClick={() => applyBasicFormat('italic')}
                 className={`px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-all cursor-pointer ${
                   activeFormats.italic 
-                    ? isOrganic ? `${palette.brandBg} shadow-md` : 'bg-indigo-600 text-white shadow-md border border-indigo-400' 
-                    : isOrganic ? `${palette.chipInactive} ${palette.subText} hover:${palette.titleText}` : 'bg-slate-800 text-slate-300 hover:bg-slate-750 hover:text-white'
+                    ? `${palette.brandBg} shadow-md` 
+                    : `${palette.chipInactive} ${palette.subText} hover:${palette.titleText}`
                 }`}
                 title={lang === 'id' ? 'Miring (Italic)' : 'Italic'}
               >
@@ -1514,8 +1514,8 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
                 onClick={() => applyBasicFormat('underline')}
                 className={`px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-all cursor-pointer ${
                   activeFormats.underline 
-                    ? isOrganic ? `${palette.brandBg} shadow-md` : 'bg-indigo-600 text-white shadow-md border border-indigo-400' 
-                    : isOrganic ? `${palette.chipInactive} ${palette.subText} hover:${palette.titleText}` : 'bg-slate-800 text-slate-300 hover:bg-slate-750 hover:text-white'
+                    ? `${palette.brandBg} shadow-md` 
+                    : `${palette.chipInactive} ${palette.subText} hover:${palette.titleText}`
                 }`}
                 title={lang === 'id' ? 'Garis Bawah (Underline)' : 'Underline'}
               >
@@ -1529,8 +1529,8 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
                 onClick={() => applyBasicFormat('strikeThrough')}
                 className={`px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-all cursor-pointer ${
                   activeFormats.strikeThrough 
-                    ? isOrganic ? `${palette.brandBg} shadow-md` : 'bg-indigo-600 text-white shadow-md border border-indigo-400' 
-                    : isOrganic ? `${palette.chipInactive} ${palette.subText} hover:${palette.titleText}` : 'bg-slate-800 text-slate-300 hover:bg-slate-750 hover:text-white'
+                    ? `${palette.brandBg} shadow-md` 
+                    : `${palette.chipInactive} ${palette.subText} hover:${palette.titleText}`
                 }`}
                 title={lang === 'id' ? 'Coretan (Strikethrough)' : 'Strikethrough'}
               >
@@ -1676,7 +1676,7 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
               onTouchEnd={handleEditorTouchEnd}
               onSelect={handleEditorSelect}
               className={`w-full flex-grow text-sm leading-relaxed bg-transparent border-none outline-none overflow-y-auto overflow-x-hidden note-editor-area break-words font-normal ${
-                isOrganic ? (palette.rootText || 'text-slate-100') : 'text-slate-200'
+                palette.rootText || (palette.isDark ? 'text-slate-100' : 'text-slate-900')
               }`}
               style={{ minHeight: "200px" }}
               data-placeholder={t('notePlaceholder') || (lang === 'id' ? "Mulai menulis isi catatan di sini..." : "Start typing note content here...")}
@@ -1684,7 +1684,7 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
 
             {/* Word & Char Counter */}
             <div className={`flex items-center justify-start px-1 pt-3 mt-2 border-t text-[11px] font-semibold ${
-              isOrganic ? `${palette.streakBorder} ${palette.subText}` : 'border-slate-800/60 text-slate-400'
+              `${palette.streakBorder} ${palette.subText}`
             }`}>
               <div className="flex items-center gap-2 sm:gap-3">
                 <span>{stats.words} {lang === 'id' ? 'kata' : 'words'}</span>
@@ -1698,7 +1698,7 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
 
       {/* Editor Toolbar & Status */}
       <div className={`p-3 sm:p-4 shrink-0 border-t transition-colors ${
-        isOrganic ? `${palette.headerBg} ${palette.headerBorder}` : 'bg-slate-900 border-slate-800'
+        `${palette.headerBg} ${palette.headerBorder}`
       }`}>
         <div className="flex flex-wrap items-center justify-between gap-2.5">
           {/* Media & Tools Group */}
@@ -1708,17 +1708,13 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
               type="button"
               onClick={() => setShowAttachmentMenu(true)}
               onMouseDown={(e) => e.preventDefault()}
-              className={`px-3 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 border text-xs font-bold active:scale-95 shadow-xs ${
-                isOrganic 
-                  ? `${palette.streakCard} ${palette.streakBorder} ${palette.titleText} hover:opacity-90` 
-                  : 'bg-slate-800/90 hover:bg-slate-750 text-slate-200 hover:text-white border-slate-700/70 hover:border-indigo-500/40'
-              }`}
+              className={`px-3 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 border text-xs font-bold active:scale-95 shadow-xs ${palette.streakCard} ${palette.streakBorder} ${palette.titleText} hover:opacity-90`}
               title={lang === 'id' ? 'Foto & Kamera' : 'Photo & Camera'}
             >
               {is3D ? (
                 <Icon3DCamera size={18} />
               ) : (
-                <Camera size={15} className={isOrganic ? palette.brandText : "text-indigo-400"} />
+                <Camera size={15} className={palette.brandText} />
               )}
               <span>{lang === 'id' ? 'Foto & Kamera' : 'Photo & Camera'}</span>
             </button>
@@ -2162,10 +2158,10 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
       {!isNoteUnlocked && (
         <div className="fixed inset-0 z-[200] bg-slate-950/95 backdrop-blur-xl flex items-center justify-center p-4">
           <div className={`border p-6 sm:p-8 rounded-3xl w-full max-w-sm flex flex-col items-center text-center shadow-2xl animate-in zoom-in-95 duration-150 ${
-            isOrganic ? `${palette.cardHero} ${palette.cardHeroBorder} ${palette.titleText}` : 'bg-slate-900 border-slate-800 text-slate-100'
+            `${palette.cardHero} ${palette.cardHeroBorder} ${palette.titleText}`
           }`}>
             <div className={`w-14 h-14 rounded-2xl border flex items-center justify-center mb-4 shadow-lg ${
-              isOrganic ? `${palette.streakCard} ${palette.streakBorder} ${palette.titleText}` : 'bg-amber-500/10 border-amber-500/20 text-amber-400'
+              `${palette.streakCard} ${palette.streakBorder} ${palette.titleText}`
             }`}>
               {is3D ? <Icon3DLock size={32} /> : <Lock size={28} />}
             </div>

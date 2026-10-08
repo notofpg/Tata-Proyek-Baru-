@@ -26,7 +26,7 @@ class BackgroundTimerService {
             if (!timerId) {
               timerId = setInterval(() => {
                 self.postMessage('tick');
-              }, 12000); // Tick every 12 seconds
+              }, 20000); // Clean 20s cadence for battery and CPU efficiency
             }
           } else if (e.data === 'stop') {
             if (timerId) {
@@ -95,12 +95,11 @@ class BackgroundTimerService {
     this.isRunning = true;
     if (this.worker) {
       this.worker.postMessage('start');
-    }
-    // Also maintain a window interval as fallback
-    if (!this.fallbackInterval && typeof window !== 'undefined') {
+    } else if (!this.fallbackInterval && typeof window !== 'undefined') {
+      // Fallback only if Web Worker is not available
       this.fallbackInterval = window.setInterval(() => {
         this.triggerTicks();
-      }, 15000);
+      }, 20000);
     }
   }
 

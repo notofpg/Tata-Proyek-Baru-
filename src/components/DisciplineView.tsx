@@ -503,7 +503,7 @@ export const DisciplineView = React.memo<DisciplineViewProps>(({
             <div className={`h-2.5 w-full rounded-full overflow-hidden flex border ${palette.progressBarTrack} ${palette.disciplineInnerBorder}`}>
               <div 
                 style={{ width: `${Math.min(100, Math.max(0, (daysDone / (totalTargetDays || 1)) * 100))}%` }} 
-                className={`h-full transition-all duration-500 ${isOrganic ? palette.progressBarFill : 'bg-emerald-500'}`} 
+                className={`h-full transition-all duration-500 ${palette.progressBarFill}`} 
               />
               <div 
                 style={{ width: `${Math.min(100, Math.max(0, (daysMissed / (totalTargetDays || 1)) * 100))}%` }} 

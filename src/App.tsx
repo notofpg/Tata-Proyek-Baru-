@@ -846,13 +846,11 @@ export default function App() {
     }; // End of checkNotifications
 
     checkNotifications();
-    // Subscribe to Background Worker timer so ticks persist when app is minimized
+    // Subscribe to Background Worker timer so ticks persist when app is minimized without duplicate timers
     const unsubscribeBgTimer = backgroundTimer.subscribe(checkNotifications);
-    const interval = setInterval(checkNotifications, 20000);
     
     return () => {
       unsubscribeBgTimer();
-      clearInterval(interval);
     };
   }, [reminderActive, reminderTime, tasks, notes, t, lang]);
 
@@ -967,7 +965,7 @@ export default function App() {
 
   if (!hasCompletedOnboarding) {
     return (
-      <div className={`w-full h-[100dvh] flex flex-col md:flex-row ${getThemeClass()} text-slate-200 font-sans relative overflow-hidden`}>
+      <div className={`w-full h-[100dvh] flex flex-col md:flex-row ${getThemeClass()} font-sans relative overflow-hidden`}>
         {renderAppBackground()}
         {(activeTheme === 'cool' || activeTheme === 'cute') && (
           <div className="absolute inset-0 bg-slate-950/40 z-0 pointer-events-none" />
@@ -984,7 +982,7 @@ export default function App() {
 
   if (isLocked) {
     return (
-      <div className={`w-full h-[100dvh] flex flex-col md:flex-row ${getThemeClass()} text-slate-200 font-sans relative overflow-hidden`}>
+      <div className={`w-full h-[100dvh] flex flex-col md:flex-row ${getThemeClass()} font-sans relative overflow-hidden`}>
         {renderAppBackground()}
         {(activeTheme === 'cool' || activeTheme === 'cute') && (
           <div className="absolute inset-0 bg-slate-950/40 z-0 pointer-events-none" />
@@ -999,8 +997,10 @@ export default function App() {
     );
   }
 
+  const appPalette = getOrganicThemePalette(activeTheme);
+
   return (
-    <div className={`w-full h-[100dvh] flex flex-col md:flex-row ${getThemeClass()} text-slate-200 font-sans relative overflow-hidden`}>
+    <div className={`w-full h-[100dvh] flex flex-col md:flex-row ${getThemeClass()} font-sans relative overflow-hidden`}>
       {renderAppBackground()}
       {(activeTheme === 'cool' || activeTheme === 'cute') && (
         <div className="absolute inset-0 bg-slate-950/40 z-0 pointer-events-none" />
@@ -1010,9 +1010,9 @@ export default function App() {
       {inAppAlarm && inAppAlarm.isAlarm && (
         <div className="fixed inset-0 z-[999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-6 animate-in fade-in duration-300">
            <div className={`border rounded-3xl p-6 sm:p-8 max-w-sm w-full flex flex-col items-center text-center shadow-2xl transition-all ${
-             isOrganic
-               ? 'bg-[#FCF9F2] border-amber-900/10 text-[#24170D]'
-               : 'bg-slate-900 border-slate-800 text-slate-100'
+             appPalette.isDark
+               ? 'bg-slate-900 border-slate-800 text-slate-100'
+               : 'bg-[#FCF9F2] border-amber-900/15 text-[#24170D]'
            }`}>
              {/* 3D Bell Ripple */}
              <div className="relative mb-5 flex items-center justify-center">
@@ -1024,12 +1024,12 @@ export default function App() {
 
              <div className="mb-6 space-y-1.5">
                <h3 className={`text-xl sm:text-2xl font-black tracking-tight ${
-                 isOrganic ? 'text-[#24170D]' : 'text-slate-50'
+                 appPalette.isDark ? 'text-slate-50' : 'text-[#24170D]'
                }`}>
                  {inAppAlarm.title}
                </h3>
                <p className={`text-xs sm:text-sm font-medium leading-relaxed ${
-                 isOrganic ? 'text-[#6B5E52]' : 'text-slate-400'
+                 appPalette.isDark ? 'text-slate-400' : 'text-[#6B5E52]'
                }`}>
                  {inAppAlarm.body}
                </p>
@@ -1083,7 +1083,7 @@ export default function App() {
                    stopGlobalAudio(); 
                  }} 
                  className={`w-full py-2 font-semibold text-xs transition-colors cursor-pointer ${
-                   isOrganic ? 'text-stone-500 hover:text-stone-800' : 'text-slate-400 hover:text-slate-200'
+                   appPalette.isDark ? 'text-slate-400 hover:text-slate-200' : 'text-stone-500 hover:text-stone-800'
                  }`}
                >
                  {lang === 'id' ? 'Matikan Alarm' : 'Dismiss Alarm'}
@@ -1104,7 +1104,7 @@ export default function App() {
               if (targetNote) openNote(targetNote);
             }
           }}
-          className={`fixed top-4 left-1/2 -translate-x-1/2 z-[990] max-w-sm w-[92%] sm:w-full bg-slate-900/95 backdrop-blur-md border border-slate-800 shadow-2xl rounded-2xl p-3.5 flex items-start gap-3.5 animate-in slide-in-from-top-4 fade-in duration-300 ${inAppAlarm.noteId ? 'cursor-pointer hover:border-slate-700' : ''}`}
+          className={`fixed top-4 left-1/2 -translate-x-1/2 z-[990] max-w-sm w-[92%] sm:w-full ${appPalette.isDark ? 'bg-slate-900/95 border-slate-800 text-slate-100' : 'bg-[#FCF9F2]/95 border-amber-900/15 text-[#24170D]'} backdrop-blur-md border shadow-2xl rounded-2xl p-3.5 flex items-start gap-3.5 animate-in slide-in-from-top-4 fade-in duration-300 ${inAppAlarm.noteId ? 'cursor-pointer hover:border-slate-700' : ''}`}
         >
            <Icon3DBell size={24} className="shrink-0 mt-0.5" />
            <div className="flex-1 min-w-0">
@@ -1257,23 +1257,14 @@ export default function App() {
         onTouchEnd={handleMainTouchEnd}
         className="flex-1 relative flex flex-col overflow-hidden w-full max-w-[1920px] mx-auto"
       >
-        <AnimatePresence mode="popLayout" initial={false}>
+        <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={currentScreen}
-            initial={{
-              opacity: 0,
-              scale: 0.995,
-            }}
-            animate={{
-              opacity: 1,
-              scale: 1,
-            }}
-            exit={{
-              opacity: 0,
-              scale: 0.995,
-            }}
-            transition={{ duration: 0.09, ease: 'easeOut' }}
-            className="w-full h-full flex flex-col flex-1 relative transform-gpu will-change-transform"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.06, ease: 'easeOut' }}
+            className="w-full h-full flex flex-col flex-1 relative"
           >
             {currentScreen === 'home' && (
               <HomeScreen 
@@ -1357,7 +1348,7 @@ export default function App() {
                 }}
               />
             )}
-            {currentScreen === 'games-hub' && <GamesHubScreen onSelectGame={(g) => setCurrentScreen(g)} onBack={() => setCurrentScreen('home')} />}
+            {currentScreen === 'games-hub' && <GamesHubScreen appTheme={activeTheme} onSelectGame={(g) => setCurrentScreen(g)} onBack={() => setCurrentScreen('home')} />}
             {currentScreen === 'game' && <GameScreen onBack={() => setCurrentScreen('games-hub')} />}
             {currentScreen === 'tictactoe' && <TicTacToeScreen onBack={() => setCurrentScreen('games-hub')} />}
             {currentScreen === 'puzzle' && <PuzzleScreen onBack={() => setCurrentScreen('games-hub')} />}
@@ -1647,19 +1638,27 @@ function NavItem({
     );
   }
 
+  const isLightTheme = activeTheme === 'light' || activeTheme === 'cute' || activeTheme === 'pink' || !getOrganicThemePalette(activeTheme).isDark;
+
   return (
     <button 
       onClick={onClick}
       className={`relative flex items-center group transition-all duration-150 active:scale-95 cursor-pointer rounded-2xl flex-1 md:w-full md:flex-none md:px-5 md:py-3.5 md:justify-start flex-col md:flex-row justify-center min-h-[54px] md:min-h-0 md:min-w-0 md:mb-1 py-1.5 px-0.5 ${
-        active ? 'text-indigo-400 bg-transparent md:bg-indigo-500/10 md:text-indigo-400 md:shadow-inner md:border md:border-indigo-500/20' : 'text-slate-400 hover:text-indigo-300 md:hover:bg-slate-800/40 md:border md:border-transparent'
+        isLightTheme
+          ? active
+            ? 'text-indigo-600 bg-indigo-50/80 md:bg-indigo-50 md:text-indigo-600 md:shadow-inner md:border md:border-indigo-200'
+            : 'text-slate-600 hover:text-indigo-600 md:hover:bg-slate-100 md:border md:border-transparent'
+          : active
+          ? 'text-indigo-400 bg-transparent md:bg-indigo-500/10 md:text-indigo-400 md:shadow-inner md:border md:border-indigo-500/20'
+          : 'text-slate-400 hover:text-indigo-300 md:hover:bg-slate-800/40 md:border md:border-transparent'
       }`}
     >
-      <div className={`md:hidden absolute top-1 left-1/2 -translate-x-1/2 w-8 h-1 bg-indigo-500 rounded-b-full opacity-0 transition-all ${active ? '!opacity-100 top-0' : ''}`}></div>
-      <div className={`[&>svg]:w-[22px] [&>svg]:h-[22px] md:[&>svg]:w-[24px] md:[&>svg]:h-[24px] [&>svg]:stroke-[2] transition-colors md:mr-4 ${active ? '[&>svg]:stroke-indigo-400 drop-shadow-sm' : ''}`}>
+      <div className={`md:hidden absolute top-1 left-1/2 -translate-x-1/2 w-8 h-1 ${isLightTheme ? 'bg-indigo-600' : 'bg-indigo-500'} rounded-b-full opacity-0 transition-all ${active ? '!opacity-100 top-0' : ''}`}></div>
+      <div className={`[&>svg]:w-[22px] [&>svg]:h-[22px] md:[&>svg]:w-[24px] md:[&>svg]:h-[24px] [&>svg]:stroke-[2] transition-colors md:mr-4 ${active ? (isLightTheme ? '[&>svg]:stroke-indigo-600 drop-shadow-sm' : '[&>svg]:stroke-indigo-400 drop-shadow-sm') : ''}`}>
         {icon}
       </div>
       <span className={`text-[9px] xs:text-[10px] md:text-sm font-bold uppercase md:tracking-wide md:normal-case mt-1 md:mt-0 transition-opacity truncate max-w-full px-1 ${active ? 'opacity-100' : 'opacity-80'}`}>{label}</span>
-      {active && <div className="hidden md:block absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-8 bg-indigo-500 rounded-r-full shadow-[0_0_8px_rgba(99,102,241,0.6)]"></div>}
+      {active && <div className={`hidden md:block absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-8 ${isLightTheme ? 'bg-indigo-600 shadow-[0_0_8px_rgba(79,70,229,0.4)]' : 'bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.6)]'} rounded-r-full`}></div>}
     </button>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Share2, X, Copy, Check, QrCode, Download, Send, MessageCircle, 
@@ -7,6 +7,7 @@ import {
 import QRCode from 'qrcode';
 import { useAppStore } from '../store';
 import { Icon3DShare } from './home/Organic3DIcons';
+import { getOrganicThemePalette } from './home/organicThemePalettes';
 
 interface InviteFriendsModalProps {
   isOpen: boolean;
@@ -22,7 +23,13 @@ export default function InviteFriendsModal({
   appTheme,
 }: InviteFriendsModalProps) {
   const { appVersion } = useAppStore();
-  const isOrganic = (appTheme || (typeof window !== 'undefined' ? localStorage.getItem('tata_theme') : '')) === 'organic';
+  const palette = useMemo(() => {
+    const effectiveTheme = appTheme || (typeof window !== 'undefined' ? localStorage.getItem('tata_theme') : '') || 'organic';
+    return getOrganicThemePalette(effectiveTheme);
+  }, [appTheme]);
+
+  const isDark = palette.isDark;
+  const isOrganic = !isDark;
 
   // Canonical App URL
   const appUrl = 'https://tatanoto.vercel.app/';
@@ -49,7 +56,7 @@ export default function InviteFriendsModal({
         width: 200,
         margin: 2,
         color: {
-          dark: isOrganic ? '#2C1C10' : '#0f172a',
+          dark: '#0f172a',
           light: '#ffffff'
         },
         errorCorrectionLevel: 'M'
@@ -57,7 +64,7 @@ export default function InviteFriendsModal({
         .then((url) => setQrDataUrl(url))
         .catch((err) => console.error('Error generating QR code:', err));
     }
-  }, [showQrCode, appUrl, qrDataUrl, isOrganic]);
+  }, [showQrCode, appUrl, qrDataUrl]);
 
   if (!isOpen) return null;
 

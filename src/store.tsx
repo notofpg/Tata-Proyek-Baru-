@@ -1827,7 +1827,43 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       console.warn("Storage sync warning during refresh:", e);
     }
 
-    // 2. Real Daily Streak & Discipline Recalculation
+    // 2. Real Cache & System Junk Cleanup (Safe: Preserves all notes, tasks & alarms)
+    try {
+      // 2a. Clean obsolete browser runtime caches (keep alarm cache intact)
+      if (typeof window !== 'undefined' && 'caches' in window) {
+        const cacheNames = await caches.keys();
+        for (const name of cacheNames) {
+          if (!name.includes('alarm')) {
+            await caches.delete(name).catch(() => {});
+          }
+        }
+      }
+
+      // 2b. Clean temporary scratch keys & obsolete migrated keys in localStorage
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const scratchKeys: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (!k) continue;
+          if (k.startsWith('tata_temp_') || k.startsWith('noto_temp_')) {
+            scratchKeys.push(k);
+          }
+          if (k.startsWith('noto_')) {
+            const tataKey = k.replace('noto_', 'tata_');
+            if (localStorage.getItem(tataKey) !== null) {
+              scratchKeys.push(k);
+            }
+          }
+        }
+        scratchKeys.forEach(k => {
+          try { localStorage.removeItem(k); } catch (e) {}
+        });
+      }
+    } catch (e) {
+      console.warn("Cache cleaning notice during refresh:", e);
+    }
+
+    // 3. Real Daily Streak & Discipline Recalculation
     try {
       checkInDaily();
     } catch (e) {}
@@ -1897,8 +1933,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     // 8. Inform user with a crisp, reassuring toast message
     try {
       const msg = lang === 'id' 
-        ? '✨ Tata berhasil disegarkan! Data tersinkron, streak aktif, & sistem mutakhir.'
-        : '✨ Tata refreshed! Data synced, streak active, & system up to date.';
+        ? '✨ Tata berhasil disegarkan! Cache & sampah dibersihkan, data 100% aman tersinkron.'
+        : '✨ Tata refreshed! Cache & junk cleaned, data 100% safely synced.';
       window.dispatchEvent(new CustomEvent('tata_toast_message', { detail: { message: msg } }));
     } catch (e) {}
   };
@@ -2973,7 +3009,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     upgradeTataAccountPremium, restoreTataAccountPremium, redeemPromoCode, activateTataTrial, isAccountPremium,
     isStorageHydrated: isStorageHydrated()
   }), [
-    notes, tasks, transactions, moods, user, searchQuery, appPin, notePin, useScrambledPin, pinHistory, pinRecoveryQuestion, pinRecoveryAnswer, sessionUnlockedNoteIds, lang,
+    notes, tasks, transactions, moods, user, appPin, notePin, useScrambledPin, pinHistory, pinRecoveryQuestion, pinRecoveryAnswer, sessionUnlockedNoteIds, lang,
     hasCompletedOnboarding, isUnlocked, streak,
     journeyStartDate, journeyDay,
     reminderActive, reminderTime, savingsTarget, savingsTargetTitle, savingsBalance, savingsGoals, initialDebt, debts,

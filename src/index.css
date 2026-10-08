@@ -806,6 +806,7 @@
     radial-gradient(#DECBB5 0.75px, #F7F3E9 0.75px);
   background-size: 30px 30px;
   background-position: 0 0, 15px 15px;
+  background-attachment: fixed;
 }
 
 .organic-theme ::selection,

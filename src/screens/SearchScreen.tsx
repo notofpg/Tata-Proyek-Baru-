@@ -367,15 +367,13 @@ export default function SearchScreen({
         onClick={() => handleOpenNoteCard(note)}
         role="button"
         className={`w-full text-left flex flex-col justify-between gap-3 p-4 border rounded-2xl transition-all cursor-pointer group shadow-sm relative overflow-hidden min-w-0 ${
-          isOrganic 
-            ? `${palette.noteCard} ${palette.noteCardBorder} ${palette.noteCardHoverBorder}` 
-            : 'bg-slate-900 border-slate-800 hover:bg-slate-800 hover:border-indigo-500/30 text-slate-200'
-        }`}
+          palette.noteCard
+        } ${palette.noteCardBorder} ${palette.noteCardHoverBorder}`}
       >
         {note.pinned && (
           <div className={`absolute top-0 right-0 w-8 h-8 rounded-bl-xl flex items-center justify-center ${
-            isOrganic ? `${palette.streakCard} border-l border-b ${palette.streakBorder}` : 'bg-orange-500/10 text-orange-400'
-          }`}>
+            palette.streakCard
+          } border-l border-b ${palette.streakBorder} ${palette.isDark ? 'text-amber-400' : 'text-amber-600'}`}>
             {is3D ? <Icon3DPin size={14} /> : <Pin className="w-3.5 h-3.5 fill-current" />}
           </div>
         )}
@@ -585,8 +583,8 @@ export default function SearchScreen({
               type="button"
               onClick={() => setSearchQuery('')}
               className={`absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-lg transition-colors cursor-pointer ${
-                isOrganic ? `${palette.subText} hover:${palette.titleText}` : 'text-slate-400 hover:text-slate-100'
-              }`}
+                palette.subText
+              } hover:${palette.titleText}`}
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -873,18 +871,16 @@ export default function SearchScreen({
                     onNavigate('settings', 'security');
                   }
                 }}
-                className={`w-full py-2.5 font-bold text-xs rounded-xl transition-colors cursor-pointer ${
-                  isOrganic ? `${palette.brandBg}` : 'bg-indigo-600 hover:bg-indigo-500 text-white'
-                }`}
+                className={`w-full py-2.5 font-bold text-xs rounded-xl transition-colors cursor-pointer ${palette.actionBtn}`}
               >
                 {lang === 'id' ? 'Atur PIN Sekarang' : 'Set Up PIN Now'}
               </button>
               <button
                 onClick={() => setShowSetupPinModal(false)}
                 className={`w-full py-2 font-bold text-xs rounded-xl transition-colors cursor-pointer ${
-                  isOrganic 
-                    ? `${palette.actionBtn}` 
-                    : 'bg-slate-800 hover:bg-slate-750 text-slate-400'
+                  palette.isDark 
+                    ? 'bg-slate-800 hover:bg-slate-750 text-slate-400' 
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
                 }`}
               >
                 {lang === 'id' ? 'Batal' : 'Cancel'}

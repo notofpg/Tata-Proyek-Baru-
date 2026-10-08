@@ -65,7 +65,7 @@ interface OrganicHomeProps {
   showQuoteCard?: boolean;
 }
 
-export function OrganicHomeView({
+export const OrganicHomeView = React.memo(function OrganicHomeView({
   appTheme,
   onOpenNote,
   onNavigate,
@@ -118,7 +118,8 @@ export function OrganicHomeView({
   const handleUpdateSearch = (q: string) => {
     setLocalSearchQuery(q);
     if (setSearchQuery) {
-      setSearchQuery(q);
+      // Debounce or avoid blocking the UI thread on keystrokes
+      setTimeout(() => setSearchQuery(q), 0);
     }
   };
 
@@ -148,11 +149,17 @@ export function OrganicHomeView({
     return () => window.removeEventListener('tata_banner_wallpaper_changed', handleBannerWallpaperChange);
   }, []);
 
-  // Dynamic Notifications calculation with real-time detection
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  // Dynamic Notifications calculation with real-time detection & single-pass memoization
+  const [notifTrigger, setNotifTrigger] = useState(0);
 
-  const refreshNotifs = useCallback(() => {
-    const list = buildAllNotifications({
+  useEffect(() => {
+    const handleNotifChanged = () => setNotifTrigger(prev => prev + 1);
+    window.addEventListener('tata_notifications_changed', handleNotifChanged);
+    return () => window.removeEventListener('tata_notifications_changed', handleNotifChanged);
+  }, []);
+
+  const notifications = useMemo(() => {
+    return buildAllNotifications({
       notes,
       tasks,
       transactions,
@@ -165,15 +172,7 @@ export function OrganicHomeView({
       savingsTarget,
       moods
     });
-    setNotifications(list);
-  }, [notes, tasks, transactions, debts, lang, streak, tataAccount, isAccountPremium, savingsBalance, savingsTarget, moods]);
-
-  useEffect(() => {
-    refreshNotifs();
-    const handleNotifChanged = () => refreshNotifs();
-    window.addEventListener('tata_notifications_changed', handleNotifChanged);
-    return () => window.removeEventListener('tata_notifications_changed', handleNotifChanged);
-  }, [refreshNotifs]);
+  }, [notes, tasks, transactions, debts, lang, streak, tataAccount, isAccountPremium, savingsBalance, savingsTarget, moods, notifTrigger]);
 
   // Dynamic Theme Palette: ensures cool (blue), dark, pink, cute, simple, light, and organic
   // apply cohesive container and card colors matching the user's selected theme
@@ -249,12 +248,21 @@ export function OrganicHomeView({
     return tasks.filter(t => !t.deleted && !t.isDiscipline);
   }, [tasks]);
 
-  const completedRegularCount = regularTasks.filter(t => t.completed).length;
-  const completedCount = completedRegularCount + (isDisciplineCheckedInToday ? 1 : 0);
-  const totalCount = regularTasks.length + (disciplineTask ? 1 : 0);
-  const progressPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+  const { completedRegularCount, completedCount, totalCount, progressPercent, frontStreak } = useMemo(() => {
+    const compReg = regularTasks.filter(t => t.completed).length;
+    const comp = compReg + (isDisciplineCheckedInToday ? 1 : 0);
+    const tot = regularTasks.length + (disciplineTask ? 1 : 0);
+    const prog = tot > 0 ? Math.round((comp / tot) * 100) : 0;
+    const front = comp === 0 ? 0 : Math.max(1, streak);
+    return {
+      completedRegularCount: compReg,
+      completedCount: comp,
+      totalCount: tot,
+      progressPercent: prog,
+      frontStreak: front
+    };
+  }, [regularTasks, isDisciplineCheckedInToday, disciplineTask, streak]);
   const organicDay = journeyDay || 1;
-  const frontStreak = completedCount === 0 ? 0 : Math.max(1, streak);
 
   // 3. Pinned Tasks & Pinned Notes (Top Priority)
   const pinnedTasks = useMemo(() => {
@@ -1226,45 +1234,49 @@ export function OrganicHomeView({
       </div>
 
       {/* Notifications Modal */}
-      <NotificationModal
-        isOpen={isNotificationOpen}
-        onClose={() => setIsNotificationOpen(false)}
-        appTheme={appTheme}
-        onOpenNote={(noteId: string) => {
-          const found = notes.find(n => n.id === noteId);
-          if (found) {
-            onOpenNote(found);
-          } else {
-            onOpenNote({
-              id: noteId,
-              title: '',
-              content: '',
-              date: new Date().toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' }),
-              tags: []
-            });
-          }
-        }}
-        onNavigate={onNavigate}
-      />
+      {isNotificationOpen && (
+        <NotificationModal
+          isOpen={isNotificationOpen}
+          onClose={() => setIsNotificationOpen(false)}
+          appTheme={appTheme}
+          onOpenNote={(noteId: string) => {
+            const found = notes.find(n => n.id === noteId);
+            if (found) {
+              onOpenNote(found);
+            } else {
+              onOpenNote({
+                id: noteId,
+                title: '',
+                content: '',
+                date: new Date().toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' }),
+                tags: []
+              });
+            }
+          }}
+          onNavigate={onNavigate}
+        />
+      )}
 
       {/* Cute Interactive Streak Flame & 365-Day Ecosystem Modal */}
-      <OrganicStreakModal
-        isOpen={isStreakModalOpen}
-        onClose={() => setIsStreakModalOpen(false)}
-        streak={streak}
-        journeyDay={organicDay}
-        journeyStartDate={journeyStartDate}
-        hasCompletedTaskToday={completedCount > 0}
-        lang={lang}
-        palette={palette}
-        appTheme={appTheme}
-        onNavigateTasks={() => {
-          setIsStreakModalOpen(false);
-          onNavigate('tasks');
-        }}
-      />
+      {isStreakModalOpen && (
+        <OrganicStreakModal
+          isOpen={isStreakModalOpen}
+          onClose={() => setIsStreakModalOpen(false)}
+          streak={streak}
+          journeyDay={organicDay}
+          journeyStartDate={journeyStartDate}
+          hasCompletedTaskToday={completedCount > 0}
+          lang={lang}
+          palette={palette}
+          appTheme={appTheme}
+          onNavigateTasks={() => {
+            setIsStreakModalOpen(false);
+            onNavigate('tasks');
+          }}
+        />
+      )}
 
     </div>
   );
-}
+});
 

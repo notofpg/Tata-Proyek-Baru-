@@ -59,7 +59,7 @@ const MOOD_ASSETS: Record<
  * 3D character mascots for Organic Mode mood tracking.
  * Rendered with high-detail claymorphic 3D styling and smooth interactive feedback.
  */
-export function Organic3DMoodAvatar({
+export const Organic3DMoodAvatar = React.memo(function Organic3DMoodAvatar({
   mood,
   size = 54,
   isSelected = false,
@@ -80,9 +80,11 @@ export function Organic3DMoodAvatar({
         src={asset.src}
         alt={asset.alt}
         referrerPolicy="no-referrer"
+        loading="lazy"
+        decoding="async"
         className="w-full h-full object-cover select-none pointer-events-none transition-transform duration-300"
       />
     </div>
   );
-}
+});
 

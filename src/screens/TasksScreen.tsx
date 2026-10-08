@@ -694,7 +694,7 @@ export default function TasksScreen({ appTheme, onNavigate, extra }: { appTheme?
                 <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
                   activeTab === 'Sekarang' 
                     ? 'bg-white/20 text-white' 
-                    : isOrganic ? `${organicPalette.streakCard} ${organicPalette.brandText}` : 'bg-slate-800 text-slate-400'
+                    : `${organicPalette.streakCard} ${organicPalette.brandText}`
                 }`}>
                   {activeNowTasksCount}
                 </span>
@@ -719,12 +719,12 @@ export default function TasksScreen({ appTheme, onNavigate, extra }: { appTheme?
                 <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
                   activeTab === 'Harian' 
                     ? 'bg-white/20 text-white' 
-                    : isOrganic ? `${organicPalette.streakCard} ${organicPalette.brandText}` : 'bg-slate-800 text-slate-400'
+                    : `${organicPalette.streakCard} ${organicPalette.brandText}`
                 }`}>
                   {dailyPendingTasks.length}
                 </span>
               ) : allDailyTasks.length > 0 ? (
-                <Check className={`w-3 h-3 ${isOrganic ? 'text-emerald-600' : 'text-emerald-400'}`} />
+                <Check className={`w-3 h-3 ${organicPalette.isDark ? 'text-emerald-400' : 'text-emerald-600'}`} />
               ) : null}
             </button>
 
@@ -902,7 +902,7 @@ export default function TasksScreen({ appTheme, onNavigate, extra }: { appTheme?
                   }`}
                 >
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className={`w-3.5 h-3.5 ${isOrganic ? 'text-emerald-600' : 'text-emerald-400'}`} />
+                    <CheckCircle2 className={`w-3.5 h-3.5 ${organicPalette.isDark ? 'text-emerald-400' : 'text-emerald-600'}`} />
                     <span>{t('completedTasks') || (lang === 'id' ? 'Selesai' : 'Completed')} ({completedNowTasks.length})</span>
                   </div>
                   {showCompleted ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -1499,7 +1499,7 @@ export default function TasksScreen({ appTheme, onNavigate, extra }: { appTheme?
                       type="date"
                       value={newTaskDate}
                       onChange={e => setNewTaskDate(e.target.value)}
-                      style={{ colorScheme: isOrganic ? (organicPalette.isDark ? 'dark' : 'light') : 'dark' }}
+                      style={{ colorScheme: organicPalette.isDark ? 'dark' : 'light' }}
                       className={`w-full rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none transition-colors cursor-pointer border ${
                         isOrganic 
                           ? `${organicPalette.taskCard} ${organicPalette.streakBorder} ${organicPalette.titleText}` 
@@ -1522,7 +1522,7 @@ export default function TasksScreen({ appTheme, onNavigate, extra }: { appTheme?
                       type="time"
                       value={newTaskAlarm}
                       onChange={e => setNewTaskAlarm(e.target.value)}
-                      style={{ colorScheme: isOrganic ? (organicPalette.isDark ? 'dark' : 'light') : 'dark' }}
+                      style={{ colorScheme: organicPalette.isDark ? 'dark' : 'light' }}
                       className={`w-full rounded-xl pl-3 pr-8 py-2 text-xs font-semibold focus:outline-none transition-colors cursor-pointer border ${
                         isOrganic 
                           ? `${organicPalette.taskCard} ${organicPalette.streakBorder} ${organicPalette.titleText}` 
@@ -1594,7 +1594,7 @@ export default function TasksScreen({ appTheme, onNavigate, extra }: { appTheme?
                       type="date"
                       value={newTaskTargetDate}
                       onChange={e => setNewTaskTargetDate(e.target.value)}
-                      style={{ colorScheme: isOrganic ? (organicPalette.isDark ? 'dark' : 'light') : 'dark' }}
+                      style={{ colorScheme: organicPalette.isDark ? 'dark' : 'light' }}
                       className={`w-full rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none cursor-pointer border ${
                         isOrganic 
                           ? `${organicPalette.taskCard} ${organicPalette.streakBorder} ${organicPalette.titleText}` 
@@ -1885,7 +1885,7 @@ export default function TasksScreen({ appTheme, onNavigate, extra }: { appTheme?
 
             {/* Explanation box */}
             <div className={`p-3.5 rounded-2xl border space-y-2 text-xs ${
-              isOrganic ? `${organicPalette.disciplineInner} ${organicPalette.disciplineInnerBorder}` : 'bg-slate-950/60 border-slate-800'
+              `${organicPalette.disciplineInner} ${organicPalette.disciplineInnerBorder}`
             }`}>
               <div className="text-amber-400 font-semibold flex items-start gap-1.5">
                 <RotateCcw className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
@@ -1974,9 +1974,9 @@ const TaskCard = React.memo<{
   const is3D = isOrganic;
   const t = useTranslation(lang);
 
-  // Daily task statistics
-  let dailyStats: { completed: number; missed: number } | null = null;
-  if (task.repeat === 'daily') {
+  // Daily task statistics - memoized to prevent date-parsing loops on list renders
+  const dailyStats = useMemo(() => {
+    if (task.repeat !== 'daily') return null;
     const today = getLocalIsoDate(new Date());
     const createdDate = parseDateToIso(task.createdAt) || today;
     const start = getLocalDateFromStr(createdDate);
@@ -2011,16 +2011,15 @@ const TaskCard = React.memo<{
       completedDays++;
     }
 
-    dailyStats = { completed: completedDays, missed: missedDays };
-  }
+    return { completed: completedDays, missed: missedDays };
+  }, [task.repeat, task.createdAt, task.completedDates, task.completed]);
 
   return (
     <motion.div
-      layout
       initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      transition={{ duration: 0.12 }}
+      transition={{ duration: 0.08 }}
       className={`px-3 py-2.5 sm:px-4 sm:py-3 flex items-center gap-3 transition-colors group ${
         isOrganic 
           ? task.deleted 
@@ -2047,7 +2046,7 @@ const TaskCard = React.memo<{
               {task.completed ? (
                 <Icon3DCheck size={20} />
               ) : (
-                <div className={`w-5 h-5 rounded-lg border-2 ${isOrganic ? `${palette.streakBorder} ${palette.taskCard} group-hover:border-emerald-500` : 'border-slate-700 bg-slate-900 group-hover:border-cyan-400'} transition-all`} />
+                <div className={`w-5 h-5 rounded-lg border-2 ${palette.streakBorder} ${palette.taskCard} group-hover:border-emerald-500 transition-all`} />
               )}
             </div>
           ) : (
@@ -2077,8 +2076,8 @@ const TaskCard = React.memo<{
       >
         <h4 className={`text-xs sm:text-sm font-semibold leading-tight break-words transition-all ${
           task.completed 
-            ? isOrganic ? `${palette.subText} line-through opacity-70` : 'text-slate-500 line-through' 
-            : isOrganic ? `${palette.titleText} group-hover:opacity-90` : 'text-slate-100 group-hover:text-white'
+            ? `${palette.subText} line-through opacity-70` 
+            : `${palette.titleText} group-hover:opacity-90`
         }`}>
           {task.title}
         </h4>
@@ -2186,7 +2185,7 @@ const TaskCard = React.memo<{
                 ? `${palette.streakCard} ${palette.streakBorder} text-amber-600` 
                 : 'text-amber-400 bg-amber-500/10 border-amber-500/20'
             }`}>
-              <Pin className={`w-2.5 h-2.5 ${isOrganic ? 'fill-amber-600' : 'fill-amber-400'}`} />
+              <Pin className={`w-2.5 h-2.5 ${palette.isDark ? 'fill-amber-400' : 'fill-amber-600'}`} />
             </span>
           )}
         </div>
@@ -2244,7 +2243,7 @@ const TaskCard = React.memo<{
               }`}
               title={lang === 'id' ? 'Sematkan' : 'Pin'}
             >
-              <Pin className={`w-3.5 h-3.5 ${task.pinned ? (isOrganic ? 'fill-amber-600' : 'fill-amber-400') : ''}`} />
+              <Pin className={`w-3.5 h-3.5 ${task.pinned ? (palette.isDark ? 'fill-amber-400' : 'fill-amber-600') : ''}`} />
             </button>
             <button 
               onClick={(e) => { e.stopPropagation(); deleteTask(task.id); }} 

@@ -5,14 +5,14 @@ import React from 'react';
  * Rendered using lightweight scalable vector graphics (SVG) with soft earthy gradients
  * matching the exact visual style in the reference image.
  */
-export function OrganicPottedPlant({ className = "w-28 h-36" }: { className?: string }) {
+export const OrganicPottedPlant = React.memo(function OrganicPottedPlant({ className = "w-28 h-36" }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 160 210"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
-      style={{ filter: 'drop-shadow(0 12px 16px rgba(50, 35, 20, 0.12))' }}
+      
     >
       {/* Background Soft Shadow */}
       <ellipse cx="80" cy="198" rx="42" ry="8" fill="#422E1A" fillOpacity="0.18" />
@@ -178,12 +178,12 @@ export function OrganicPottedPlant({ className = "w-28 h-36" }: { className?: st
       </defs>
     </svg>
   );
-}
+});
 
 /**
  * Organic Growth Tree Emblem for Streak / Progress stats
  */
-export function OrganicGrowthTree({ className = "w-8 h-8" }: { className?: string }) {
+export const OrganicGrowthTree = React.memo(function OrganicGrowthTree({ className = "w-8 h-8" }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 48 48"
@@ -211,20 +211,20 @@ export function OrganicGrowthTree({ className = "w-8 h-8" }: { className?: strin
       <circle cx="27" cy="18" r="2" fill="#88AD85" />
     </svg>
   );
-}
+});
 
 /**
  * Handcrafted Tactile Blooming Rose in Ceramic Pot for Ecy Mawar Theme
  * Featuring layered velvety rose petals, dewdrops, organic foliage, and soft warm rose gradients.
  */
-export function OrganicBloomingRose({ className = "w-28 h-36" }: { className?: string }) {
+export const OrganicBloomingRose = React.memo(function OrganicBloomingRose({ className = "w-28 h-36" }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 170 220"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
-      style={{ filter: 'drop-shadow(0 14px 20px rgba(225, 29, 72, 0.16))' }}
+      
     >
       {/* Ground soft romantic shadow */}
       <ellipse cx="85" cy="208" rx="46" ry="9" fill="#881337" fillOpacity="0.14" />
@@ -441,7 +441,7 @@ export function OrganicBloomingRose({ className = "w-28 h-36" }: { className?: s
         stroke="#FB7185"
         strokeWidth="0.8"
         transform="rotate(15 140 145)"
-        style={{ filter: 'drop-shadow(0 2px 4px rgba(225, 29, 72, 0.2))' }}
+        
       />
       <path
         d="M32 150 C38 146, 42 152, 40 156 C36 160, 30 156, 32 150 Z"
@@ -449,7 +449,7 @@ export function OrganicBloomingRose({ className = "w-28 h-36" }: { className?: s
         stroke="#FB7185"
         strokeWidth="0.8"
         transform="rotate(-25 36 153)"
-        style={{ filter: 'drop-shadow(0 2px 4px rgba(225, 29, 72, 0.2))' }}
+        
       />
 
       {/* Rich Color Gradients */}
@@ -563,20 +563,20 @@ export function OrganicBloomingRose({ className = "w-28 h-36" }: { className?: s
       </defs>
     </svg>
   );
-}
+});
 
 /**
  * Compact Multi-Petal Blooming Flower Blossom
  * Great for badges, buttons, cards, and header decoration in Ecy Rose theme.
  */
-export function OrganicFlowerBlossom({ className = "w-6 h-6", glow = false }: { className?: string; glow?: boolean }) {
+export const OrganicFlowerBlossom = React.memo(function OrganicFlowerBlossom({ className = "w-6 h-6", glow = false }: { className?: string; glow?: boolean }) {
   return (
     <svg
       viewBox="0 0 48 48"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
-      style={glow ? { filter: 'drop-shadow(0 2px 6px rgba(244, 63, 94, 0.4))' } : undefined}
+      
     >
       {/* 5 Layered Blossom Petals */}
       {/* Top Petal */}
@@ -659,20 +659,20 @@ export function OrganicFlowerBlossom({ className = "w-6 h-6", glow = false }: { 
       </defs>
     </svg>
   );
-}
+});
 
 /**
  * Gorgeous Tactile 3D Rose Flower for Floating Action Button (FAB)
  * Custom sculpted with layered blooming petals, pistil glow, and luminous rose gradients.
  */
-export function OrganicFabRoseFlower({ className = "w-11 h-11" }: { className?: string }) {
+export const OrganicFabRoseFlower = React.memo(function OrganicFabRoseFlower({ className = "w-11 h-11" }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 64 64"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
-      style={{ filter: 'drop-shadow(0 3px 6px rgba(190, 18, 60, 0.45))' }}
+      
     >
       {/* Outer Glow Halo */}
       <circle cx="32" cy="32" r="27" fill="url(#fabHaloGlow)" opacity="0.45" />
@@ -819,6 +819,6 @@ export function OrganicFabRoseFlower({ className = "w-11 h-11" }: { className?: 
       </defs>
     </svg>
   );
-}
+});
 
 

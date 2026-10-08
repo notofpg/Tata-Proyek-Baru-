@@ -13,7 +13,7 @@ export interface Icon3DProps {
  */
 
 // 1. TATA AI COMPANION (Playful 3D AI mascot / core with sprout)
-export function Icon3DTataAI({ size = 26, className = '' }: Icon3DProps) {
+export const Icon3DTataAI = React.memo(function Icon3DTataAI({ size = 26, className = '' }: Icon3DProps) {
   return (
     <svg 
       width={size} 
@@ -21,7 +21,7 @@ export function Icon3DTataAI({ size = 26, className = '' }: Icon3DProps) {
       viewBox="0 0 48 48" 
       fill="none" 
       xmlns="http://www.w3.org/2000/svg"
-      className={`shrink-0 drop-shadow-[0_2px_4px_rgba(60,30,10,0.12)] ${className}`}
+      className={`shrink-0 ${className}`}
     >
       <defs>
         <radialGradient id="aiHeadGrad" cx="35%" cy="30%" r="70%">
@@ -66,10 +66,10 @@ export function Icon3DTataAI({ size = 26, className = '' }: Icon3DProps) {
       <path d="M27 5 C29 3, 33 4, 32 7 C31 9, 28 8, 27 5 Z" fill="url(#aiLeafGrad)" />
     </svg>
   );
-}
+});
 
 // 2. KEUANGAN / WALLET (Glossy 3D leather pouch with gold coins - AlloBank style)
-export function Icon3DWallet({ size = 26, className = '' }: Icon3DProps) {
+export const Icon3DWallet = React.memo(function Icon3DWallet({ size = 26, className = '' }: Icon3DProps) {
   return (
     <svg 
       width={size} 
@@ -77,7 +77,7 @@ export function Icon3DWallet({ size = 26, className = '' }: Icon3DProps) {
       viewBox="0 0 48 48" 
       fill="none" 
       xmlns="http://www.w3.org/2000/svg"
-      className={`shrink-0 drop-shadow-[0_2px_4px_rgba(60,30,10,0.12)] ${className}`}
+      className={`shrink-0 ${className}`}
     >
       <defs>
         <linearGradient id="wallCoinGrad" x1="0" y1="0" x2="1" y2="1">
@@ -108,10 +108,10 @@ export function Icon3DWallet({ size = 26, className = '' }: Icon3DProps) {
       <path d="M10 38 L38 38" stroke="#FDE8D7" strokeWidth="1" strokeDasharray="2 2" strokeOpacity="0.6" />
     </svg>
   );
-}
+});
 
 // 3. NOTIFIKASI / CHIME BELL (Glossy 3D Gold Chime Bell)
-export function Icon3DBell({ size = 26, className = '' }: Icon3DProps) {
+export const Icon3DBell = React.memo(function Icon3DBell({ size = 26, className = '' }: Icon3DProps) {
   return (
     <svg 
       width={size} 
@@ -119,7 +119,7 @@ export function Icon3DBell({ size = 26, className = '' }: Icon3DProps) {
       viewBox="0 0 48 48" 
       fill="none" 
       xmlns="http://www.w3.org/2000/svg"
-      className={`shrink-0 drop-shadow-[0_2px_4px_rgba(60,30,10,0.12)] ${className}`}
+      className={`shrink-0 ${className}`}
     >
       <defs>
         <linearGradient id="bellGoldGrad" x1="0" y1="0" x2="1" y2="1">
@@ -147,10 +147,10 @@ export function Icon3DBell({ size = 26, className = '' }: Icon3DProps) {
       <circle cx="35" cy="11" r="1" fill="#FFFFFF" />
     </svg>
   );
-}
+});
 
 // 4. PENCARIAN / SEARCH (3D Magnifying Glass with Glass Gloss)
-export function Icon3DSearch({ size = 20, className = '' }: Icon3DProps) {
+export const Icon3DSearch = React.memo(function Icon3DSearch({ size = 20, className = '' }: Icon3DProps) {
   return (
     <svg 
       width={size} 
@@ -158,7 +158,7 @@ export function Icon3DSearch({ size = 20, className = '' }: Icon3DProps) {
       viewBox="0 0 48 48" 
       fill="none" 
       xmlns="http://www.w3.org/2000/svg"
-      className={`shrink-0 drop-shadow-[0_1px_3px_rgba(60,30,10,0.15)] ${className}`}
+      className={`shrink-0 ${className}`}
     >
       <defs>
         <linearGradient id="searchRimGrad" x1="0" y1="0" x2="1" y2="1">
@@ -183,14 +183,14 @@ export function Icon3DSearch({ size = 20, className = '' }: Icon3DProps) {
       <path d="M13 14 C15 11, 20 10, 23 11" stroke="#FFFFFF" strokeWidth="1.8" strokeLinecap="round" />
     </svg>
   );
-}
+});
 
 // 5. STREAK FLAME (3D Sculpted Fire Flame - High Definition & Tactile)
 export interface Icon3DFlameProps extends Icon3DProps {
   isDelayed?: boolean;
 }
 
-export function Icon3DFlame({ size = 24, className = '', isDelayed = false }: Icon3DFlameProps) {
+export const Icon3DFlame = React.memo(function Icon3DFlame({ size = 24, className = '', isDelayed = false }: Icon3DFlameProps) {
   if (isDelayed) {
     return (
       <svg 
@@ -199,7 +199,7 @@ export function Icon3DFlame({ size = 24, className = '', isDelayed = false }: Ic
         viewBox="0 0 48 48" 
         fill="none" 
         xmlns="http://www.w3.org/2000/svg"
-        className={`shrink-0 drop-shadow-[0_2px_5px_rgba(100,116,139,0.3)] transition-all ${className}`}
+        className={`shrink-0 transition-all ${className}`}
       >
         <defs>
           <radialGradient id="flameDelayedAura" cx="50%" cy="70%" r="50%">
@@ -260,7 +260,7 @@ export function Icon3DFlame({ size = 24, className = '', isDelayed = false }: Ic
       viewBox="0 0 48 48" 
       fill="none" 
       xmlns="http://www.w3.org/2000/svg"
-      className={`shrink-0 drop-shadow-[0_5px_12px_rgba(234,88,12,0.4)] transition-transform hover:scale-105 ${className}`}
+      className={`shrink-0 transition-transform hover:scale-105 ${className}`}
     >
       <defs>
         {/* Soft Ambient Radiance Aura */}
@@ -343,10 +343,10 @@ export function Icon3DFlame({ size = 24, className = '', isDelayed = false }: Ic
       <circle cx="23" cy="27" r="1" fill="#FFFFFF" fillOpacity="0.8" />
     </svg>
   );
-}
+});
 
 // 6. INSPIRASI / IDEA BULB (3D Glowing Idea Bulb)
-export function Icon3DBulbZap({ size = 22, className = '' }: Icon3DProps) {
+export const Icon3DBulbZap = React.memo(function Icon3DBulbZap({ size = 22, className = '' }: Icon3DProps) {
   return (
     <svg 
       width={size} 
@@ -354,7 +354,7 @@ export function Icon3DBulbZap({ size = 22, className = '' }: Icon3DProps) {
       viewBox="0 0 48 48" 
       fill="none" 
       xmlns="http://www.w3.org/2000/svg"
-      className={`shrink-0 drop-shadow-[0_2px_4px_rgba(245,158,11,0.25)] ${className}`}
+      className={`shrink-0 ${className}`}
     >
       <defs>
         <linearGradient id="bulbGlassGrad" x1="0" y1="0" x2="1" y2="1">
@@ -375,10 +375,10 @@ export function Icon3DBulbZap({ size = 22, className = '' }: Icon3DProps) {
       <path d="M21 41 Q24 43 27 41" stroke="#44403C" strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
-}
+});
 
 // 7. NAV: BERANDA (3D Cozy Cottage House)
-export function Icon3DNavHome({ size = 26, active = false, className = '' }: Icon3DProps) {
+export const Icon3DNavHome = React.memo(function Icon3DNavHome({ size = 26, active = false, className = '' }: Icon3DProps) {
   return (
     <svg 
       width={size} 
@@ -386,7 +386,7 @@ export function Icon3DNavHome({ size = 26, active = false, className = '' }: Ico
       viewBox="0 0 48 48" 
       fill="none" 
       xmlns="http://www.w3.org/2000/svg"
-      className={`shrink-0 transition-transform ${active ? 'scale-110 drop-shadow-[0_3px_6px_rgba(195,94,64,0.35)]' : 'opacity-85 hover:opacity-100 drop-shadow-[0_1px_3px_rgba(60,30,10,0.12)]'} ${className}`}
+      className={`shrink-0 transition-transform ${active ? 'scale-110' : 'opacity-85 hover:opacity-100'} ${className}`}
     >
       <defs>
         <linearGradient id="homeRoofGrad" x1="0" y1="0" x2="1" y2="1">
@@ -414,10 +414,10 @@ export function Icon3DNavHome({ size = 26, active = false, className = '' }: Ico
       <circle cx="23" cy="15" r="1" fill="#FFFFFF" />
     </svg>
   );
-}
+});
 
 // 8. NAV: TUGAS (3D Clipboard Checklist)
-export function Icon3DNavTasks({ size = 26, active = false, className = '' }: Icon3DProps) {
+export const Icon3DNavTasks = React.memo(function Icon3DNavTasks({ size = 26, active = false, className = '' }: Icon3DProps) {
   return (
     <svg 
       width={size} 
@@ -425,7 +425,7 @@ export function Icon3DNavTasks({ size = 26, active = false, className = '' }: Ic
       viewBox="0 0 48 48" 
       fill="none" 
       xmlns="http://www.w3.org/2000/svg"
-      className={`shrink-0 transition-transform ${active ? 'scale-110 drop-shadow-[0_3px_6px_rgba(195,94,64,0.35)]' : 'opacity-85 hover:opacity-100 drop-shadow-[0_1px_3px_rgba(60,30,10,0.12)]'} ${className}`}
+      className={`shrink-0 transition-transform ${active ? 'scale-110' : 'opacity-85 hover:opacity-100'} ${className}`}
     >
       <defs>
         <linearGradient id="taskBoardGrad" x1="0" y1="0" x2="1" y2="1">
@@ -455,10 +455,10 @@ export function Icon3DNavTasks({ size = 26, active = false, className = '' }: Ic
       <rect x="22" y="33.5" width="11" height="2.5" rx="1.25" fill="#C5B4A0" />
     </svg>
   );
-}
+});
 
 // 9. NAV: KALENDER (3D Spiral Flip Calendar)
-export function Icon3DNavCalendar({ size = 26, active = false, className = '' }: Icon3DProps) {
+export const Icon3DNavCalendar = React.memo(function Icon3DNavCalendar({ size = 26, active = false, className = '' }: Icon3DProps) {
   return (
     <svg 
       width={size} 
@@ -466,7 +466,7 @@ export function Icon3DNavCalendar({ size = 26, active = false, className = '' }:
       viewBox="0 0 48 48" 
       fill="none" 
       xmlns="http://www.w3.org/2000/svg"
-      className={`shrink-0 transition-transform ${active ? 'scale-110 drop-shadow-[0_3px_6px_rgba(195,94,64,0.35)]' : 'opacity-85 hover:opacity-100 drop-shadow-[0_1px_3px_rgba(60,30,10,0.12)]'} ${className}`}
+      className={`shrink-0 transition-transform ${active ? 'scale-110' : 'opacity-85 hover:opacity-100'} ${className}`}
     >
       <defs>
         <linearGradient id="calTopGrad" x1="0" y1="0" x2="1" y2="0">
@@ -487,10 +487,10 @@ export function Icon3DNavCalendar({ size = 26, active = false, className = '' }:
       <circle cx="33" cy="35" r="2" fill="#4E7651" />
     </svg>
   );
-}
+});
 
 // 10. NAV: CATATAN (3D Leather Journal Book)
-export function Icon3DNavNotes({ size = 26, active = false, className = '' }: Icon3DProps) {
+export const Icon3DNavNotes = React.memo(function Icon3DNavNotes({ size = 26, active = false, className = '' }: Icon3DProps) {
   return (
     <svg 
       width={size} 
@@ -498,7 +498,7 @@ export function Icon3DNavNotes({ size = 26, active = false, className = '' }: Ic
       viewBox="0 0 48 48" 
       fill="none" 
       xmlns="http://www.w3.org/2000/svg"
-      className={`shrink-0 transition-transform ${active ? 'scale-110 drop-shadow-[0_3px_6px_rgba(195,94,64,0.35)]' : 'opacity-85 hover:opacity-100 drop-shadow-[0_1px_3px_rgba(60,30,10,0.12)]'} ${className}`}
+      className={`shrink-0 transition-transform ${active ? 'scale-110' : 'opacity-85 hover:opacity-100'} ${className}`}
     >
       <defs>
         <linearGradient id="bookCoverGrad" x1="0" y1="0" x2="1" y2="1">
@@ -520,10 +520,10 @@ export function Icon3DNavNotes({ size = 26, active = false, className = '' }: Ic
       <path d="M24 23 C22 25, 22 28, 25 30 C27 28, 27 25, 24 23 Z" fill="#E8F4E5" />
     </svg>
   );
-}
+});
 
 // 11. NAV: PENGATURAN (3D Dual Cogwheel Gear)
-export function Icon3DNavSettings({ size = 26, active = false, className = '' }: Icon3DProps) {
+export const Icon3DNavSettings = React.memo(function Icon3DNavSettings({ size = 26, active = false, className = '' }: Icon3DProps) {
   return (
     <svg 
       width={size} 
@@ -531,7 +531,7 @@ export function Icon3DNavSettings({ size = 26, active = false, className = '' }:
       viewBox="0 0 48 48" 
       fill="none" 
       xmlns="http://www.w3.org/2000/svg"
-      className={`shrink-0 transition-transform ${active ? 'scale-110 drop-shadow-[0_3px_6px_rgba(195,94,64,0.35)]' : 'opacity-85 hover:opacity-100 drop-shadow-[0_1px_3px_rgba(60,30,10,0.12)]'} ${className}`}
+      className={`shrink-0 transition-transform ${active ? 'scale-110' : 'opacity-85 hover:opacity-100'} ${className}`}
     >
       <defs>
         <linearGradient id="gearMainGrad" x1="0" y1="0" x2="1" y2="1">
@@ -562,10 +562,10 @@ export function Icon3DNavSettings({ size = 26, active = false, className = '' }:
       <path d="M14 17 C16 13, 20 11, 24 11" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeOpacity="0.5" />
     </svg>
   );
-}
+});
 
 // 12. TASK: CHECKED (Glossy Emerald 3D Pill Button)
-export function Icon3DTaskChecked({ size = 22, className = '' }: Icon3DProps) {
+export const Icon3DTaskChecked = React.memo(function Icon3DTaskChecked({ size = 22, className = '' }: Icon3DProps) {
   return (
     <svg 
       width={size} 
@@ -573,7 +573,7 @@ export function Icon3DTaskChecked({ size = 22, className = '' }: Icon3DProps) {
       viewBox="0 0 32 32" 
       fill="none" 
       xmlns="http://www.w3.org/2000/svg"
-      className={`shrink-0 drop-shadow-[0_2px_4px_rgba(78,118,81,0.35)] ${className}`}
+      className={`shrink-0 ${className}`}
     >
       <defs>
         <linearGradient id="taskCheckGrad" x1="0" y1="0" x2="1" y2="1">
@@ -587,10 +587,10 @@ export function Icon3DTaskChecked({ size = 22, className = '' }: Icon3DProps) {
       <path d="M10 16.5 L14 20.5 L22 11.5" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
-}
+});
 
 // 13. TASK: UNCHECKED (Tactile Off-White 3D Ring Button)
-export function Icon3DTaskUnchecked({ size = 22, className = '' }: Icon3DProps) {
+export const Icon3DTaskUnchecked = React.memo(function Icon3DTaskUnchecked({ size = 22, className = '' }: Icon3DProps) {
   return (
     <svg 
       width={size} 
@@ -604,10 +604,10 @@ export function Icon3DTaskUnchecked({ size = 22, className = '' }: Icon3DProps) 
       <circle cx="16" cy="16" r="8" fill="#EFE5D6" opacity="0.4" />
     </svg>
   );
-}
+});
 
 // 14. FAB: PLUS (Vibrant 3D Terracotta Embossed Button)
-export function Icon3DFabPlus({ size = 28, className = '' }: Icon3DProps) {
+export const Icon3DFabPlus = React.memo(function Icon3DFabPlus({ size = 28, className = '' }: Icon3DProps) {
   return (
     <svg 
       width={size} 
@@ -615,7 +615,7 @@ export function Icon3DFabPlus({ size = 28, className = '' }: Icon3DProps) {
       viewBox="0 0 48 48" 
       fill="none" 
       xmlns="http://www.w3.org/2000/svg"
-      className={`shrink-0 drop-shadow-[0_4px_8px_rgba(224,109,52,0.4)] ${className}`}
+      className={`shrink-0 ${className}`}
     >
       <defs>
         <linearGradient id="fabPlusGrad" x1="0" y1="0" x2="1" y2="1">
@@ -629,16 +629,16 @@ export function Icon3DFabPlus({ size = 28, className = '' }: Icon3DProps) {
       <path d="M24 14 L24 34 M14 24 L34 24" stroke="#FFFFFF" strokeWidth="4.5" strokeLinecap="round" />
     </svg>
   );
-}
+});
 
 // -------------------------------------------------------------
 // SETTINGS & COMMON 3D ICONS
 // -------------------------------------------------------------
 
 // 15. TEMA & TAMPILAN / PALETTE (3D Wooden Artist Palette with Paint Dabs)
-export function Icon3DPalette({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DPalette = React.memo(function Icon3DPalette({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(60,30,10,0.15)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="palWood" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#F5A874" />
@@ -655,12 +655,12 @@ export function Icon3DPalette({ size = 24, className = '' }: Icon3DProps) {
       <path d="M12 12 C16 8 26 8 32 10" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
     </svg>
   );
-}
+});
 
 // 16. BAHASA / GLOBE (3D Earth Globe on Stand)
-export function Icon3DGlobe({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DGlobe = React.memo(function Icon3DGlobe({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(60,30,10,0.15)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <radialGradient id="globeOcean" cx="35%" cy="30%" r="70%">
           <stop offset="0%" stopColor="#93C5FD" />
@@ -678,12 +678,12 @@ export function Icon3DGlobe({ size = 24, className = '' }: Icon3DProps) {
       <rect x="15" y="41" width="18" height="4" rx="2" fill="#D97706" />
     </svg>
   );
-}
+});
 
 // 17. SMARTPHONE / DISPLAY MODE (3D Curved Glass Smartphone)
-export function Icon3DSmartphone({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DSmartphone = React.memo(function Icon3DSmartphone({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(60,30,10,0.15)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="phoneBody" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#689F6E" />
@@ -697,12 +697,12 @@ export function Icon3DSmartphone({ size = 24, className = '' }: Icon3DProps) {
       <rect x="21" y="8" width="6" height="1.5" rx="0.75" fill="#A7D5AC" />
     </svg>
   );
-}
+});
 
 // 18. EFEK SUARA / VOLUME (3D Audio Speaker with Soundwaves)
-export function Icon3DVolume({ size = 24, active = true, className = '' }: Icon3DProps) {
+export const Icon3DVolume = React.memo(function Icon3DVolume({ size = 24, active = true, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(60,30,10,0.15)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="spkGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#FBBF24" />
@@ -721,12 +721,12 @@ export function Icon3DVolume({ size = 24, active = true, className = '' }: Icon3
       )}
     </svg>
   );
-}
+});
 
 // 19. KUNCI LAYAR / LOCK (3D Brass Padlock)
-export function Icon3DLock({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DLock = React.memo(function Icon3DLock({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(60,30,10,0.15)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="lockBodyGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#F87171" />
@@ -746,12 +746,12 @@ export function Icon3DLock({ size = 24, className = '' }: Icon3DProps) {
       <path d="M24 30 L24 36" stroke="#FFE4E6" strokeWidth="2.5" strokeLinecap="round" />
     </svg>
   );
-}
+});
 
 // 20. PIN CATATAN RAHASIA / SECRET NOTE (3D Document with Golden Key)
-export function Icon3DSecretNote({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DSecretNote = React.memo(function Icon3DSecretNote({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(60,30,10,0.15)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="docGrad" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#FFFDF9" />
@@ -771,12 +771,12 @@ export function Icon3DSecretNote({ size = 24, className = '' }: Icon3DProps) {
       <path d="M35 31 L42 38 L40 40 L38 38 L36 40 L33 37" stroke="url(#keyGrad)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
-}
+});
 
 // 21. ACAK TOMBOL PIN / SCRAMBLE KEYPAD (3D Tactile Keypad Grid)
-export function Icon3DShuffle({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DShuffle = React.memo(function Icon3DShuffle({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(60,30,10,0.15)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="padGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#C084FC" />
@@ -796,12 +796,12 @@ export function Icon3DShuffle({ size = 24, className = '' }: Icon3DProps) {
       <circle cx="32" cy="32" r="3" fill="#FFFFFF" />
     </svg>
   );
-}
+});
 
 // 22. CADANGAN OTOMATIS / DATABASE (3D Layered Server Disks)
-export function Icon3DDatabase({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DDatabase = React.memo(function Icon3DDatabase({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(60,30,10,0.15)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="dbDiskGrad" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#689F6E" />
@@ -822,12 +822,12 @@ export function Icon3DDatabase({ size = 24, className = '' }: Icon3DProps) {
       <circle cx="32" cy="32" r="1.5" fill="#4ADE80" />
     </svg>
   );
-}
+});
 
 // 23. EKSPOR CADANGAN / DOWNLOAD (3D Folder with Down Arrow)
-export function Icon3DDownload({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DDownload = React.memo(function Icon3DDownload({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(60,30,10,0.15)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="dlBoxGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#60A5FA" />
@@ -839,12 +839,12 @@ export function Icon3DDownload({ size = 24, className = '' }: Icon3DProps) {
       <path d="M24 7 V25 M18 19 L24 25 L30 19" stroke="#3B82F6" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
-}
+});
 
 // 24. IMPOR CADANGAN / UPLOAD (3D Folder with Up Arrow)
-export function Icon3DUpload({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DUpload = React.memo(function Icon3DUpload({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(60,30,10,0.15)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="ulBoxGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#2DD4BF" />
@@ -856,12 +856,12 @@ export function Icon3DUpload({ size = 24, className = '' }: Icon3DProps) {
       <path d="M24 25 V7 M18 13 L24 7 L30 13" stroke="#0D9488" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
-}
+});
 
 // 25. RESET DATA / TRASH (3D Terracotta Trash Bin with Warning)
-export function Icon3DTrash({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DTrash = React.memo(function Icon3DTrash({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(60,30,10,0.15)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="trashBodyGrad" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#F87171" />
@@ -876,12 +876,12 @@ export function Icon3DTrash({ size = 24, className = '' }: Icon3DProps) {
       <rect x="28" y="22" width="2.5" height="14" rx="1.25" fill="#FFFFFF" opacity="0.6" />
     </svg>
   );
-}
+});
 
 // 26. SEGARAN CACHE / REFRESH (3D Cyan Twirling Arrows)
-export function Icon3DRefresh({ size = 24, spinning = false, className = '' }: Icon3DProps & { spinning?: boolean }) {
+export const Icon3DRefresh = React.memo(function Icon3DRefresh({ size = 24, spinning = false, className = '' }: Icon3DProps & { spinning?: boolean }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(60,30,10,0.15)] ${spinning ? 'animate-spin' : ''} ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${spinning ? 'animate-spin' : ''} ${className}`}>
       <defs>
         <linearGradient id="refGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#38BDF8" />
@@ -894,12 +894,12 @@ export function Icon3DRefresh({ size = 24, spinning = false, className = '' }: I
       <polygon points="14,26 7,26 10.5,33" fill="#0284C7" />
     </svg>
   );
-}
+});
 
 // 27. PUSAT GAME / GAMEPAD (3D Retro Gaming Console Controller)
-export function Icon3DGamepad({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DGamepad = React.memo(function Icon3DGamepad({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(60,30,10,0.15)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="padBodyGrad" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#FB923C" />
@@ -918,12 +918,12 @@ export function Icon3DGamepad({ size = 24, className = '' }: Icon3DProps) {
       <circle cx="33" cy="28.5" r="2" fill="#22C55E" />
     </svg>
   );
-}
+});
 
 // 28. TENTANG TATA / INFO (3D Soft Pill Badge with "i")
-export function Icon3DInfo({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DInfo = React.memo(function Icon3DInfo({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(60,30,10,0.15)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="infoGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#94A3B8" />
@@ -936,12 +936,12 @@ export function Icon3DInfo({ size = 24, className = '' }: Icon3DProps) {
       <rect x="22" y="22" width="4" height="12" rx="2" fill="#FFFFFF" />
     </svg>
   );
-}
+});
 
 // 29. KEBIJAKAN PRIVASI / SHIELD (3D Emerald Security Shield)
-export function Icon3DShield({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DShield = React.memo(function Icon3DShield({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(60,30,10,0.15)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="shieldGrad" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#4ADE80" />
@@ -954,16 +954,16 @@ export function Icon3DShield({ size = 24, className = '' }: Icon3DProps) {
       <path d="M19 23 L23 27 L30 19" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
-}
+});
 
 // -------------------------------------------------------------
 // CALENDAR & MOOD 3D ICONS
 // -------------------------------------------------------------
 
 // 30. MOOD: HAPPY (3D Glowing Smile Face)
-export function Icon3DMoodHappy({ size = 28, className = '' }: Icon3DProps) {
+export const Icon3DMoodHappy = React.memo(function Icon3DMoodHappy({ size = 28, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(60,30,10,0.15)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <radialGradient id="happyGrad" cx="35%" cy="30%" r="70%">
           <stop offset="0%" stopColor="#FEF08A" />
@@ -984,12 +984,12 @@ export function Icon3DMoodHappy({ size = 28, className = '' }: Icon3DProps) {
       <circle cx="35" cy="26" r="2.5" fill="#F87171" opacity="0.7" />
     </svg>
   );
-}
+});
 
 // 31. MOOD: CALM / PEACEFUL (3D Gentle Sage Smile)
-export function Icon3DMoodCalm({ size = 28, className = '' }: Icon3DProps) {
+export const Icon3DMoodCalm = React.memo(function Icon3DMoodCalm({ size = 28, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(60,30,10,0.15)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <radialGradient id="calmGrad" cx="35%" cy="30%" r="70%">
           <stop offset="0%" stopColor="#BBF7D0" />
@@ -1008,12 +1008,12 @@ export function Icon3DMoodCalm({ size = 28, className = '' }: Icon3DProps) {
       <circle cx="34" cy="26" r="2.2" fill="#86EFAC" opacity="0.8" />
     </svg>
   );
-}
+});
 
 // 32. MOOD: NEUTRAL (3D Neutral Face)
-export function Icon3DMoodNeutral({ size = 28, className = '' }: Icon3DProps) {
+export const Icon3DMoodNeutral = React.memo(function Icon3DMoodNeutral({ size = 28, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(60,30,10,0.15)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <radialGradient id="neuGrad" cx="35%" cy="30%" r="70%">
           <stop offset="0%" stopColor="#FED7AA" />
@@ -1028,12 +1028,12 @@ export function Icon3DMoodNeutral({ size = 28, className = '' }: Icon3DProps) {
       <path d="M18 29 L30 29" stroke="#7C2D12" strokeWidth="2.8" strokeLinecap="round" />
     </svg>
   );
-}
+});
 
 // 33. MOOD: SAD (3D Sad Face)
-export function Icon3DMoodSad({ size = 28, className = '' }: Icon3DProps) {
+export const Icon3DMoodSad = React.memo(function Icon3DMoodSad({ size = 28, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(60,30,10,0.15)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <radialGradient id="sadGrad" cx="35%" cy="30%" r="70%">
           <stop offset="0%" stopColor="#BAE6FD" />
@@ -1048,12 +1048,12 @@ export function Icon3DMoodSad({ size = 28, className = '' }: Icon3DProps) {
       <path d="M18 31 Q24 26 30 31" stroke="#0C4A6E" strokeWidth="2.8" strokeLinecap="round" fill="none" />
     </svg>
   );
-}
+});
 
 // 34. MOOD: CRY / TIRED (3D Blue Crying Face with Tears)
-export function Icon3DMoodCry({ size = 28, className = '' }: Icon3DProps) {
+export const Icon3DMoodCry = React.memo(function Icon3DMoodCry({ size = 28, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(60,30,10,0.15)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <radialGradient id="cryGrad" cx="35%" cy="30%" r="70%">
           <stop offset="0%" stopColor="#C7D2FE" />
@@ -1071,16 +1071,16 @@ export function Icon3DMoodCry({ size = 28, className = '' }: Icon3DProps) {
       <path d="M35 23 C35 26 33 28 33 28 C33 28 31 26 31 23 C31 21 35 21 35 23 Z" fill="#67E8F9" />
     </svg>
   );
-}
+});
 
 // -------------------------------------------------------------
 // FINANCE & STATS 3D ICONS
 // -------------------------------------------------------------
 
 // 35. INCOME / PEMASUKAN (3D Green Circular Badge with Up Arrow)
-export function Icon3DIncome({ size = 26, className = '' }: Icon3DProps) {
+export const Icon3DIncome = React.memo(function Icon3DIncome({ size = 26, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(78,118,81,0.25)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="incGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#86EFAC" />
@@ -1093,12 +1093,12 @@ export function Icon3DIncome({ size = 26, className = '' }: Icon3DProps) {
       <path d="M18 28 L30 16 M20 16 L30 16 L30 26" stroke="#FFFFFF" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
-}
+});
 
 // 36. EXPENSE / PENGELUARAN (3D Terracotta Circular Badge with Down Arrow)
-export function Icon3DExpense({ size = 26, className = '' }: Icon3DProps) {
+export const Icon3DExpense = React.memo(function Icon3DExpense({ size = 26, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(195,94,64,0.25)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="expGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#FCA5A5" />
@@ -1111,12 +1111,12 @@ export function Icon3DExpense({ size = 26, className = '' }: Icon3DProps) {
       <path d="M18 18 L30 30 M30 20 L30 30 L20 30" stroke="#FFFFFF" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
-}
+});
 
 // 37. PIGGY BANK / TABUNGAN (3D Pink & Terracotta Piggy Bank with Coin)
-export function Icon3DPiggyBank({ size = 26, className = '' }: Icon3DProps) {
+export const Icon3DPiggyBank = React.memo(function Icon3DPiggyBank({ size = 26, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(60,30,10,0.15)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="pigGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#F472B6" />
@@ -1144,12 +1144,12 @@ export function Icon3DPiggyBank({ size = 26, className = '' }: Icon3DProps) {
       <circle cx="16" cy="23" r="1.5" fill="#1C1917" />
     </svg>
   );
-}
+});
 
 // 38. GRAFIK / STATS (3D Pie Chart with Raised Wedge)
-export function Icon3DChart({ size = 26, className = '' }: Icon3DProps) {
+export const Icon3DChart = React.memo(function Icon3DChart({ size = 26, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(60,30,10,0.15)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="pie1" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#38BDF8" />
@@ -1166,12 +1166,12 @@ export function Icon3DChart({ size = 26, className = '' }: Icon3DProps) {
       <ellipse cx="24" cy="12" rx="6" ry="1.5" fill="#FFFFFF" opacity="0.4" />
     </svg>
   );
-}
+});
 
 // 39. TARGET / FOKUS DISIPLIN / GOAL (3D Red-White-Gold Bullseye Target)
-export function Icon3DTarget({ size = 26, className = '' }: Icon3DProps) {
+export const Icon3DTarget = React.memo(function Icon3DTarget({ size = 26, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(60,30,10,0.15)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="tgtOuter" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#EF4444" />
@@ -1196,12 +1196,12 @@ export function Icon3DTarget({ size = 26, className = '' }: Icon3DProps) {
       <circle cx="24" cy="24" r="2.5" fill="#FFFFFF" />
     </svg>
   );
-}
+});
 
 // 41. STRUK / RECEIPT (3D Paper Receipt with Zigzag Edges)
-export function Icon3DReceipt({ size = 26, className = '' }: Icon3DProps) {
+export const Icon3DReceipt = React.memo(function Icon3DReceipt({ size = 26, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(60,30,10,0.15)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="recPaper" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#FFFFFF" />
@@ -1218,12 +1218,12 @@ export function Icon3DReceipt({ size = 26, className = '' }: Icon3DProps) {
       <rect x="17" y="31" width="8" height="2.5" rx="1.25" fill="#10B981" />
     </svg>
   );
-}
+});
 
 // 42. KARTU / CREDIT CARD (3D Vibrant Teal & Gold Card with Chip)
-export function Icon3DCreditCard({ size = 26, className = '' }: Icon3DProps) {
+export const Icon3DCreditCard = React.memo(function Icon3DCreditCard({ size = 26, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(60,30,10,0.15)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="cardGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#2DD4BF" />
@@ -1245,12 +1245,12 @@ export function Icon3DCreditCard({ size = 26, className = '' }: Icon3DProps) {
       <path d="M32 27 C34 29 34 31 32 33" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
     </svg>
   );
-}
+});
 
 // 43. BANK / LANDMARK (3D Classical Bank Building)
-export function Icon3DBank({ size = 26, className = '' }: Icon3DProps) {
+export const Icon3DBank = React.memo(function Icon3DBank({ size = 26, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(60,30,10,0.15)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="bankGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#E2E8F0" />
@@ -1271,12 +1271,12 @@ export function Icon3DBank({ size = 26, className = '' }: Icon3DProps) {
       <rect x="8" y="36" width="32" height="4" rx="2" fill="#334155" />
     </svg>
   );
-}
+});
 
 // 44. KOIN / COINS (3D Stacked Golden Coins)
-export function Icon3DCoins({ size = 26, className = '' }: Icon3DProps) {
+export const Icon3DCoins = React.memo(function Icon3DCoins({ size = 26, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(60,30,10,0.15)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="coinGold" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#FDE047" />
@@ -1296,12 +1296,12 @@ export function Icon3DCoins({ size = 26, className = '' }: Icon3DProps) {
       <ellipse cx="32" cy="18" rx="6" ry="9" transform="rotate(-25 32 18)" fill="#FEF08A" opacity="0.6" />
     </svg>
   );
-}
+});
 
 // 45. PERINGATAN / WARNING (3D Golden Amber Hazard Triangle)
-export function Icon3DWarning({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DWarning = React.memo(function Icon3DWarning({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(217,119,6,0.25)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="warnGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#FDE047" />
@@ -1315,12 +1315,12 @@ export function Icon3DWarning({ size = 24, className = '' }: Icon3DProps) {
       <circle cx="24" cy="33.5" r="1.75" fill="#78350F" />
     </svg>
   );
-}
+});
 
 // 46. JAM / WAKTU / CLOCK (3D Cyan-Slate Mechanical Clock Face)
-export function Icon3DClock({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DClock = React.memo(function Icon3DClock({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(14,165,233,0.2)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="clkRim" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#7DD3FC" />
@@ -1337,12 +1337,12 @@ export function Icon3DClock({ size = 24, className = '' }: Icon3DProps) {
       <circle cx="24" cy="24" r="2.5" fill="#0C4A6E" />
     </svg>
   );
-}
+});
 
 // 47. PENGULANGAN / REPEAT (3D Green Loop Arrows)
-export function Icon3DRepeat({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DRepeat = React.memo(function Icon3DRepeat({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(34,197,94,0.25)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="repGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#86EFAC" />
@@ -1356,12 +1356,12 @@ export function Icon3DRepeat({ size = 24, className = '' }: Icon3DProps) {
       <polyline points="18 34 12 28 18 22" stroke="url(#repGrad)" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
     </svg>
   );
-}
+});
 
 // 49. LABEL / TAG (3D Terracotta Price Tag with String Hole)
-export function Icon3DTag({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DTag = React.memo(function Icon3DTag({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(195,94,64,0.25)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="tagGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#FB923C" />
@@ -1375,12 +1375,12 @@ export function Icon3DTag({ size = 24, className = '' }: Icon3DProps) {
       <circle cx="32" cy="18" r="1.2" fill="#7C2D12" />
     </svg>
   );
-}
+});
 
 // 50. ARSIP / ARCHIVE (3D Cardboard Archive Box with Lid)
-export function Icon3DArchive({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DArchive = React.memo(function Icon3DArchive({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(180,83,9,0.25)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="boxLidGrad" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#FDE047" />
@@ -1402,12 +1402,12 @@ export function Icon3DArchive({ size = 24, className = '' }: Icon3DProps) {
       <ellipse cx="24" cy="12" rx="14" ry="1.5" fill="#FFFFFF" opacity="0.4" />
     </svg>
   );
-}
+});
 
 // 51. SEMAT / PIN (3D Red Pushpin with Shadow)
-export function Icon3DPin({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DPin = React.memo(function Icon3DPin({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(239,68,68,0.3)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="pinHeadGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#F87171" />
@@ -1428,12 +1428,12 @@ export function Icon3DPin({ size = 24, className = '' }: Icon3DProps) {
       <rect x="17" y="22" width="14" height="6" rx="3" fill="#B91C1C" />
     </svg>
   );
-}
+});
 
 // 52. HATI / HEART (3D Glossy Pink-Rose Heart for Dev Message)
-export function Icon3DHeart({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DHeart = React.memo(function Icon3DHeart({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(244,63,94,0.3)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="heartGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#FB7185" />
@@ -1449,12 +1449,12 @@ export function Icon3DHeart({ size = 24, className = '' }: Icon3DProps) {
       <ellipse cx="32" cy="14" rx="2.5" ry="1.2" transform="rotate(30 32 14)" fill="#FFFFFF" opacity="0.4" />
     </svg>
   );
-}
+});
 
 // 53. INSTAGRAM (3D Sunset Gradient Camera)
-export function Icon3DInstagram({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DInstagram = React.memo(function Icon3DInstagram({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(225,48,108,0.25)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="igGrad" x1="0" y1="1" x2="1" y2="0">
           <stop offset="0%" stopColor="#FCAF45" />
@@ -1471,12 +1471,12 @@ export function Icon3DInstagram({ size = 24, className = '' }: Icon3DProps) {
       <ellipse cx="24" cy="11" rx="10" ry="1.5" fill="#FFFFFF" opacity="0.4" />
     </svg>
   );
-}
+});
 
 // 54. EMAIL / MAIL (3D Amber-Orange Envelope)
-export function Icon3DMail({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DMail = React.memo(function Icon3DMail({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(245,158,11,0.25)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="mailBodyGrad" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#FDE047" />
@@ -1495,12 +1495,12 @@ export function Icon3DMail({ size = 24, className = '' }: Icon3DProps) {
       <ellipse cx="24" cy="15" rx="12" ry="1.5" fill="#FFFFFF" opacity="0.5" />
     </svg>
   );
-}
+});
 
 // 55. KUNCI / KEY (3D Golden Metallic Key)
-export function Icon3DKey({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DKey = React.memo(function Icon3DKey({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(217,119,6,0.3)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="keyGoldGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#FDE047" />
@@ -1515,12 +1515,12 @@ export function Icon3DKey({ size = 24, className = '' }: Icon3DProps) {
       <path d="M32 32 L36 28 M37 37 L41 33" stroke="url(#keyGoldGrad)" strokeWidth="4" strokeLinecap="round" />
     </svg>
   );
-}
+});
 
 // 56. PENGGUNA / USER / AVATAR (3D Indigo Friendly User Badge)
-export function Icon3DUser({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DUser = React.memo(function Icon3DUser({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(99,102,241,0.25)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="usrGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#A5B4FC" />
@@ -1534,12 +1534,12 @@ export function Icon3DUser({ size = 24, className = '' }: Icon3DProps) {
       <ellipse cx="24" cy="30" rx="10" ry="2" fill="#FFFFFF" opacity="0.3" />
     </svg>
   );
-}
+});
 
 // 57. BANTUAN / HELP / INFO (3D Cyan-Indigo Help Question Orb)
-export function Icon3DHelp({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DHelp = React.memo(function Icon3DHelp({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(99,102,241,0.25)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="hlpGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#818CF8" />
@@ -1553,12 +1553,12 @@ export function Icon3DHelp({ size = 24, className = '' }: Icon3DProps) {
       <circle cx="24" cy="33" r="2" fill="#FFFFFF" />
     </svg>
   );
-}
+});
 
 // 58. CROP / POTONG GAMBAR (3D Indigo Crop Tool Frame)
-export function Icon3DCrop({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DCrop = React.memo(function Icon3DCrop({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(99,102,241,0.25)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="crpGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#818CF8" />
@@ -1569,12 +1569,12 @@ export function Icon3DCrop({ size = 24, className = '' }: Icon3DProps) {
       <path d="M34 42 V14 H6" stroke="url(#crpGrad)" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
-}
+});
 
 // 59. KAMERA / FOTO (3D Camera with Lens Glow)
-export function Icon3DCamera({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DCamera = React.memo(function Icon3DCamera({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(99,102,241,0.25)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="camGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#818CF8" />
@@ -1590,12 +1590,12 @@ export function Icon3DCamera({ size = 24, className = '' }: Icon3DProps) {
       <circle cx="35" cy="18" r="1.5" fill="#F43F5E" />
     </svg>
   );
-}
+});
 
 // 60. RIWAYAT / AUDIT / HISTORY (3D Purple Clock History Arrow)
-export function Icon3DHistory({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DHistory = React.memo(function Icon3DHistory({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(168,85,247,0.25)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="histGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#C084FC" />
@@ -1608,12 +1608,12 @@ export function Icon3DHistory({ size = 24, className = '' }: Icon3DProps) {
       <path d="M24 16 V24 L29 28" stroke="url(#histGrad)" strokeWidth="3" strokeLinecap="round" />
     </svg>
   );
-}
+});
 
 // 61. SCAN / OCR SCANNER (3D Laser Scanner Sheet)
-export function Icon3DScan({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DScan = React.memo(function Icon3DScan({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(59,130,246,0.25)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="scanCornerGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#60A5FA" />
@@ -1643,12 +1643,12 @@ export function Icon3DScan({ size = 24, className = '' }: Icon3DProps) {
       <line x1="10" y1="24" x2="38" y2="24" stroke="url(#scanLaser)" strokeWidth="2.5" strokeLinecap="round" />
     </svg>
   );
-}
+});
 
 // 62. DOKUMEN / FILE TEXT (3D Blue Document)
-export function Icon3DFileText({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DFileText = React.memo(function Icon3DFileText({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(37,99,235,0.25)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="fileTextGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#93C5FD" />
@@ -1663,12 +1663,12 @@ export function Icon3DFileText({ size = 24, className = '' }: Icon3DProps) {
       <rect x="16" y="34" width="14" height="2.5" rx="1.25" fill="#FFFFFF" fillOpacity="0.5" />
     </svg>
   );
-}
+});
 
 // 63. GAMBAR / FOTO / IMAGE (3D Vibrant Landscape Card)
-export function Icon3DImage({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DImage = React.memo(function Icon3DImage({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(16,185,129,0.25)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="imgBgGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#34D399" />
@@ -1686,12 +1686,12 @@ export function Icon3DImage({ size = 24, className = '' }: Icon3DProps) {
       <path d="M12 36 L21 27 L30 35 L35 30 L40 35 V37 C40 38.6569 38.6569 40 37 40 H11 C9.34315 40 8 38.6569 8 37 V36 Z" fill="#022C22" />
     </svg>
   );
-}
+});
 
 // 64. BACK ARROW / KEMBALI (3D Warm Rounded Arrow)
-export function Icon3DArrowLeft({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DArrowLeft = React.memo(function Icon3DArrowLeft({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(234,88,12,0.25)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="backGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#FB923C" />
@@ -1704,12 +1704,12 @@ export function Icon3DArrowLeft({ size = 24, className = '' }: Icon3DProps) {
       <path d="M19 24 H32" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" />
     </svg>
   );
-}
+});
 
 // 65. UNLOCK / BUKA KUNCI (3D Open Gold Padlock)
-export function Icon3DUnlock({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DUnlock = React.memo(function Icon3DUnlock({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(245,158,11,0.25)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="unlockBody" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#FCD34D" />
@@ -1729,12 +1729,12 @@ export function Icon3DUnlock({ size = 24, className = '' }: Icon3DProps) {
       <path d="M24 31 V35" stroke="#78350F" strokeWidth="2.5" strokeLinecap="round" />
     </svg>
   );
-}
+});
 
 // 66. COPY / SALIN (3D Tactile Double Clipboard)
-export function Icon3DCopy({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DCopy = React.memo(function Icon3DCopy({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(99,102,241,0.25)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="copyBack" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#818CF8" />
@@ -1752,12 +1752,12 @@ export function Icon3DCopy({ size = 24, className = '' }: Icon3DProps) {
       <rect x="21" y="32" width="13" height="2" rx="1" fill="#4F46E5" />
     </svg>
   );
-}
+});
 
 // 67. PAPERCLIP / LAMPIRAN (3D Metallic Clip)
-export function Icon3DPaperclip({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DPaperclip = React.memo(function Icon3DPaperclip({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(100,116,139,0.25)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="clipGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#E2E8F0" />
@@ -1774,12 +1774,12 @@ export function Icon3DPaperclip({ size = 24, className = '' }: Icon3DProps) {
       />
     </svg>
   );
-}
+});
 
 // 68. ACTIVITY / PULSE / PROGRES (3D Vibrant Pulse Wave)
-export function Icon3DActivity({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DActivity = React.memo(function Icon3DActivity({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(99,102,241,0.25)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="actGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#818CF8" />
@@ -1804,12 +1804,12 @@ export function Icon3DActivity({ size = 24, className = '' }: Icon3DProps) {
       <circle cx="32" cy="21" r="2" fill="#FFFFFF" />
     </svg>
   );
-}
+});
 
 // 69. CLOSE / BATAL / X (3D Rounded Cross)
-export function Icon3DClose({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DClose = React.memo(function Icon3DClose({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(244,63,94,0.25)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="clsGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#FB7185" />
@@ -1822,12 +1822,12 @@ export function Icon3DClose({ size = 24, className = '' }: Icon3DProps) {
       <path d="M17 17 L31 31 M31 17 L17 31" stroke="#FFFFFF" strokeWidth="3.5" strokeLinecap="round" />
     </svg>
   );
-}
+});
 
 // 70. EDIT / PENCIL (3D Golden Stylus / Pencil)
-export function Icon3DEdit({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DEdit = React.memo(function Icon3DEdit({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(245,158,11,0.25)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="editPenGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#FDE047" />
@@ -1841,12 +1841,12 @@ export function Icon3DEdit({ size = 24, className = '' }: Icon3DProps) {
       <path d="M16 28 L20 32" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
     </svg>
   );
-}
+});
 
 // 71. SEND (3D Terracotta Paper Plane)
-export function Icon3DSend({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DSend = React.memo(function Icon3DSend({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(195,94,64,0.3)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="sendWing1" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#FB923C" />
@@ -1864,12 +1864,12 @@ export function Icon3DSend({ size = 24, className = '' }: Icon3DProps) {
       <path d="M42 6 L22 28" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
     </svg>
   );
-}
+});
 
 // 72. PLAY (3D Emerald / Amber Glossy Play Button)
-export function Icon3DPlay({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DPlay = React.memo(function Icon3DPlay({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(16,185,129,0.3)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="playGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#34D399" />
@@ -1882,12 +1882,12 @@ export function Icon3DPlay({ size = 24, className = '' }: Icon3DProps) {
       <path d="M19 16 L33 24 L19 32 Z" fill="#FFFFFF" />
     </svg>
   );
-}
+});
 
 // 73. PAUSE (3D Indigo / Amber Glossy Pause)
-export function Icon3DPause({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DPause = React.memo(function Icon3DPause({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(99,102,241,0.3)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="pauseGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#818CF8" />
@@ -1901,12 +1901,12 @@ export function Icon3DPause({ size = 24, className = '' }: Icon3DProps) {
       <rect x="27" y="16" width="4" height="16" rx="2" fill="#FFFFFF" />
     </svg>
   );
-}
+});
 
 // 74. STOP (3D Ruby Glossy Stop)
-export function Icon3DStop({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DStop = React.memo(function Icon3DStop({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(244,63,94,0.3)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="stopGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#FB7185" />
@@ -1918,12 +1918,12 @@ export function Icon3DStop({ size = 24, className = '' }: Icon3DProps) {
       <rect x="17" y="17" width="14" height="14" rx="3" fill="#FFFFFF" />
     </svg>
   );
-}
+});
 
 // 75. TROPHY / AWARD (3D Golden Championship Cup)
-export function Icon3DTrophy({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DTrophy = React.memo(function Icon3DTrophy({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(245,158,11,0.3)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="trophyGold" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#FDE047" />
@@ -1939,12 +1939,12 @@ export function Icon3DTrophy({ size = 24, className = '' }: Icon3DProps) {
       <polygon points="24,16 25.5,20 29.5,20 26.5,22.5 27.5,26.5 24,24 20.5,26.5 21.5,22.5 18.5,20 22.5,20" fill="#FFFFFF" />
     </svg>
   );
-}
+});
 
 // 76. GIFT / REWARD (3D Wrapped Gift Box)
-export function Icon3DGift({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DGift = React.memo(function Icon3DGift({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(244,63,94,0.3)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="giftBoxGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#FDA4AF" />
@@ -1963,12 +1963,12 @@ export function Icon3DGift({ size = 24, className = '' }: Icon3DProps) {
       <path d="M24 14 C28 8 33 10 30 14 Z" fill="url(#giftRibbon)" />
     </svg>
   );
-}
+});
 
 // 77. CLIPBOARD / LIST (3D Checklist Board)
-export function Icon3DClipboard({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DClipboard = React.memo(function Icon3DClipboard({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(99,102,241,0.25)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="clipBg" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#818CF8" />
@@ -1982,12 +1982,12 @@ export function Icon3DClipboard({ size = 24, className = '' }: Icon3DProps) {
       <rect x="14" y="30" width="12" height="3" rx="1.5" fill="#FFFFFF" opacity="0.85" />
     </svg>
   );
-}
+});
 
 // 78. COMPASS / EXPLORE (3D Golden Navigator)
-export function Icon3DCompass({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DCompass = React.memo(function Icon3DCompass({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(245,158,11,0.3)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="compBrass" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#FDE047" />
@@ -2001,12 +2001,12 @@ export function Icon3DCompass({ size = 24, className = '' }: Icon3DProps) {
       <circle cx="24" cy="24" r="2.5" fill="#FDE047" />
     </svg>
   );
-}
+});
 
 // 79. LIGHTBULB / IDEA (3D Glowing Amber Bulb)
-export function Icon3DLightbulb({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DLightbulb = React.memo(function Icon3DLightbulb({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(245,158,11,0.35)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="bulbGlass" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#FEF08A" />
@@ -2021,12 +2021,12 @@ export function Icon3DLightbulb({ size = 24, className = '' }: Icon3DProps) {
       <ellipse cx="22" cy="14" rx="3" ry="1.5" fill="#FFFFFF" opacity="0.6" />
     </svg>
   );
-}
+});
 
 // 80. ZAP / ENERGY (3D Electric Lightning Bolt)
-export function Icon3DZap({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DZap = React.memo(function Icon3DZap({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(245,158,11,0.35)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="zapGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#FEF08A" />
@@ -2038,12 +2038,12 @@ export function Icon3DZap({ size = 24, className = '' }: Icon3DProps) {
       <polygon points="25,7 15,25 24,25 23,38 33,21 24,21" fill="#FEF9C3" opacity="0.5" />
     </svg>
   );
-}
+});
 
 // 81. SLIDERS / ADJUST (3D Tuning Controls)
-export function Icon3DSliders({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DSliders = React.memo(function Icon3DSliders({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(99,102,241,0.25)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <line x1="14" y1="8" x2="14" y2="40" stroke="#64748B" strokeWidth="3" strokeLinecap="round" />
       <line x1="24" y1="8" x2="24" y2="40" stroke="#64748B" strokeWidth="3" strokeLinecap="round" />
       <line x1="34" y1="8" x2="34" y2="40" stroke="#64748B" strokeWidth="3" strokeLinecap="round" />
@@ -2052,12 +2052,12 @@ export function Icon3DSliders({ size = 24, className = '' }: Icon3DProps) {
       <circle cx="34" cy="20" r="5" fill="#10B981" />
     </svg>
   );
-}
+});
 
 // 82. FILTER / FUNNEL (3D Filter Funnel)
-export function Icon3DFilter({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DFilter = React.memo(function Icon3DFilter({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(99,102,241,0.25)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="filtGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#818CF8" />
@@ -2068,12 +2068,12 @@ export function Icon3DFilter({ size = 24, className = '' }: Icon3DProps) {
       <ellipse cx="24" cy="10" rx="16" ry="3" fill="#C7D2FE" opacity="0.6" />
     </svg>
   );
-}
+});
 
 // 83. SHARE / NODE (3D Connected Nodes)
-export function Icon3DShare({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DShare = React.memo(function Icon3DShare({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(59,130,246,0.25)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <line x1="16" y1="24" x2="32" y2="14" stroke="#94A3B8" strokeWidth="3" />
       <line x1="16" y1="24" x2="32" y2="34" stroke="#94A3B8" strokeWidth="3" />
       <circle cx="16" cy="24" r="6" fill="#3B82F6" />
@@ -2082,12 +2082,12 @@ export function Icon3DShare({ size = 24, className = '' }: Icon3DProps) {
       <circle cx="15" cy="22" r="2" fill="#FFFFFF" opacity="0.6" />
     </svg>
   );
-}
+});
 
 // 84. BOOKMARK (3D Ribbon Badge)
-export function Icon3DBookmark({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DBookmark = React.memo(function Icon3DBookmark({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(244,63,94,0.3)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="bookGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#FB7185" />
@@ -2098,12 +2098,12 @@ export function Icon3DBookmark({ size = 24, className = '' }: Icon3DProps) {
       <path d="M14 8 H34 V12 H14 Z" fill="#FDA4AF" opacity="0.6" />
     </svg>
   );
-}
+});
 
 // 85. FEATHER / WRITE (3D Quill Plume)
-export function Icon3DFeather({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DFeather = React.memo(function Icon3DFeather({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(168,85,247,0.3)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="feathGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#C084FC" />
@@ -2115,12 +2115,12 @@ export function Icon3DFeather({ size = 24, className = '' }: Icon3DProps) {
       <path d="M10 42 L28 20" stroke="#F3E8FF" strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
-}
+});
 
 // 86. ROTATE CCW / RESET / UNDO (3D Reset Loop)
-export function Icon3DRotateCcw({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DRotateCcw = React.memo(function Icon3DRotateCcw({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(99,102,241,0.25)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="rotGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#818CF8" />
@@ -2131,22 +2131,22 @@ export function Icon3DRotateCcw({ size = 24, className = '' }: Icon3DProps) {
       <path d="M10 24 C10 32.8 17.2 40 26 40 C34.8 40 42 32.8 42 24 C42 15.2 34.8 8 26 8 C19.5 8 13.9 11.9 11.4 17.5" stroke="url(#rotGrad)" strokeWidth="4" strokeLinecap="round" />
     </svg>
   );
-}
+});
 
 // 87. CHEVRON RIGHT (3D Directional Pill)
-export function Icon3DChevronRight({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DChevronRight = React.memo(function Icon3DChevronRight({ size = 24, className = '' }: Icon3DProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <circle cx="24" cy="24" r="16" fill="#334155" opacity="0.4" />
       <path d="M20 16 L28 24 L20 32" stroke="#CBD5E1" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
-}
+});
 
 // 88. FOCUS / STOPWATCH (3D Tactile Focus Dial)
-export function Icon3DFocus({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DFocus = React.memo(function Icon3DFocus({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(249,115,22,0.3)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="focDial" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#FB923C" />
@@ -2161,12 +2161,12 @@ export function Icon3DFocus({ size = 24, className = '' }: Icon3DProps) {
       <line x1="24" y1="26" x2="30" y2="20" stroke="#FDE047" strokeWidth="2.5" strokeLinecap="round" />
     </svg>
   );
-}
+});
 
 // 89. MICROPHONE (3D Studio Mic)
-export function Icon3DMic({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DMic = React.memo(function Icon3DMic({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(244,63,94,0.3)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="micGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#FB7185" />
@@ -2179,12 +2179,12 @@ export function Icon3DMic({ size = 24, className = '' }: Icon3DProps) {
       <line x1="16" y1="42" x2="32" y2="42" stroke="#94A3B8" strokeWidth="3" strokeLinecap="round" />
     </svg>
   );
-}
+});
 
 // 90. SPEAKER / AUDIO (3D Sound Wave)
-export function Icon3DSpeaker({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DSpeaker = React.memo(function Icon3DSpeaker({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(16,185,129,0.3)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="spkGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#34D399" />
@@ -2196,12 +2196,12 @@ export function Icon3DSpeaker({ size = 24, className = '' }: Icon3DProps) {
       <path d="M39 11 C44 16 44 32 39 37" stroke="#A7F3D0" strokeWidth="3" strokeLinecap="round" />
     </svg>
   );
-}
+});
 
 // 91. EYE / VISUAL (3D Eye Badge)
-export function Icon3DEye({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DEye = React.memo(function Icon3DEye({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(59,130,246,0.25)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="eyeGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#60A5FA" />
@@ -2214,12 +2214,12 @@ export function Icon3DEye({ size = 24, className = '' }: Icon3DProps) {
       <circle cx="22" cy="22" r="1.5" fill="#FFFFFF" />
     </svg>
   );
-}
+});
 
 // 92. CHECK SQUARE (3D Emerald Checkbox)
-export function Icon3DCheckSquare({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DCheckSquare = React.memo(function Icon3DCheckSquare({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_2px_4px_rgba(16,185,129,0.3)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="chkSqGrad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#34D399" />
@@ -2232,12 +2232,12 @@ export function Icon3DCheckSquare({ size = 24, className = '' }: Icon3DProps) {
       <path d="M16 24 L22 30 L32 18" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
-}
+});
 
 // 92. KUNCI EMAS BRANKAS / GOLD VAULT LOCK (3D Tactile Golden Padlock)
-export function Icon3DGoldLock({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DGoldLock = React.memo(function Icon3DGoldLock({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_4px_8px_rgba(180,83,9,0.3)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="goldLockBody" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#FDE68A" />
@@ -2269,12 +2269,12 @@ export function Icon3DGoldLock({ size = 24, className = '' }: Icon3DProps) {
       <path d="M24 31.5 L24 37" stroke="#2E1303" strokeWidth="2.8" strokeLinecap="round" />
     </svg>
   );
-}
+});
 
 // 93. HAPUS / BACKSPACE / DELETE (3D Tactile Backspace Key with Gloss)
-export function Icon3DBackspace({ size = 24, className = '' }: Icon3DProps) {
+export const Icon3DBackspace = React.memo(function Icon3DBackspace({ size = 24, className = '' }: Icon3DProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 drop-shadow-[0_3px_6px_rgba(225,29,72,0.25)] ${className}`}>
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
       <defs>
         <linearGradient id="backspaceBodyGrad" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#FB7185" />
@@ -2309,7 +2309,7 @@ export function Icon3DBackspace({ size = 24, className = '' }: Icon3DProps) {
       />
     </svg>
   );
-}
+});
 
 // Aliases for compatibility
 export const Icon3DDelete = Icon3DBackspace;

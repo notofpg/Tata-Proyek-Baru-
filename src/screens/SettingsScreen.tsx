@@ -22,6 +22,7 @@ import InviteFriendsModal from '../components/InviteFriendsModal';
 import GoogleAccountPromptModal from '../components/GoogleAccountPromptModal';
 import BackupRestoreModal from '../components/BackupRestoreModal';
 import { WALLPAPER_PRESETS, WallpaperPreset } from '../utils/wallpaperPresets';
+import { getOrganicThemePalette } from '../components/home/organicThemePalettes';
 import { LiteStickerIcon } from '../components/LiteModeIcons';
 import { isSwipeOnInteractiveOrScrollable, MIN_SWIPE_DISTANCE, MIN_SWIPE_RATIO, MAX_SWIPE_TIME_MS } from '../utils/swipeUtils';
 import {
@@ -1660,7 +1661,7 @@ export default function SettingsScreen({
             </div>
           )}
           <div>
-            <h4 className="font-bold text-[14px] text-slate-100 block">
+            <h4 className={`font-bold text-[14px] ${primaryTextThemeClass} block`}>
               {lang === 'id' ? 'Pencadangan Otomatis' : 'Auto Backup'}
             </h4>
             <span className="text-xs text-slate-400 block">
@@ -1706,7 +1707,7 @@ export default function SettingsScreen({
             type="text"
             value={autoBackupFilenamePrefix}
             onChange={(e) => setAutoBackupFilenamePrefix(e.target.value)}
-            className={`w-full ${innerCardThemeClass} rounded-xl px-3.5 py-2.5 text-slate-100 text-xs outline-none focus:border-indigo-500/40 transition-colors placeholder-slate-600`}
+            className={`w-full ${innerCardThemeClass} rounded-xl px-3.5 py-2.5 ${primaryTextThemeClass} text-xs outline-none focus:border-indigo-500/40 transition-colors placeholder-slate-600`}
             placeholder={lang === 'id' ? 'Contoh: tata_cadangan' : 'Example: tata_backup'}
           />
           {lastAutoBackupTimestamp > 0 && (
@@ -1723,7 +1724,7 @@ export default function SettingsScreen({
         <div className="pt-3 border-t border-slate-800/60 space-y-2.5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
-              <span className="text-xs font-bold text-slate-200 block">
+              <span className={`text-xs font-bold ${primaryTextThemeClass} block`}>
                 {lang === 'id' ? 'Proteksi PIN Cadangan' : 'Backup PIN Security'}
               </span>
               <span className="text-[11px] text-slate-400">
@@ -1811,7 +1812,8 @@ export default function SettingsScreen({
     );
   };
 
-  const isLight = appTheme === 'light' || appTheme === 'cute' || appTheme === 'pink' || appTheme === 'organic';
+  const palette = React.useMemo(() => getOrganicThemePalette(appTheme), [appTheme]);
+  const isLight = !palette.isDark;
 
   const rootTextThemeClass = appTheme === 'wallpaper'
     ? 'text-white'
@@ -1825,21 +1827,21 @@ export default function SettingsScreen({
             ? 'text-slate-900'
             : 'text-slate-200';
 
-  const cardGroupThemeClass = isLight
-    ? (appTheme === 'organic' || appTheme === 'cute'
-        ? 'bg-[#FAF5EA] border border-[#EADCC8] rounded-2xl overflow-hidden divide-y divide-[#EADCC8]/80 shadow-xs'
-        : appTheme === 'pink'
-          ? 'bg-[#FFF0F5] border border-pink-200 rounded-2xl overflow-hidden divide-y divide-pink-200/80 shadow-xs'
-          : 'bg-white border border-slate-200 rounded-2xl overflow-hidden divide-y divide-slate-100 shadow-xs')
-    : '${cardThemeClass} rounded-2xl overflow-hidden divide-y divide-slate-800/60 shadow-sm';
-
   const cardThemeClass = isLight
     ? (appTheme === 'organic' || appTheme === 'cute'
         ? 'bg-[#FAF5EA] border border-[#EADCC8] rounded-2xl shadow-xs'
         : appTheme === 'pink'
           ? 'bg-[#FFF0F5] border border-pink-200 rounded-2xl shadow-xs'
           : 'bg-white border border-slate-200 rounded-2xl shadow-xs')
-    : '${cardThemeClass} rounded-2xl shadow-sm';
+    : 'bg-slate-900 border border-slate-800 rounded-2xl shadow-sm';
+
+  const cardGroupThemeClass = isLight
+    ? (appTheme === 'organic' || appTheme === 'cute'
+        ? 'bg-[#FAF5EA] border border-[#EADCC8] rounded-2xl overflow-hidden divide-y divide-[#EADCC8]/80 shadow-xs'
+        : appTheme === 'pink'
+          ? 'bg-[#FFF0F5] border border-pink-200 rounded-2xl overflow-hidden divide-y divide-pink-200/80 shadow-xs'
+          : 'bg-white border border-slate-200 rounded-2xl overflow-hidden divide-y divide-slate-100 shadow-xs')
+    : 'bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden divide-y divide-slate-800/60 shadow-sm';
 
   const innerCardThemeClass = isLight
     ? (appTheme === 'organic' || appTheme === 'cute'
@@ -1919,7 +1921,7 @@ export default function SettingsScreen({
       {isResetting && (
         <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md z-[9999] flex flex-col items-center justify-center p-6 text-center">
           <div className="w-16 h-16 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mb-4" />
-          <p className="text-slate-200 font-bold text-lg">
+          <p className={`font-bold text-lg ${primaryTextThemeClass}`}>
             {lang === 'id' ? 'Mengatur Ulang Aplikasi...' : 'Resetting Application...'}
           </p>
           <p className="text-slate-400 text-xs mt-2">
@@ -2153,7 +2155,7 @@ export default function SettingsScreen({
                           <Globe size={16} />
                         </div>
                       )}
-                      <span className="font-semibold text-[14px] text-slate-200 block truncate">
+                      <span className={`font-semibold text-[14px] ${primaryTextThemeClass} block truncate`}>
                         {lang === 'id' ? 'Bahasa' : 'Language'}
                       </span>
                     </div>
@@ -2180,7 +2182,7 @@ export default function SettingsScreen({
                           <Smartphone size={16} />
                         </div>
                       )}
-                      <span className="font-semibold text-[14px] text-slate-200 block truncate">
+                      <span className={`font-semibold text-[14px] ${primaryTextThemeClass} block truncate`}>
                         {lang === 'id' ? 'Mode Aplikasi' : 'Display Mode'}
                       </span>
                     </div>
@@ -2204,7 +2206,7 @@ export default function SettingsScreen({
                           {soundActive ? <Volume2 size={16} /> : <VolumeX size={16} />}
                         </div>
                       )}
-                      <span className="font-semibold text-[14px] text-slate-200 block truncate">
+                      <span className={`font-semibold text-[14px] ${primaryTextThemeClass} block truncate`}>
                         {lang === 'id' ? 'Efek Suara' : 'Sound Effects'}
                       </span>
                     </div>
@@ -2234,7 +2236,7 @@ export default function SettingsScreen({
                           <Bot size={16} />
                         </div>
                       )}
-                      <span className="font-semibold text-[14px] text-slate-200 block truncate">
+                      <span className={`font-semibold text-[14px] ${primaryTextThemeClass} block truncate`}>
                         Tata AI (BYOK Key)
                       </span>
                     </div>
@@ -2547,9 +2549,14 @@ export default function SettingsScreen({
                           <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} />
                         </div>
                       )}
-                      <span className={`font-semibold text-[14px] block truncate ${cardRowTextClass}`}>
-                        {lang === 'id' ? 'Segarkan Cache Aplikasi' : 'Refresh App Cache'}
-                      </span>
+                      <div className="min-w-0">
+                        <span className={`font-semibold text-[14px] block truncate ${cardRowTextClass}`}>
+                          {lang === 'id' ? 'Bersihkan Cache & Segarkan Sistem' : 'Clean Cache & Refresh System'}
+                        </span>
+                        <span className={`text-[11px] block truncate ${cardRowSubtextClass}`}>
+                          {lang === 'id' ? 'Hapus sisa cache & sampah sementara, data 100% aman' : 'Clear temporary cache & junk, data 100% safe'}
+                        </span>
+                      </div>
                     </div>
                     <div className="shrink-0 flex items-center text-slate-400">
                       <ChevronRight size={16} />
@@ -3102,7 +3109,7 @@ export default function SettingsScreen({
                             <Smartphone size={20} />
                           </div>
                           <div>
-                            <h4 className="text-xs sm:text-sm font-bold text-slate-100">
+                            <h4 className={`text-xs sm:text-sm font-bold ${primaryTextThemeClass}`}>
                               {lang === 'id' ? 'Ingin Menggunakan Foto Sendiri?' : 'Want to Use Your Own Photo?'}
                             </h4>
                             <p className="text-[11px] text-slate-400 mt-0.5">
@@ -3158,7 +3165,7 @@ export default function SettingsScreen({
                                 {appTheme === 'wallpaper' ? <Check size={18} strokeWidth={2.5} /> : <Sparkles size={18} />}
                               </div>
                               <div>
-                                <h4 className="text-xs sm:text-sm font-bold text-slate-100">
+                                <h4 className={`text-xs sm:text-sm font-bold ${primaryTextThemeClass}`}>
                                   {appTheme === 'wallpaper' 
                                     ? (lang === 'id' ? 'Tema Wallpaper Sedang Aktif' : 'Wallpaper Theme Active') 
                                     : (lang === 'id' ? 'Tema Wallpaper Belum Aktif' : 'Wallpaper Theme Inactive')}
@@ -3238,7 +3245,7 @@ export default function SettingsScreen({
                               <div className="flex-1 space-y-3 min-w-0 text-center sm:text-left">
                                 <div>
                                   <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
-                                    <h4 className="text-sm font-bold text-slate-100">
+                                    <h4 className={`text-sm font-bold ${primaryTextThemeClass}`}>
                                       {lang === 'id' ? 'Foto Wallpaper Layar Penuh' : 'Full Screen Background Photo'}
                                     </h4>
                                     {localCustomWallpaper ? (
@@ -3303,7 +3310,7 @@ export default function SettingsScreen({
                           {/* Curated Wallpaper Presets */}
                           <div className={`${cardThemeClass} rounded-2xl p-4 space-y-3`}>
                             <div className="flex items-center justify-between">
-                              <span className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                              <span className={`text-xs font-bold ${primaryTextThemeClass} flex items-center gap-1.5`}>
                                 <Sparkles size={13} className="text-amber-400" />
                                 {lang === 'id' ? 'Koleksi Estetik Siap Pakai' : 'Curated Wallpaper Presets'}
                               </span>
@@ -3358,7 +3365,7 @@ export default function SettingsScreen({
                           <div className={`${cardThemeClass} rounded-2xl p-4 sm:p-5 space-y-4 shadow-sm`}>
                             <div className="flex items-center gap-2 pb-2 border-b border-slate-800">
                               <Sliders size={15} className="text-indigo-400" />
-                              <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider">
+                              <h4 className={`text-xs font-bold ${primaryTextThemeClass} uppercase tracking-wider`}>
                                 {lang === 'id' ? 'Penyesuaian & Kenyamanan Layar' : 'Screen & Comfort Settings'}
                               </h4>
                             </div>
@@ -3562,7 +3569,7 @@ export default function SettingsScreen({
                       <div className={`p-4 sm:p-5 ${cardThemeClass} rounded-2xl space-y-4 shadow-sm`}>
                         <div className="flex items-center justify-between">
                           <div>
-                            <h3 className="text-sm font-bold text-slate-100">
+                            <h3 className={`text-sm font-bold ${primaryTextThemeClass}`}>
                               {lang === 'id' ? 'Banner Sambutan Beranda' : 'Home Greeting Banner'}
                             </h3>
                             <p className="text-[11px] text-slate-400 mt-0.5">
@@ -3667,7 +3674,7 @@ export default function SettingsScreen({
                             </div>
                           )}
                           <div>
-                            <span className="font-bold text-sm text-slate-100 block">
+                            <span className={`font-bold text-sm ${primaryTextThemeClass} block`}>
                               {lang === 'id' ? 'Kunci PIN Layar Utama' : 'Passcode PIN Lock'}
                             </span>
                             <span className="text-xs text-slate-400">
@@ -3723,7 +3730,7 @@ export default function SettingsScreen({
                               <Shuffle size={16} className="text-indigo-400 shrink-0 mt-0.5" />
                             )}
                             <div>
-                              <h4 className="text-xs font-bold text-slate-200">
+                              <h4 className={`text-xs font-bold ${primaryTextThemeClass}`}>
                                 {lang === 'id' ? 'Acak Tombol PIN (Anti-Intip)' : 'Scramble Keypad (Anti-Peeking)'}
                               </h4>
                               <p className="text-[11px] text-slate-400 leading-relaxed mt-0.5">
@@ -3851,7 +3858,7 @@ export default function SettingsScreen({
                           )}
                           <div>
                             <div className="flex items-center gap-2">
-                              <span className="font-bold text-sm text-slate-100 block">
+                              <span className={`font-bold text-sm ${primaryTextThemeClass} block`}>
                                 {lang === 'id' ? 'PIN Terpisah untuk Catatan' : 'Separate Note PIN'}
                               </span>
                               <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
@@ -3927,7 +3934,7 @@ export default function SettingsScreen({
                           </div>
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="font-bold text-sm text-slate-100 block truncate">
+                              <span className={`font-bold text-sm ${primaryTextThemeClass} block truncate`}>
                                 {lang === 'id' ? 'Pertanyaan Keamanan Terpadu' : 'Unified Security Question'}
                               </span>
                               <span className={`px-2 py-0.5 rounded text-[10px] font-bold border shrink-0 ${
@@ -3993,7 +4000,7 @@ export default function SettingsScreen({
                             </div>
                           )}
                           <div className="min-w-0">
-                            <p className="font-bold text-sm text-slate-100 group-hover:text-indigo-400 transition-colors">
+                            <p className={`font-bold text-sm ${primaryTextThemeClass} group-hover:text-indigo-400 transition-colors`}>
                               {lang === 'id' ? 'Kelola Cadangan & Pemulihan (.json)' : 'Manage Backup & Restore (.json)'}
                             </p>
                             <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">
@@ -4061,7 +4068,7 @@ export default function SettingsScreen({
                           )}
                           <div>
                             <div className="flex items-center gap-2">
-                              <span className="font-bold text-sm text-slate-100 block">
+                              <span className={`font-bold text-sm ${primaryTextThemeClass} block`}>
                                 {lang === 'id' ? 'Izin Notifikasi Browser' : 'Browser Notification Permission'}
                               </span>
                               <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
@@ -4112,7 +4119,7 @@ export default function SettingsScreen({
                       <div className="pt-3 border-t border-slate-800/60 flex flex-col gap-3">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                           <div>
-                            <span className="text-xs font-bold text-slate-200 block">
+                            <span className={`text-xs font-bold ${primaryTextThemeClass} block`}>
                               {lang === 'id' ? 'Uji Coba Notifikasi Langsung' : 'Live Test Notification'}
                             </span>
                             <span className="text-[11px] text-slate-400">
@@ -4132,7 +4139,7 @@ export default function SettingsScreen({
                         <div className="pt-2.5 border-t border-slate-800/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                           <div>
                             <div className="flex items-center gap-2">
-                              <span className="text-xs font-bold text-slate-200 block">
+                              <span className={`text-xs font-bold ${primaryTextThemeClass} block`}>
                                 {lang === 'id' ? 'Uji Notifikasi Latar Belakang (5 Detik)' : 'Background Test (5s Delay)'}
                               </span>
                               <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/30">
@@ -4350,7 +4357,7 @@ export default function SettingsScreen({
                     <div className={`${cardThemeClass} rounded-2xl p-4 sm:p-5 shadow-sm space-y-4 mt-2`}>
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div>
-                          <span className="font-bold text-xs text-slate-200 block">
+                          <span className={`font-bold text-xs ${primaryTextThemeClass} block`}>
                             {lang === 'id' ? 'Uji Forensik Isolasi Data Perangkat' : 'Device Forensic Isolation Audit'}
                           </span>
                           <span className="text-[11px] text-slate-400 leading-relaxed block mt-0.5">
@@ -4383,7 +4390,7 @@ export default function SettingsScreen({
                           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-slate-300">
                             <div className="p-2 bg-slate-900/60 rounded-lg border border-slate-800">
                               <span className="text-[10px] text-slate-400 block">{lang === 'id' ? 'Total Entri Lokal' : 'Total Local Items'}</span>
-                              <span className="font-bold text-slate-100">{privacyAuditResult.totalRecords} {lang === 'id' ? 'item' : 'items'}</span>
+                              <span className={`font-bold ${primaryTextThemeClass}`}>{privacyAuditResult.totalRecords} {lang === 'id' ? 'item' : 'items'}</span>
                             </div>
                             <div className="p-2 bg-slate-900/60 rounded-lg border border-slate-800">
                               <span className="text-[10px] text-slate-400 block">{lang === 'id' ? 'Ukuran LocalStorage' : 'LocalStorage Size'}</span>
@@ -4437,7 +4444,7 @@ export default function SettingsScreen({
                           )}
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="font-semibold text-[14px] text-slate-200 block truncate">
+                              <span className={`font-semibold text-[14px] ${primaryTextThemeClass} block truncate`}>
                                 {lang === 'id' ? 'White Paper & Laporan Privasi Lengkap' : 'White Paper & Full Privacy Report'}
                               </span>
                               <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
@@ -4468,7 +4475,7 @@ export default function SettingsScreen({
                             </div>
                           )}
                           <div className="min-w-0">
-                            <span className="font-semibold text-[14px] text-slate-200 block truncate">
+                            <span className={`font-semibold text-[14px] ${primaryTextThemeClass} block truncate`}>
                               {lang === 'id' ? 'Pesan dari Pengembang (Noto)' : 'Developer Message (Noto)'}
                             </span>
                             <span className="text-[11px] text-slate-400 block truncate">
@@ -4495,7 +4502,7 @@ export default function SettingsScreen({
                             </div>
                           )}
                           <div className="min-w-0">
-                            <span className="font-semibold text-[14px] text-slate-200 block truncate">
+                            <span className={`font-semibold text-[14px] ${primaryTextThemeClass} block truncate`}>
                               {lang === 'id' ? 'Catatan Rilis & Fitur Baru (v5.1.0)' : 'Release Notes & New Features (v5.1.0)'}
                             </span>
                             <span className="text-[11px] text-slate-400 block truncate">
@@ -4526,7 +4533,7 @@ export default function SettingsScreen({
                           )}
                           <div>
                             <div className="flex items-center gap-2">
-                              <span className="font-bold text-xs text-slate-200">
+                              <span className={`font-bold text-xs ${primaryTextThemeClass}`}>
                                 {lang === 'id' ? 'Izin Kamera (Pemindai Lokal)' : 'Camera Access (Local Scanner)'}
                               </span>
                               <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-sky-500/10 text-sky-400 border border-sky-500/20">
@@ -4552,7 +4559,7 @@ export default function SettingsScreen({
                           )}
                           <div>
                             <div className="flex items-center gap-2">
-                              <span className="font-bold text-xs text-slate-200">
+                              <span className={`font-bold text-xs ${primaryTextThemeClass}`}>
                                 {lang === 'id' ? 'Izin Notifikasi Pengingat' : 'Reminder Notifications'}
                               </span>
                               {notifPermission === 'granted' && (
@@ -4587,7 +4594,7 @@ export default function SettingsScreen({
                           )}
                           <div>
                             <div className="flex items-center gap-2">
-                              <span className="font-bold text-xs text-slate-200">
+                              <span className={`font-bold text-xs ${primaryTextThemeClass}`}>
                                 {lang === 'id' ? 'Statistik anonim penggunaan aplikasi' : 'Anonymous app usage statistics'}
                               </span>
                               <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${!disableTelemetry ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}`}>
@@ -4652,7 +4659,7 @@ export default function SettingsScreen({
                             </div>
                           )}
                           <div className="min-w-0">
-                            <span className="font-semibold text-[14px] text-slate-200 block truncate">
+                            <span className={`font-semibold text-[14px] ${primaryTextThemeClass} block truncate`}>
                               Instagram Resmi (@noto.grow)
                             </span>
                             <span className="text-[11px] text-slate-400 block truncate">
@@ -4679,7 +4686,7 @@ export default function SettingsScreen({
                             </div>
                           )}
                           <div className="min-w-0">
-                            <span className="font-semibold text-[14px] text-slate-200 block truncate">
+                            <span className={`font-semibold text-[14px] ${primaryTextThemeClass} block truncate`}>
                               {lang === 'id' ? 'Email Pengembang' : 'Developer Email'}
                             </span>
                             <span className="text-[11px] text-slate-400 block truncate">
@@ -4707,7 +4714,7 @@ export default function SettingsScreen({
                           )}
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="font-semibold text-[14px] text-slate-200 block truncate">
+                              <span className={`font-semibold text-[14px] ${primaryTextThemeClass} block truncate`}>
                                 {lang === 'id' ? 'Undang Teman & Bagikan Tata' : 'Invite Friends & Share Tata'}
                               </span>
                               <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
@@ -4776,7 +4783,7 @@ export default function SettingsScreen({
                             </div>
                           )}
                           <div>
-                            <span className="font-bold text-xs text-slate-100 block">
+                            <span className={`font-bold text-xs ${primaryTextThemeClass} block`}>
                               {(() => {
                                 const key = testApiKey.trim() || geminiApiKey?.trim() || '';
                                 if (!key) return 'Gemini Flash (Server Default)';
@@ -4820,7 +4827,7 @@ export default function SettingsScreen({
                               setConnectionStatus('idle');
                               setConnectionError(null);
                             }}
-                            className={`w-full ${innerCardThemeClass} rounded-xl pl-3.5 pr-10 py-2.5 text-slate-100 text-xs outline-none focus:border-indigo-500 transition-all placeholder-slate-600`}
+                            className={`w-full ${innerCardThemeClass} rounded-xl pl-3.5 pr-10 py-2.5 ${primaryTextThemeClass} text-xs outline-none focus:border-indigo-500 transition-all placeholder-slate-600`}
                             placeholder={lang === 'id' ? 'Masukkan Key (AIzaSy..., xai-..., gsk_..., sk-...)...' : 'Enter API Key (AIzaSy..., xai-..., gsk_..., sk-...)...'}
                           />
                           <button
@@ -4983,7 +4990,7 @@ export default function SettingsScreen({
                           ) : (
                             <HelpCircle size={16} className="text-indigo-400" />
                           )}
-                          <span className="font-bold text-xs text-slate-200 group-hover:text-indigo-400 transition-colors">
+                          <span className={`font-bold text-xs ${primaryTextThemeClass} group-hover:text-indigo-400 transition-colors`}>
                             {lang === 'id' ? 'Cara Mendapatkan API Key Gemini Gratis' : 'How to Get a Free Gemini API Key'}
                           </span>
                         </div>
@@ -5310,7 +5317,7 @@ export default function SettingsScreen({
                     <span className="text-[10px] text-amber-400 font-bold uppercase tracking-widest mb-1 block">
                       {lang === 'id' ? 'Pertanyaan Keamanan' : 'Security Question'}
                     </span>
-                    <p className="text-xs sm:text-sm font-medium text-slate-200 leading-snug">{pinRecoveryQuestion}</p>
+                    <p className={`text-xs sm:text-sm font-medium ${primaryTextThemeClass} leading-snug`}>{pinRecoveryQuestion}</p>
                   </div>
                 )}
 
@@ -5503,7 +5510,7 @@ export default function SettingsScreen({
                   <Lock size={20} />
                 </div>
               )}
-              <h3 className="text-base font-extrabold text-slate-100 font-sans">{lang === 'id' ? 'Verifikasi PIN Cadangan' : 'Verify Backup PIN'}</h3>
+              <h3 className={`text-base font-extrabold ${primaryTextThemeClass} font-sans`}>{lang === 'id' ? 'Verifikasi PIN Cadangan' : 'Verify Backup PIN'}</h3>
               <p className="text-[11px] text-slate-400 leading-normal mt-1.5">{lang === 'id' ? 'Masukkan PIN Cadangan Otomatis Anda untuk menyimpan perubahan frekuensi.' : 'Please enter your Auto-Backup PIN to confirm frequency alteration.'}</p>
             </div>
 
@@ -5595,7 +5602,7 @@ export default function SettingsScreen({
                   <Key size={20} />
                 </div>
               )}
-              <h3 className="text-base font-extrabold text-slate-100 font-sans">
+              <h3 className={`text-base font-extrabold ${primaryTextThemeClass} font-sans`}>
                 {autoBackupPinSetupStep === 1 
                   ? (lang === 'id' ? 'Buat PIN Cadangan Otomatis' : 'Create Auto-Backup PIN')
                   : (lang === 'id' ? 'Konfirmasi PIN Cadangan' : 'Confirm Auto-Backup PIN')}
@@ -5711,7 +5718,7 @@ export default function SettingsScreen({
                   <Key size={20} />
                 </div>
               )}
-              <h3 className="text-base font-extrabold text-slate-100 font-sans">
+              <h3 className={`text-base font-extrabold ${primaryTextThemeClass} font-sans`}>
                 {autoBackupPinChangeStep === 1 
                   ? (lang === 'id' ? 'Verifikasi PIN Lama' : 'Verify Old PIN')
                   : autoBackupPinChangeStep === 2
@@ -5861,7 +5868,7 @@ export default function SettingsScreen({
                   <Lock size={20} />
                 </div>
               )}
-              <h3 className="text-base font-extrabold text-slate-100 font-sans">
+              <h3 className={`text-base font-extrabold ${primaryTextThemeClass} font-sans`}>
                 {lang === 'id' ? 'Reset / Nonaktifkan PIN Cadangan' : 'Reset / Disable Backup PIN'}
               </h3>
               <p className="text-[11px] text-slate-400 leading-normal mt-1.5">
@@ -5993,7 +6000,7 @@ export default function SettingsScreen({
         <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 z-[200] animate-in fade-in duration-200">
           <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl w-full max-w-md shadow-2xl space-y-5">
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
+              <h3 className={`text-base font-bold ${primaryTextThemeClass} flex items-center gap-2`}>
                 {isOrganic ? <Icon3DHelp size={22} /> : <HelpCircle size={18} className="text-amber-400" />}
                 {lang === 'id' ? 'Bantuan Gagal Install / Reset PWA' : 'PWA Reinstallation Support'}
               </h3>
@@ -6017,7 +6024,7 @@ export default function SettingsScreen({
 
               {/* ACTION 1: FORCE RESET PWA SERVICE WORKERS */}
               <div className="space-y-2">
-                <h4 className="font-bold text-slate-100 text-xs uppercase tracking-wider">
+                <h4 className={`font-bold ${primaryTextThemeClass} text-xs uppercase tracking-wider`}>
                   {lang === 'id' ? 'Solusi 1: Setel Ulang Service Worker & Cache' : 'Solution 1: Reset Service Worker & Cache'}
                 </h4>
                 <p className="text-[11px] text-slate-400">
@@ -6039,7 +6046,7 @@ export default function SettingsScreen({
 
               {/* ACTION 2: CLEAR ALL COOKIES & SITE DATA */}
               <div className="space-y-2 pt-2 border-t border-slate-800/80">
-                <h4 className="font-bold text-slate-100 text-xs uppercase tracking-wider">
+                <h4 className={`font-bold ${primaryTextThemeClass} text-xs uppercase tracking-wider`}>
                   {lang === 'id' ? 'Solusi 2: Bersihkan Data Manual di Perangkat' : 'Solution 2: Manual Uninstall on Device'}
                 </h4>
                 <div className="space-y-2 text-[11px] sm:text-xs text-slate-400">
@@ -6080,7 +6087,7 @@ export default function SettingsScreen({
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-[200] animate-in fade-in duration-150">
           <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl w-full max-w-xs shadow-2xl space-y-4">
             <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-              <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
+              <h3 className={`text-sm font-bold ${primaryTextThemeClass} flex items-center gap-2`}>
                 {isOrganic ? (
                   <Icon3DGlobe size={18} />
                 ) : (
@@ -6150,7 +6157,7 @@ export default function SettingsScreen({
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-[200] animate-in fade-in duration-150">
           <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl w-full max-w-xs shadow-2xl space-y-4">
             <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-              <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
+              <h3 className={`text-sm font-bold ${primaryTextThemeClass} flex items-center gap-2`}>
                 {isOrganic ? (
                   <Icon3DSmartphone size={18} />
                 ) : (
@@ -6386,7 +6393,7 @@ export default function SettingsScreen({
                   <Crown className="w-5 h-5 fill-current" />
                 </div>
                 <div>
-                  <h3 className="text-sm sm:text-base font-extrabold text-slate-100 flex items-center gap-1.5">
+                  <h3 className={`text-sm sm:text-base font-extrabold ${primaryTextThemeClass} flex items-center gap-1.5`}>
                     <span>{lang === 'id' ? 'Lisensi Tata Pro & Pro Max' : 'Tata Pro & Pro Max Licenses'}</span>
                   </h3>
                   <p className="text-[11px] text-slate-400">
@@ -6477,7 +6484,7 @@ export default function SettingsScreen({
                   ? 'bg-gradient-to-br from-amber-500/10 via-slate-950 to-orange-500/10 border-amber-500/30'
                   : 'bg-slate-950/60 border-slate-800'
               }`}>
-                <h4 className="font-bold text-slate-200 mb-2 flex items-center gap-1.5">
+                <h4 className={`font-bold ${primaryTextThemeClass} mb-2 flex items-center gap-1.5`}>
                   {licenseModalTierTab === 'pro_max' ? (
                     <>
                       <Crown className="w-3.5 h-3.5 text-amber-400 fill-current shrink-0" />
@@ -6546,7 +6553,7 @@ export default function SettingsScreen({
                       <div className="p-3 rounded-2xl bg-slate-950/80 border border-slate-800 hover:border-amber-500/50 transition-all flex flex-col justify-between space-y-2">
                         <div>
                           <span className="text-[10px] font-bold text-slate-400 block">Bulanan</span>
-                          <span className="text-sm font-extrabold text-slate-100 block">Rp 29.000</span>
+                          <span className={`text-sm font-extrabold ${primaryTextThemeClass} block`}>Rp 29.000</span>
                           <span className="text-[10px] text-slate-400">/ 30 hari</span>
                         </div>
                         <span className="text-[10px] text-amber-400/80 font-medium">Bebas komitmen</span>
@@ -6583,7 +6590,7 @@ export default function SettingsScreen({
                       <div className="p-3 rounded-2xl bg-slate-950/80 border border-slate-800 hover:border-indigo-500/50 transition-all flex flex-col justify-between space-y-2">
                         <div>
                           <span className="text-[10px] font-bold text-slate-400 block">Bulanan</span>
-                          <span className="text-sm font-extrabold text-slate-100 block">Rp 19.000</span>
+                          <span className={`text-sm font-extrabold ${primaryTextThemeClass} block`}>Rp 19.000</span>
                           <span className="text-[10px] text-slate-400">/ 30 hari</span>
                         </div>
                         <span className="text-[10px] text-slate-400 font-medium">Bebas komitmen</span>
@@ -6608,7 +6615,7 @@ export default function SettingsScreen({
                       <div className="p-3 rounded-2xl bg-slate-950/80 border border-slate-700 flex flex-col justify-between space-y-2">
                         <div>
                           <span className="text-[10px] font-bold text-slate-300 block">Seumur Hidup</span>
-                          <span className="text-sm font-extrabold text-slate-100 block">Rp 199.000</span>
+                          <span className={`text-sm font-extrabold ${primaryTextThemeClass} block`}>Rp 199.000</span>
                           <span className="text-[10px] text-slate-400">Sekali bayar selamanya</span>
                         </div>
                         <span className="text-[10px] text-slate-300 font-bold">Permanen</span>
@@ -6732,7 +6739,7 @@ export default function SettingsScreen({
       {toastMessage && (
         <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[9999] bg-slate-900 border border-slate-850 px-4.5 py-3 rounded-2xl shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
           <div className="w-2 h-2 rounded-full bg-emerald-500" />
-          <p className="text-xs font-extrabold text-slate-200">
+          <p className={`text-xs font-extrabold ${primaryTextThemeClass}`}>
             {toastMessage}
           </p>
         </div>
