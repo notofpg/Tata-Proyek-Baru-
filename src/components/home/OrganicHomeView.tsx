@@ -29,7 +29,17 @@ import {
 } from 'lucide-react';
 import { useAppStore } from '../../store';
 import { Note, Task } from '../../types';
-import { OrganicPottedPlant, OrganicBloomingRose, OrganicFlowerBlossom, OrganicFabRoseFlower } from './OrganicBotanicals';
+import { 
+  OrganicPottedPlant, 
+  OrganicBloomingRose, 
+  OrganicFlowerBlossom, 
+  OrganicFabRoseFlower,
+  OrganicCrystalOrchid,
+  OrganicGoldenBonsai,
+  OrganicMinimalSprout,
+  OrganicCrystalStar,
+  OrganicGoldenLeaf
+} from './OrganicBotanicals';
 import { Organic3DMoodAvatar, OrganicMoodType } from './Organic3DMoodAvatar';
 import {
   Icon3DTataAI,
@@ -52,6 +62,7 @@ import { executeUniversalSearch, SearchResultItem } from '../../services/searchE
 import { getOrganicThemePalette } from './organicThemePalettes';
 import OrganicStreakModal from './OrganicStreakModal';
 import { getLargeItem, getLargeItemSync } from '../../utils/db';
+import { triggerHaptic, playTaskCompleteSound, playConfirmSound, playTapSound } from '../../utils/sound';
 
 interface OrganicHomeProps {
   appTheme?: string;
@@ -184,12 +195,13 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
 
   const notificationCount = notifications.length;
 
-  // Universal Search Execution
+  // Universal Search Execution with decoupled specific dependencies to avoid full-store re-evaluations
   const searchResults: SearchResultItem[] = useMemo(() => {
     const trimmed = localSearchQuery.trim();
     if (!trimmed) return [];
     return executeUniversalSearch(trimmed, store, lang);
-  }, [store, lang, localSearchQuery]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localSearchQuery, notes, tasks, transactions, debts, savingsBalance, savingsTarget, tataAccount, isAccountPremium, lang]);
 
   const filteredSearchResults = useMemo(() => {
     if (selectedSearchCategory === 'all') return searchResults;
@@ -223,15 +235,16 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
   const [activeMoodSelected, setActiveMoodSelected] = useState<OrganicMoodType | null>(getInitialActiveMood);
   const [isQuoteDismissed, setIsQuoteDismissed] = useState(false);
   const [showFabMenu, setShowFabMenu] = useState(false);
+  const [refreshToast, setRefreshToast] = useState(false);
 
   // Synchronize mood with store changes
   useEffect(() => {
     setActiveMoodSelected(getInitialActiveMood());
   }, [currentTodayMood?.mood]);
 
-  // 1. Discipline Task Filter
+  // 1. Discipline Task Filter (robust detection of isDiscipline or disciplineData)
   const disciplineTask = useMemo(() => {
-    return tasks.find(t => t.isDiscipline && !t.deleted);
+    return tasks.find(t => (t.isDiscipline || !!t.disciplineData) && !t.deleted);
   }, [tasks]);
 
   // Full Discipline Check-in with Daily Checkins & Streak Updates
@@ -239,62 +252,84 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
     disciplineTask && (
       disciplineTask.disciplineData?.dailyCheckins?.includes(todayStr) ||
       disciplineTask.disciplineData?.usedRestDates?.includes(todayStr) ||
+      disciplineTask.completedDates?.includes(todayStr) ||
       disciplineTask.completed
     )
   );
 
-  // 2. Regular Tasks & Progress Calculation
-  const regularTasks = useMemo(() => {
-    return tasks.filter(t => !t.deleted && !t.isDiscipline);
+  // 2. Regular Active Tasks
+  const activeTasks = useMemo(() => {
+    return tasks.filter(t => !t.deleted && !t.isDiscipline && !t.disciplineData);
   }, [tasks]);
 
-  const { completedRegularCount, completedCount, totalCount, progressPercent, frontStreak } = useMemo(() => {
-    const compReg = regularTasks.filter(t => t.completed).length;
-    const comp = compReg + (isDisciplineCheckedInToday ? 1 : 0);
-    const tot = regularTasks.length + (disciplineTask ? 1 : 0);
-    const prog = tot > 0 ? Math.round((comp / tot) * 100) : 0;
-    const front = comp === 0 ? 0 : Math.max(1, streak);
-    return {
-      completedRegularCount: compReg,
-      completedCount: comp,
-      totalCount: tot,
-      progressPercent: prog,
-      frontStreak: front
-    };
-  }, [regularTasks, isDisciplineCheckedInToday, disciplineTask, streak]);
-  const organicDay = journeyDay || 1;
+  // Tasks due or active today
+  const todayTasks = useMemo(() => {
+    return activeTasks.filter(t => {
+      if (!t.date || t.date === 'Hari ini' || t.date === todayStr) return true;
+      if (t.repeat === 'daily') return true;
+      return false;
+    });
+  }, [activeTasks, todayStr]);
 
   // 3. Pinned Tasks & Pinned Notes (Top Priority)
   const pinnedTasks = useMemo(() => {
-    return tasks.filter(t => !t.deleted && !t.isDiscipline && t.pinned);
-  }, [tasks]);
+    return activeTasks.filter(t => t.pinned);
+  }, [activeTasks]);
 
   const pinnedNotes = useMemo(() => {
     return notes.filter(n => !n.isArchived && n.pinned);
   }, [notes]);
 
+  const { completedCount, totalCount, progressPercent, frontStreak, isTodayConfirmed } = useMemo(() => {
+    const scope = todayTasks.length > 0 ? todayTasks : activeTasks;
+    const compReg = scope.filter(t => t.completed).length;
+    const comp = compReg + (isDisciplineCheckedInToday ? 1 : 0);
+    const tot = scope.length + (disciplineTask ? 1 : 0);
+    const prog = tot > 0 ? Math.round((comp / tot) * 100) : 0;
+    const isConfirmed = comp > 0;
+    const front = streak || 0;
+    return {
+      completedCount: comp,
+      totalCount: tot,
+      progressPercent: prog,
+      frontStreak: front,
+      isTodayConfirmed: isConfirmed
+    };
+  }, [todayTasks, activeTasks, isDisciplineCheckedInToday, disciplineTask, streak]);
+
+  const pendingTasksCount = useMemo(() => {
+    const scope = todayTasks.length > 0 ? todayTasks : activeTasks;
+    const uncompleted = scope.filter(t => !t.completed).length;
+    return uncompleted + (disciplineTask && !isDisciplineCheckedInToday ? 1 : 0);
+  }, [todayTasks, activeTasks, disciplineTask, isDisciplineCheckedInToday]);
+
+  const organicDay = journeyDay || 1;
+
   const getUserName = () => {
     if (user?.name && user.name.trim()) {
-      return user.name.toUpperCase();
+      const trimmed = user.name.trim();
+      return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
     }
-    return lang === 'id' ? 'SOBAT TATA' : 'FRIEND';
+    return lang === 'id' ? 'Sobat Tata' : 'Friend';
   };
 
   const getGreeting = () => {
     const hr = new Date().getHours();
     if (lang === 'id') {
-      if (hr < 11) return 'SELAMAT PAGI';
-      if (hr < 15) return 'SELAMAT SIANG';
-      if (hr < 18) return 'SELAMAT SORE';
-      return 'SELAMAT MALAM';
+      if (hr < 11) return 'Selamat pagi';
+      if (hr < 15) return 'Selamat siang';
+      if (hr < 18) return 'Selamat sore';
+      return 'Selamat malam';
     } else {
-      if (hr < 12) return 'GOOD MORNING';
-      if (hr < 17) return 'GOOD AFTERNOON';
-      return 'GOOD EVENING';
+      if (hr < 12) return 'Good morning';
+      if (hr < 17) return 'Good afternoon';
+      return 'Good evening';
     }
   };
 
+  // Instant tactile mood selection WITHOUT notes (per strict user request)
   const handleMoodClick = (val: 'great' | 'good' | 'neutral' | 'bad' | 'terrible') => {
+    triggerHaptic('light');
     setActiveMoodSelected(val);
     const moodMapping: Record<string, any> = {
       great: 'excellent',
@@ -339,10 +374,53 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
   const handleToggleDisciplineToday = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!disciplineTask) return;
-    toggleTask(disciplineTask.id);
+    if (!isDisciplineCheckedInToday) {
+      playTaskCompleteSound();
+    } else {
+      triggerHaptic('medium');
+    }
+    toggleTask(disciplineTask.id, todayStr);
+  };
+
+  const handleToggleRegularTask = (taskId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const target = tasks.find(t => t.id === taskId);
+    if (target && !target.completed) {
+      playTaskCompleteSound();
+    } else {
+      triggerHaptic('light');
+    }
+    toggleTask(taskId, todayStr);
+  };
+
+  const handleTogglePinTask = (task: Task, e: React.MouseEvent) => {
+    e.stopPropagation();
+    triggerHaptic('light');
+    updateTask({ ...task, pinned: !task.pinned });
+  };
+
+  const handleTogglePinNote = (note: Note, e: React.MouseEvent) => {
+    e.stopPropagation();
+    triggerHaptic('light');
+    updateNote({ ...note, pinned: !note.pinned });
+  };
+
+  const handleRefreshClick = async () => {
+    triggerHaptic('medium');
+    try {
+      if (handleRefreshApp) {
+        await handleRefreshApp();
+      }
+    } catch {
+      // ignore
+    } finally {
+      setRefreshToast(true);
+      setTimeout(() => setRefreshToast(false), 2200);
+    }
   };
 
   const handleCreateNewNote = () => {
+    triggerHaptic('light');
     const newId = Date.now().toString();
     const newNote: Note = {
       id: newId,
@@ -356,6 +434,8 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
   };
 
   const handleExecuteSearchResult = (item: SearchResultItem) => {
+    triggerHaptic('light');
+    handleUpdateSearch('');
     item.action(onNavigate, {
       openNote: onOpenNote,
       createNote: handleCreateNewNote
@@ -372,12 +452,12 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
         {/* Brand with Leaf icon and sync status */}
         <div className="flex items-center gap-2">
           <button
-            onClick={handleRefreshApp}
+            onClick={handleRefreshClick}
             disabled={isRefreshing}
-            className="flex items-center gap-2.5 group cursor-pointer active:scale-95 transition-all text-left"
+            className="flex items-center gap-2.5 group cursor-pointer active:scale-95 transition-all text-left touch-manipulation select-none"
             title={lang === 'id' ? 'Klik untuk Segarkan Data' : 'Click to Refresh'}
           >
-            <div className={`w-9 h-9 rounded-2xl flex items-center justify-center shadow-xs ${palette.brandBg} transition-all group-hover:scale-105`}>
+            <div className={`w-9 h-9 rounded-2xl flex items-center justify-center shadow-xs ${palette.brandBg} transition-all group-hover:scale-105 active:scale-90`}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="w-4.5 h-4.5 text-current">
                 <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
                 <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 12" />
@@ -386,39 +466,60 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
             <div className="flex items-center gap-1.5">
               <span className={`font-black text-xl tracking-tight ${palette.brandText}`}>TATA</span>
               <RefreshCw size={12} className={`opacity-60 transition-transform ${isRefreshing ? 'animate-spin text-amber-600' : 'group-hover:rotate-180'}`} />
+              <AnimatePresence>
+                {refreshToast && (
+                  <motion.span
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                  >
+                    {lang === 'id' ? 'Segar ✨' : 'Synced ✨'}
+                  </motion.span>
+                )}
+              </AnimatePresence>
             </div>
           </button>
         </div>
 
-        {/* Right Action Icons in Soft Rounded Pills */}
+        {/* Right Action Icons in Soft Rounded Pills with tactile haptic response */}
         <div className="flex items-center gap-1.5 sm:gap-2">
           <button 
-            onClick={() => onNavigate('ai-companion')}
+            onClick={() => {
+              triggerHaptic('light');
+              onNavigate('ai-companion');
+            }}
             aria-label="Tata AI"
             title="Tata AI Companion"
-            className={`w-9.5 h-9.5 sm:w-10 sm:h-10 rounded-2xl active:scale-95 flex items-center justify-center transition-all shadow-2xs border ${palette.actionBtn} ${palette.actionBtnHover} hover:shadow-xs cursor-pointer`}
+            className={`w-9.5 h-9.5 sm:w-10 sm:h-10 rounded-2xl active:scale-90 flex items-center justify-center transition-all shadow-2xs border touch-manipulation select-none ${palette.actionBtn} ${palette.actionBtnHover} hover:shadow-xs cursor-pointer`}
           >
             <Icon3DTataAI size={21} />
           </button>
           
           <button 
-            onClick={() => onNavigate('finance')}
+            onClick={() => {
+              triggerHaptic('light');
+              onNavigate('finance');
+            }}
             aria-label="Keuangan"
             title={lang === 'id' ? 'Keuangan & Kas' : 'Finance'}
-            className={`w-9.5 h-9.5 sm:w-10 sm:h-10 rounded-2xl active:scale-95 flex items-center justify-center transition-all shadow-2xs border ${palette.actionBtn} ${palette.actionBtnHover} hover:shadow-xs cursor-pointer`}
+            className={`w-9.5 h-9.5 sm:w-10 sm:h-10 rounded-2xl active:scale-90 flex items-center justify-center transition-all shadow-2xs border touch-manipulation select-none ${palette.actionBtn} ${palette.actionBtnHover} hover:shadow-xs cursor-pointer`}
           >
             <Icon3DWallet size={21} />
           </button>
 
           <button 
-            onClick={() => setIsNotificationOpen(true)}
+            onClick={() => {
+              triggerHaptic('light');
+              setIsNotificationOpen(true);
+            }}
             aria-label="Notifikasi"
             title={lang === 'id' ? 'Notifikasi & Pengingat' : 'Notifications & Reminders'}
-            className={`w-9.5 h-9.5 sm:w-10 sm:h-10 rounded-2xl active:scale-95 flex items-center justify-center transition-all shadow-2xs border ${palette.actionBtn} ${palette.actionBtnHover} hover:shadow-xs cursor-pointer relative`}
+            className={`w-9.5 h-9.5 sm:w-10 sm:h-10 rounded-2xl active:scale-90 flex items-center justify-center transition-all shadow-2xs border touch-manipulation select-none ${palette.actionBtn} ${palette.actionBtnHover} hover:shadow-xs cursor-pointer relative`}
           >
             <Icon3DBell size={21} />
             {notificationCount > 0 && (
-              <span className="absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 rounded-full bg-rose-500 text-white text-[9.5px] font-black flex items-center justify-center shadow-xs">
+              <span className="absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 rounded-full bg-rose-500 text-white text-[9.5px] font-black flex items-center justify-center shadow-xs animate-pulse">
                 {notificationCount > 9 ? '9+' : notificationCount}
               </span>
             )}
@@ -447,8 +548,12 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
           />
           {localSearchQuery ? (
             <button
-              onClick={() => handleUpdateSearch('')}
-              className="p-1 rounded-full opacity-70 hover:opacity-100 transition-opacity cursor-pointer"
+              onClick={() => {
+                triggerHaptic('light');
+                handleUpdateSearch('');
+                searchInputRef.current?.focus();
+              }}
+              className="p-1 rounded-full opacity-70 hover:opacity-100 transition-opacity cursor-pointer touch-manipulation active:scale-90"
               title={lang === 'id' ? 'Hapus Pencarian' : 'Clear search'}
             >
               <X size={16} />
@@ -477,8 +582,11 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
             ].map(cat => (
               <button
                 key={cat.id}
-                onClick={() => setSelectedSearchCategory(cat.id)}
-                className={`px-3 py-1 rounded-full text-[11px] font-bold tracking-tight whitespace-nowrap transition-all flex items-center gap-1 cursor-pointer border ${
+                onClick={() => {
+                  triggerHaptic('light');
+                  setSelectedSearchCategory(cat.id);
+                }}
+                className={`px-3 py-1 rounded-full text-[11px] font-bold tracking-tight whitespace-nowrap transition-all flex items-center gap-1 cursor-pointer border touch-manipulation active:scale-95 ${
                   selectedSearchCategory === cat.id
                     ? palette.chipActive
                     : palette.chipInactive
@@ -613,16 +721,29 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
                 <OrganicFlowerBlossom className="w-10 h-10 sm:w-12 sm:h-12 rotate-12" glow />
               </div>
             )}
+            {palette.id === 'cool' && !bannerWallpaper && (
+              <div className="absolute -top-1 -right-1 sm:top-2 sm:right-2 pointer-events-none opacity-40 hover:opacity-75 transition-opacity select-none">
+                <OrganicCrystalStar className="w-9 h-9 sm:w-11 sm:h-11 rotate-12" glow />
+              </div>
+            )}
+            {palette.id === 'cute' && !bannerWallpaper && (
+              <div className="absolute -top-1 -right-1 sm:top-2 sm:right-2 pointer-events-none opacity-40 hover:opacity-75 transition-opacity select-none">
+                <OrganicGoldenLeaf className="w-9 h-9 sm:w-11 sm:h-11 -rotate-12" glow />
+              </div>
+            )}
             <div className="relative z-10">
               {/* Top greeting & Streak Container */}
               <div className="flex items-start justify-between gap-3 mb-4">
                 <div className="flex items-center gap-3">
                   {/* Profile Avatar */}
                   <div 
-                    onClick={() => onNavigate('settings')}
-                    className={`w-11 h-11 rounded-2xl overflow-hidden flex items-center justify-center shadow-2xs shrink-0 cursor-pointer border ${
+                    onClick={() => {
+                      triggerHaptic('light');
+                      onNavigate('settings');
+                    }}
+                    className={`w-11 h-11 rounded-2xl overflow-hidden flex items-center justify-center shadow-2xs shrink-0 cursor-pointer border active:scale-90 touch-manipulation select-none ${
                       bannerWallpaper ? 'bg-black/40 border-white/40' : `${palette.avatarBg} ${palette.avatarBorder}`
-                    } hover:opacity-90 transition-opacity`}
+                    } hover:opacity-90 transition-all`}
                   >
                     {user?.avatarUrl && user.avatarUrl !== 'indexeddb:user_avatar' ? (
                       <img src={user.avatarUrl} alt="Profile" className="w-full h-full object-cover" />
@@ -661,49 +782,64 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
                 <motion.div 
                   whileHover={{ scale: 1.04, y: -1 }}
                   whileTap={{ scale: 0.96 }}
-                  onClick={() => setIsStreakModalOpen(true)}
-                  className={`shrink-0 flex items-center gap-3 rounded-2xl px-3.5 py-2 border cursor-pointer transition-all shadow-2xs hover:shadow-sm group relative overflow-hidden ${
+                  onClick={() => {
+                    triggerHaptic('light');
+                    setIsStreakModalOpen(true);
+                  }}
+                  className={`shrink-0 flex items-center gap-3 rounded-2xl px-3.5 py-2 border cursor-pointer transition-all shadow-2xs hover:shadow-sm group relative overflow-hidden touch-manipulation ${
                     bannerWallpaper
                       ? 'bg-black/40 backdrop-blur-md border-white/25 text-white'
-                      : (completedCount === 0 
+                      : (frontStreak === 0
                         ? 'bg-slate-500/10 border-slate-400/20 text-slate-500 dark:text-slate-400' 
                         : palette.streakCard)
                   }`}
                   title={lang === 'id' 
-                    ? (completedCount === 0 
-                      ? `Streak: 0 hari. Kerjakan tugas hari ini agar streak bertambah!` 
-                      : `Streak: ${frontStreak} hari berturut-turut! Klik untuk lihat detail`)
-                    : (completedCount === 0 
-                      ? `Streak: 0 days. Finish a task today to grow your streak!` 
-                      : `Streak: ${frontStreak} days! Click to explore`)}
+                    ? (frontStreak === 0 
+                      ? 'Streak: 0 hari. Selesaikan 1 tugas hari ini untuk mulai membangun streak!' 
+                      : isTodayConfirmed
+                        ? `Streak: ${frontStreak} hari berturut-turut! Target hari ini tercapai 🔥`
+                        : `Streak aktif: ${frontStreak} hari! Selesaikan tugas hari ini agar streak terus bertambah 🔥`)
+                    : (frontStreak === 0 
+                      ? 'Streak: 0 days. Finish a task today to start your streak!' 
+                      : isTodayConfirmed
+                        ? `Streak: ${frontStreak} days! Today's goal completed 🔥`
+                        : `Active streak: ${frontStreak} days! Complete a task today to keep it going 🔥`)}
                 >
                   <div className={`relative shrink-0 flex items-center justify-center w-8 h-8 rounded-xl border transition-all ${
                     bannerWallpaper 
                       ? 'bg-white/10 border-white/20'
-                      : (completedCount === 0 
+                      : (frontStreak === 0
                         ? 'bg-slate-500/15 border-slate-500/25' 
-                        : 'bg-gradient-to-br from-amber-500/15 via-orange-500/10 to-red-500/5 border-orange-500/20')
+                        : isTodayConfirmed
+                          ? 'bg-gradient-to-br from-amber-500/20 via-orange-500/15 to-red-500/10 border-orange-500/30'
+                          : 'bg-amber-500/10 border-amber-500/20')
                   }`}>
                     <Icon3DFlame 
                       size={20} 
-                      isDelayed={completedCount === 0}
+                      isDelayed={!isTodayConfirmed}
                       className="group-hover:scale-110 transition-transform duration-300" 
                     />
                   </div>
                   <div className="flex flex-col text-left">
                     <div className="flex items-baseline gap-1">
                       <span className={`text-base font-black tracking-tight leading-none ${
-                        bannerWallpaper ? 'text-white' : (completedCount === 0 ? 'text-slate-400 dark:text-slate-500' : palette.streakText)
+                        bannerWallpaper ? 'text-white' : (frontStreak === 0 ? 'text-slate-400 dark:text-slate-500' : palette.streakText)
                       }`}>
                         {frontStreak}
                       </span>
                     </div>
                     <span className={`text-[9px] font-extrabold tracking-wider uppercase mt-0.5 ${
-                      bannerWallpaper ? 'text-amber-300' : (completedCount === 0 ? 'text-slate-400 dark:text-slate-500' : palette.streakLabel)
+                      bannerWallpaper 
+                        ? 'text-amber-300' 
+                        : (frontStreak === 0 
+                          ? 'text-slate-400 dark:text-slate-500' 
+                          : isTodayConfirmed
+                            ? palette.streakLabel
+                            : 'text-amber-600 dark:text-amber-400 font-bold')
                     }`}>
-                      {completedCount === 0 
-                        ? (lang === 'id' ? 'RESET' : 'RESET') 
-                        : (lang === 'id' ? 'HARI' : 'DAYS')}
+                      {lang === 'id' 
+                        ? (frontStreak === 0 ? 'HARI' : isTodayConfirmed ? 'HARI' : 'AKTIF') 
+                        : (frontStreak === 0 ? 'DAYS' : isTodayConfirmed ? 'DAYS' : 'ACTIVE')}
                     </span>
                   </div>
                 </motion.div>
@@ -728,8 +864,11 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
           {/* 4. DISCIPLINE TARGET CARD (If Active) - Single Clean Surface */}
           {disciplineTask && (
             <div 
-              onClick={() => onNavigate('tasks')}
-              className={`relative w-full rounded-2xl p-4 sm:p-5 mb-5 border transition-all cursor-pointer group shadow-xs ${palette.disciplineCard}`}
+              onClick={() => {
+                triggerHaptic('light');
+                onNavigate('tasks');
+              }}
+              className={`relative w-full rounded-2xl p-4 sm:p-5 mb-5 border transition-all cursor-pointer group shadow-xs touch-manipulation active:scale-[0.99] ${palette.disciplineCard}`}
             >
               <div className="flex items-center justify-between mb-2.5">
                 <div className="flex items-center gap-2">
@@ -767,7 +906,7 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
 
                 <button
                   onClick={handleToggleDisciplineToday}
-                  className={`flex-none px-3 py-1.5 rounded-xl font-bold text-xs transition-all cursor-pointer shadow-2xs active:scale-95 ${
+                  className={`flex-none px-3 py-1.5 rounded-xl font-bold text-xs transition-all cursor-pointer shadow-2xs active:scale-95 touch-manipulation ${
                     isDisciplineCheckedInToday
                       ? palette.disciplineBtnDone
                       : palette.disciplineBtnAction
@@ -795,21 +934,25 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
                 <div className="flex items-center gap-1">
                   {onRefreshQuote && (
                     <button 
-                      onClick={onRefreshQuote}
+                      onClick={() => {
+                        triggerHaptic('light');
+                        onRefreshQuote();
+                      }}
                       aria-label="Ganti kutipan"
                       title={lang === 'id' ? 'Ganti kutipan' : 'New Quote'}
-                      className={`w-7 h-7 rounded-xl flex items-center justify-center transition-colors cursor-pointer ${palette.quoteBtn}`}
+                      className={`w-7 h-7 rounded-xl flex items-center justify-center transition-colors cursor-pointer touch-manipulation active:scale-90 ${palette.quoteBtn}`}
                     >
                       <Shuffle size={12} />
                     </button>
                   )}
                   <button 
                     onClick={() => {
+                      triggerHaptic('light');
                       setIsQuoteDismissed(true);
                       if (onCloseQuote) onCloseQuote();
                     }}
                     aria-label="Tutup kutipan"
-                    className={`w-7 h-7 rounded-xl flex items-center justify-center transition-colors cursor-pointer ${palette.quoteBtn}`}
+                    className={`w-7 h-7 rounded-xl flex items-center justify-center transition-colors cursor-pointer touch-manipulation active:scale-90 ${palette.quoteBtn}`}
                   >
                     <X size={13} />
                   </button>
@@ -824,15 +967,20 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
             </div>
           )}
 
-          {/* 6. MOOD SECTION & EMOTIONAL GARDEN */}
+          {/* 6. MOOD SECTION & EMOTIONAL GARDEN - NO NOTES INPUT PER USER PREFERENCE */}
           <div className={`relative w-full rounded-2xl p-4 sm:p-5 mb-5 border shadow-xs ${palette.moodCard}`}>
             <div className="flex items-center justify-between mb-3.5">
-              <h2 className={`text-xs font-bold uppercase tracking-wider ${palette.moodTitle}`}>
-                {lang === 'id' ? 'Suasana Hati Hari Ini' : "Today's Mood"}
-              </h2>
+              <div className="flex items-center gap-2">
+                <h2 className={`text-xs font-bold uppercase tracking-wider ${palette.moodTitle}`}>
+                  {lang === 'id' ? 'Suasana Hati Hari Ini' : "Today's Mood"}
+                </h2>
+              </div>
               <button 
-                onClick={() => onNavigate('calendar')}
-                className={`text-[11px] font-semibold hover:underline flex items-center gap-1 cursor-pointer ${palette.moodLink}`}
+                onClick={() => {
+                  triggerHaptic('light');
+                  onNavigate('calendar');
+                }}
+                className={`text-[11px] font-semibold hover:underline flex items-center gap-1 cursor-pointer touch-manipulation select-none ${palette.moodLink}`}
               >
                 <span>{lang === 'id' ? 'Kalender Mood' : 'Mood Calendar'}</span>
                 <ArrowRight size={12} />
@@ -854,7 +1002,7 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
                     key={m.id}
                     onClick={() => handleMoodClick(m.id)}
                     aria-label={lang === 'id' ? m.labelId : m.labelEn}
-                    className={`group flex flex-col items-center justify-center p-1 sm:p-1.5 rounded-xl transition-all cursor-pointer select-none active:scale-95 ${
+                    className={`group flex flex-col items-center justify-center p-1 sm:p-1.5 rounded-xl transition-all cursor-pointer select-none active:scale-90 touch-manipulation ${
                       isSelected 
                         ? palette.moodBtnActive 
                         : palette.moodBtnHover
@@ -884,242 +1032,239 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
 
         {/* Right Column: Priorities, Quick Tasks, Recent Notes & Aesthetics */}
         <div className="lg:col-span-7 space-y-5">
-          {/* 7. PRIORITAS UTAMA (PINNED TASKS & NOTES) */}
+          {/* 7. PRIORITAS UTAMA & TUGAS HARI INI */}
           <div className="w-full">
-        <div className="flex items-center justify-between mb-3.5 px-1">
-          <div className="flex items-center gap-2">
-            <div className={`w-7 h-7 rounded-xl flex items-center justify-center shadow-xs ${palette.brandBg}`}>
-              <Pin size={15} className="text-current" />
-            </div>
-            <h2 className={`text-sm font-extrabold uppercase tracking-wider ${palette.priorityTitle}`}>
-              {lang === 'id' ? 'Prioritas Utama' : 'Top Priority'}
-            </h2>
-          </div>
-          <button 
-            onClick={() => onNavigate('tasks')}
-            className={`text-xs font-bold hover:underline flex items-center gap-1 cursor-pointer ${palette.moodLink}`}
-          >
-            <span>{lang === 'id' ? 'Semua Tugas' : 'All Tasks'}</span>
-            <ArrowRight size={13} />
-          </button>
-        </div>
+            <div className="flex items-center justify-between gap-2.5 mb-3.5 px-1">
+              <div className="flex items-center gap-2">
+                <div className={`w-7 h-7 rounded-xl flex items-center justify-center shadow-xs ${palette.brandBg}`}>
+                  <Pin size={15} className="text-current" />
+                </div>
+                <h2 className={`text-sm font-extrabold uppercase tracking-wider ${palette.priorityTitle}`}>
+                  {lang === 'id' ? 'Tugas Prioritas' : 'Priority Tasks'}
+                </h2>
+                {(pinnedTasks.length > 0 || pinnedNotes.length > 0) && (
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${palette.searchBadge}`}>
+                    {pinnedTasks.length + pinnedNotes.length}
+                  </span>
+                )}
+              </div>
 
-        {pinnedTasks.length === 0 && pinnedNotes.length === 0 ? (
-          <div className={`rounded-2xl p-6 text-center border shadow-xs ${palette.priorityEmptyCard}`}>
-            <div className={`w-11 h-11 rounded-2xl flex items-center justify-center mx-auto mb-2.5 shadow-inner ${palette.priorityEmptyIconBg}`}>
-              <Pin size={20} className="opacity-80" />
-            </div>
-            <h4 className={`font-bold text-sm mb-1 ${palette.priorityEmptyText}`}>
-              {lang === 'id' ? 'Belum Ada Prioritas Utama' : 'No Priority Items Yet'}
-            </h4>
-            <p className={`text-xs max-w-xs mx-auto leading-relaxed mb-3.5 ${palette.priorityEmptySub}`}>
-              {lang === 'id' 
-                ? 'Sematkan catatan atau tugas penting agar tampil langsung di beranda.' 
-                : 'Pin important tasks or notes to display them right here on Home.'}
-            </p>
-            <div className="flex items-center justify-center gap-2">
-              <button
-                onClick={() => onNavigate('tasks')}
-                className={`px-3.5 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer ${palette.priorityEmptyBtn}`}
+              <button 
+                onClick={() => {
+                  triggerHaptic('light');
+                  onNavigate('tasks');
+                }}
+                className={`text-xs font-bold hover:underline flex items-center gap-1 cursor-pointer touch-manipulation select-none ${palette.moodLink}`}
               >
-                {lang === 'id' ? '+ Tugas' : '+ Tasks'}
-              </button>
-              <button
-                onClick={() => onNavigate('search')}
-                className={`px-3.5 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer ${palette.priorityEmptyBtn}`}
-              >
-                {lang === 'id' ? '+ Catatan' : '+ Notes'}
+                <span>{lang === 'id' ? 'Semua' : 'All'}</span>
+                <ArrowRight size={12} />
               </button>
             </div>
-          </div>
-        ) : (
-          <div className="space-y-5">
-            {/* Pinned Tasks - Flattened, no nested wrapper card */}
-            {pinnedTasks.length > 0 && (
-              <div className="space-y-2.5">
-                <div className="flex items-center justify-between px-1">
-                  <div className="flex items-center gap-2">
-                    <CheckSquare size={14} className="text-emerald-500" />
-                    <h3 className={`text-xs font-bold uppercase tracking-wider ${palette.priorityTitle}`}>
-                      {lang === 'id' ? 'Tugas Prioritas' : 'Priority Tasks'}
-                    </h3>
+
+            {/* HANYA ITEM DI-PIN (PINNED TASKS & PINNED NOTES) */}
+            {pinnedTasks.length === 0 && pinnedNotes.length === 0 ? (
+                <div className={`rounded-2xl p-5 text-center border shadow-xs ${palette.priorityEmptyCard}`}>
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center mx-auto mb-2 shadow-inner ${palette.priorityEmptyIconBg}`}>
+                    <Pin size={16} className="opacity-80" />
                   </div>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${palette.searchBadge}`}>
-                    {pinnedTasks.length}
-                  </span>
-                </div>
-
-                <div className="space-y-2">
-                  {pinnedTasks.map((task) => (
-                    <div
-                      key={task.id}
-                      onClick={() => toggleTask(task.id)}
-                      className={`flex items-center justify-between p-3.5 rounded-2xl border transition-all cursor-pointer shadow-xs group ${
-                        task.completed
-                          ? `${palette.taskCardDone} ${palette.taskCardDoneBorder}`
-                          : `${palette.taskCard} ${palette.taskCardBorder} ${palette.taskCardHoverBorder}`
-                      }`}
+                  <h4 className={`font-bold text-xs sm:text-sm mb-1 ${palette.priorityEmptyText}`}>
+                    {lang === 'id' ? 'Belum Ada Tugas Prioritas' : 'No Priority Tasks Yet'}
+                  </h4>
+                  <p className={`text-[11px] max-w-xs mx-auto leading-relaxed mb-3 ${palette.priorityEmptySub}`}>
+                    {lang === 'id' 
+                      ? 'Sematkan tugas penting agar tampil di sini.' 
+                      : 'Pin important tasks to keep them here.'}
+                  </p>
+                  <div className="flex items-center justify-center gap-2">
+                    <button
+                      onClick={() => {
+                        triggerHaptic('light');
+                        onNavigate('tasks', { openNewTask: true });
+                      }}
+                      className={`px-3.5 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer touch-manipulation select-none ${palette.priorityEmptyBtn}`}
                     >
-                      <div className="flex items-center gap-3 min-w-0 pr-2 flex-1">
-                        <button
-                          type="button"
-                          className="shrink-0 transition-transform active:scale-90 cursor-pointer"
-                          aria-label="Toggle task"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleTask(task.id);
-                          }}
-                        >
-                          {task.completed ? (
-                            <Icon3DTaskChecked size={22} />
-                          ) : (
-                            <Icon3DTaskUnchecked size={22} />
-                          )}
-                        </button>
-
-                        <div className="min-w-0 flex-1">
-                          <h4 className={`text-xs sm:text-sm font-bold truncate leading-snug ${task.completed ? palette.taskCardDoneText : palette.taskCardText}`}>
-                            {task.title}
-                          </h4>
-                          
-                          <div className="flex flex-wrap items-center gap-1.5 mt-0.5 text-[10px] opacity-70">
-                            {task.date && (
-                              <span className="font-mono">{task.date}</span>
-                            )}
-                            {task.time && (
-                              <span className="font-mono">• {task.time}</span>
-                            )}
-                            {task.alarmTime && (
-                              <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-600 dark:text-amber-400 font-semibold text-[9px]">
-                                <Bell size={10} />
-                                {task.alarmTime}
-                              </span>
-                            )}
-                            {task.repeat === 'daily' && (
-                              <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 font-semibold text-[9px]">
-                                <Repeat size={10} />
-                                {lang === 'id' ? 'Tiap Hari' : 'Daily'}
-                              </span>
-                            )}
-                          </div>
+                      {lang === 'id' ? '+ Buat Tugas' : '+ New Task'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Pinned Tasks */}
+                  {pinnedTasks.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between px-1">
+                        <div className="flex items-center gap-1.5">
+                          <CheckSquare size={13} className="text-emerald-500" />
+                          <h3 className={`text-xs font-bold uppercase tracking-wider ${palette.priorityTitle}`}>
+                            {lang === 'id' ? 'Tugas Prioritas' : 'Priority Tasks'}
+                          </h3>
                         </div>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${palette.searchBadge}`}>
+                          {pinnedTasks.length}
+                        </span>
                       </div>
 
-                      <div className="flex items-center gap-1 shrink-0">
-                        {task.priority && task.priority !== 'Sedang' && (
-                          <span className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full mr-1 ${
-                            task.priority === 'Tinggi'
-                              ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400'
-                              : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
-                          }`}>
-                            {task.priority}
-                          </span>
-                        )}
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            updateTask({ ...task, pinned: false });
-                          }}
-                          className="w-7 h-7 rounded-xl flex items-center justify-center opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
-                          title={lang === 'id' ? 'Lepas dari Prioritas Utama' : 'Unpin from Top Priority'}
-                        >
-                          <X size={14} />
-                        </button>
+                      <div className="space-y-2">
+                        {pinnedTasks.map((task) => (
+                          <div
+                            key={task.id}
+                            onClick={() => handleToggleRegularTask(task.id)}
+                            className={`flex items-center justify-between p-3 sm:p-3.5 rounded-2xl border transition-all cursor-pointer shadow-xs group touch-manipulation select-none ${
+                              task.completed
+                                ? `${palette.taskCardDone} ${palette.taskCardDoneBorder}`
+                                : `${palette.taskCard} ${palette.taskCardBorder} ${palette.taskCardHoverBorder}`
+                            }`}
+                          >
+                            <div className="flex items-center gap-3 min-w-0 pr-2 flex-1">
+                              <button
+                                type="button"
+                                className="shrink-0 transition-transform active:scale-90 cursor-pointer"
+                                aria-label="Toggle task"
+                                onClick={(e) => handleToggleRegularTask(task.id, e)}
+                              >
+                                {task.completed ? (
+                                  <Icon3DTaskChecked size={22} />
+                                ) : (
+                                  <Icon3DTaskUnchecked size={22} />
+                                )}
+                              </button>
+
+                              <div className="min-w-0 flex-1">
+                                <h4 className={`text-xs sm:text-sm font-bold truncate leading-snug ${task.completed ? `${palette.taskCardDoneText} line-through opacity-70` : palette.taskCardText}`}>
+                                  {task.title}
+                                </h4>
+                                
+                                <div className="flex flex-wrap items-center gap-1.5 mt-0.5 text-[10px] opacity-70">
+                                  {task.date && (
+                                    <span className="font-mono">{task.date}</span>
+                                  )}
+                                  {task.time && (
+                                    <span className="font-mono">• {task.time}</span>
+                                  )}
+                                  {task.alarmTime && (
+                                    <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-600 dark:text-amber-400 font-semibold text-[9px]">
+                                      <Bell size={10} />
+                                      {task.alarmTime}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-1 shrink-0">
+                              {task.priority && task.priority !== 'Sedang' && (
+                                <span className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full mr-1 ${
+                                  task.priority === 'Tinggi'
+                                    ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400'
+                                    : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                                }`}>
+                                  {task.priority}
+                                </span>
+                              )}
+                              <button
+                                type="button"
+                                onClick={(e) => handleTogglePinTask(task, e)}
+                                className="w-7 h-7 rounded-xl flex items-center justify-center opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5 active:scale-90 transition-all cursor-pointer touch-manipulation"
+                                title={lang === 'id' ? 'Lepas Sematan' : 'Unpin'}
+                              >
+                                <X size={14} />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
+                  )}
 
-            {/* Pinned Notes - Flattened, no nested wrapper card */}
-            {pinnedNotes.length > 0 && (
-              <div className="space-y-2.5">
-                <div className="flex items-center justify-between px-1">
-                  <div className="flex items-center gap-2">
-                    <FileText size={14} className="text-amber-500" />
-                    <h3 className={`text-xs font-bold uppercase tracking-wider ${palette.priorityTitle}`}>
-                      {lang === 'id' ? 'Catatan Prioritas' : 'Priority Notes'}
-                    </h3>
-                  </div>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${palette.searchBadge}`}>
-                    {pinnedNotes.length}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  {pinnedNotes.map((note) => (
-                    <div
-                      key={note.id}
-                      onClick={() => onOpenNote(note)}
-                      className={`p-4 rounded-2xl border transition-all cursor-pointer shadow-xs flex flex-col justify-between group ${palette.noteCard} ${palette.noteCardBorder} ${palette.noteCardHoverBorder} hover:shadow-md`}
-                    >
-                      <div>
-                        <div className="flex items-center justify-between gap-1 mb-2">
-                          <div className="flex items-center gap-1 overflow-x-hidden">
-                            <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-md uppercase flex items-center gap-1 shrink-0 ${palette.noteTagBadge}`}>
-                              <Pin size={10} className="fill-current" />
-                              <span>{lang === 'id' ? 'Prioritas' : 'Pinned'}</span>
-                            </span>
-                            {note.tags && note.tags.length > 0 && (
-                              <span className="text-[9px] font-bold opacity-75 bg-black/5 dark:bg-white/5 px-1.5 py-0.5 rounded-md uppercase truncate max-w-[90px]">
-                                {note.tags[0].replace('#', '')}
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="flex items-center gap-1 shrink-0">
-                            {note.sharedWithAI && (
-                              <span className="px-1.5 py-0.5 bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 text-[9px] font-bold rounded flex items-center gap-0.5" title={lang === 'id' ? 'Telah masuk Tata AI' : 'Shared with Tata AI'}>
-                                <Bot size={10} />
-                                <span>AI</span>
-                              </span>
-                            )}
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                updateNote({ ...note, pinned: false });
-                              }}
-                              className="w-6 h-6 rounded-lg flex items-center justify-center opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
-                              title={lang === 'id' ? 'Lepas dari Prioritas Utama' : 'Unpin note'}
-                            >
-                              <X size={12} />
-                            </button>
-                          </div>
+                  {/* Pinned Notes */}
+                  {pinnedNotes.length > 0 && (
+                    <div className="space-y-2.5">
+                      <div className="flex items-center justify-between px-1">
+                        <div className="flex items-center gap-2">
+                          <FileText size={14} className="text-amber-500" />
+                          <h3 className={`text-xs font-bold uppercase tracking-wider ${palette.priorityTitle}`}>
+                            {lang === 'id' ? 'Catatan Prioritas' : 'Priority Notes'}
+                          </h3>
                         </div>
-
-                        <h4 className={`text-xs sm:text-sm font-bold transition-colors line-clamp-1 leading-snug mb-1 ${palette.noteCardText}`}>
-                          {note.title || (lang === 'id' ? 'Catatan Tanpa Judul' : 'Untitled Note')}
-                        </h4>
-
-                        {note.isLocked ? (
-                          <p className="text-[11px] text-amber-500 font-medium flex items-center gap-1 my-1">
-                            <Lock size={11} />
-                            <span>{lang === 'id' ? 'Terkunci PIN' : 'Locked with PIN'}</span>
-                          </p>
-                        ) : (
-                          <p className={`text-[11px] line-clamp-2 leading-relaxed ${palette.noteCardSub}`}>
-                            {note.content ? note.content.replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]*>?/gm, '').replace(/&nbsp;?/gi, ' ').trim() : '...'}
-                          </p>
-                        )}
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${palette.searchBadge}`}>
+                          {pinnedNotes.length}
+                        </span>
                       </div>
 
-                      <div className="flex items-center justify-between pt-2.5 mt-2 border-t border-black/5 dark:border-white/5 text-[10px] font-mono opacity-60">
-                        <span>{note.date}</span>
-                        {note.reminder && (
-                          <span className="flex items-center gap-1 text-rose-500 font-sans font-bold">
-                            <Bell size={10} />
-                            <span>{note.reminder}</span>
-                          </span>
-                        )}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        {pinnedNotes.map((note) => (
+                          <div
+                            key={note.id}
+                            onClick={() => {
+                              triggerHaptic('light');
+                              onOpenNote(note);
+                            }}
+                            className={`p-4 rounded-2xl border transition-all cursor-pointer shadow-xs flex flex-col justify-between group touch-manipulation ${palette.noteCard} ${palette.noteCardBorder} ${palette.noteCardHoverBorder} hover:shadow-md`}
+                          >
+                            <div>
+                              <div className="flex items-center justify-between gap-1 mb-2">
+                                <div className="flex items-center gap-1 overflow-x-hidden">
+                                  <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-md uppercase flex items-center gap-1 shrink-0 ${palette.noteTagBadge}`}>
+                                    <Pin size={10} className="fill-current" />
+                                    <span>{lang === 'id' ? 'Prioritas' : 'Pinned'}</span>
+                                  </span>
+                                  {note.tags && note.tags.length > 0 && (
+                                    <span className="text-[9px] font-bold opacity-75 bg-black/5 dark:bg-white/5 px-1.5 py-0.5 rounded-md uppercase truncate max-w-[90px]">
+                                      {note.tags[0].replace('#', '')}
+                                    </span>
+                                  )}
+                                </div>
+
+                                <div className="flex items-center gap-1 shrink-0">
+                                  {note.sharedWithAI && (
+                                    <span className="px-1.5 py-0.5 bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 text-[9px] font-bold rounded flex items-center gap-0.5" title={lang === 'id' ? 'Telah masuk Tata AI' : 'Shared with Tata AI'}>
+                                      <Bot size={10} />
+                                      <span>AI</span>
+                                    </span>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={(e) => handleTogglePinNote(note, e)}
+                                    className="w-6 h-6 rounded-lg flex items-center justify-center opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5 active:scale-90 transition-all cursor-pointer touch-manipulation"
+                                    title={lang === 'id' ? 'Lepas dari Prioritas Utama' : 'Unpin note'}
+                                  >
+                                    <X size={12} />
+                                  </button>
+                                </div>
+                              </div>
+
+                              <h4 className={`text-xs sm:text-sm font-bold transition-colors line-clamp-1 leading-snug mb-1 ${palette.noteCardText}`}>
+                                {note.title || (lang === 'id' ? 'Catatan Tanpa Judul' : 'Untitled Note')}
+                              </h4>
+
+                              {note.isLocked ? (
+                                <p className="text-[11px] text-amber-500 font-medium flex items-center gap-1 my-1">
+                                  <Lock size={11} />
+                                  <span>{lang === 'id' ? 'Terkunci PIN' : 'Locked with PIN'}</span>
+                                </p>
+                              ) : (
+                                <p className={`text-[11px] line-clamp-2 leading-relaxed ${palette.noteCardSub}`}>
+                                  {note.content ? note.content.replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]*>?/gm, '').replace(/&nbsp;?/gi, ' ').trim() : '...'}
+                                </p>
+                              )}
+                            </div>
+
+                            <div className="flex items-center justify-between pt-2.5 mt-2 border-t border-black/5 dark:border-white/5 text-[10px] font-mono opacity-60">
+                              <span>{note.date}</span>
+                              {note.reminder && (
+                                <span className="flex items-center gap-1 text-rose-500 font-sans font-bold">
+                                  <Bell size={10} />
+                                  <span>{note.reminder}</span>
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                  ))}
+                  )}
                 </div>
-              </div>
-            )}
+              )}
 
             {/* Elegant Garden / Aesthetic Footer */}
             <div className="pt-6 pb-8 flex flex-col items-center justify-center text-center">
@@ -1144,6 +1289,44 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
                     <OrganicFlowerBlossom className="w-3.5 h-3.5 shrink-0" />
                   </div>
                 </motion.div>
+              ) : palette.id === 'cool' ? (
+                <motion.div 
+                  whileHover={{ scale: 1.05 }}
+                  className="flex flex-col items-center gap-2.5 cursor-pointer group select-none"
+                >
+                  <OrganicCrystalOrchid className="w-22 h-30 drop-shadow-[0_8px_20px_rgba(2,132,199,0.3)] group-hover:scale-105 transition-transform duration-300" />
+                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#13234A]/80 border border-[#1E3A8A] shadow-2xs text-cyan-300">
+                    <Sparkles size={12} className="text-cyan-400" />
+                    <p className="text-xs font-semibold">
+                      {lang === 'id' ? 'Kristal ketenangan dan fokus berenergi' : 'Crystal clarity and energized focus'}
+                    </p>
+                    <Sparkles size={12} className="text-cyan-400" />
+                  </div>
+                </motion.div>
+              ) : palette.id === 'cute' ? (
+                <motion.div 
+                  whileHover={{ scale: 1.05 }}
+                  className="flex flex-col items-center gap-2.5 cursor-pointer group select-none"
+                >
+                  <OrganicGoldenBonsai className="w-22 h-30 drop-shadow-md group-hover:scale-105 transition-transform duration-300" />
+                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100/70 dark:bg-amber-950/40 border border-amber-300/60 shadow-2xs text-amber-900 dark:text-amber-200">
+                    <Sparkles size={12} className="text-amber-500" />
+                    <p className="text-xs font-semibold">
+                      {lang === 'id' ? 'Bonsai emas pembawa keberuntungan dan tekad' : 'Golden bonsai of prosperity & steadfast spirit'}
+                    </p>
+                    <Sparkles size={12} className="text-amber-500" />
+                  </div>
+                </motion.div>
+              ) : palette.id === 'light' || palette.id === 'simple' ? (
+                <motion.div 
+                  whileHover={{ scale: 1.05 }}
+                  className="flex flex-col items-center gap-2.5 cursor-pointer group select-none"
+                >
+                  <OrganicMinimalSprout className="w-22 h-30 drop-shadow-sm group-hover:scale-105 transition-transform duration-300" />
+                  <p className={`text-xs font-semibold ${palette.subText}`}>
+                    {lang === 'id' ? 'Satu langkah kecil yang bertumbuh setiap hari' : 'One small step growing every day'}
+                  </p>
+                </motion.div>
               ) : (
                 <div className={`p-3.5 rounded-2xl border flex items-center gap-3 max-w-sm w-full mx-auto ${palette.cardHero} ${palette.cardHeroBorder}`}>
                   <div className={`w-8 h-8 rounded-xl border flex items-center justify-center shrink-0 ${palette.actionBtn} ${palette.actionBtnBorder}`}>
@@ -1161,13 +1344,18 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
               )}
             </div>
           </div>
-        )}
-      </div>
         </div>
       </div>
       )}
 
-      {/* 10. INTERACTIVE FLOATING ACTION BUTTON */}
+      {/* 10. INTERACTIVE FLOATING ACTION BUTTON WITH OUTSIDE TAP DISMISS */}
+      {showFabMenu && (
+        <div 
+          className="fixed inset-0 z-20 pointer-events-auto bg-black/15 backdrop-blur-[0.5px] transition-opacity cursor-pointer"
+          onClick={() => setShowFabMenu(false)}
+        />
+      )}
+
       <div className="fixed bottom-20 right-4 sm:right-8 z-30 flex flex-col items-end pointer-events-none">
         {/* Action FAB Menu Popup */}
         <AnimatePresence>
@@ -1180,10 +1368,11 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
             >
               <button
                 onClick={() => {
+                  triggerHaptic('light');
                   setShowFabMenu(false);
                   handleCreateNewNote();
                 }}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl transition-colors cursor-pointer ${palette.fabMenuItemHover} ${palette.fabMenuItemText}`}
+                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl transition-colors cursor-pointer touch-manipulation ${palette.fabMenuItemHover} ${palette.fabMenuItemText}`}
               >
                 <FileText size={15} className={palette.id === 'pink' ? "text-rose-500" : "text-amber-500"} />
                 <span>{lang === 'id' ? 'Catatan Baru' : 'New Note'}</span>
@@ -1192,10 +1381,11 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
 
               <button
                 onClick={() => {
+                  triggerHaptic('light');
                   setShowFabMenu(false);
                   onNavigate('tasks', { openNewTask: true });
                 }}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl transition-colors cursor-pointer ${palette.fabMenuItemHover} ${palette.fabMenuItemText}`}
+                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl transition-colors cursor-pointer touch-manipulation ${palette.fabMenuItemHover} ${palette.fabMenuItemText}`}
               >
                 <CheckCircle2 size={15} className="text-emerald-500" />
                 <span>{lang === 'id' ? 'Tugas Baru' : 'New Task'}</span>
@@ -1204,10 +1394,11 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
 
               <button
                 onClick={() => {
+                  triggerHaptic('light');
                   setShowFabMenu(false);
                   onNavigate('finance', { openAddModal: true });
                 }}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl transition-colors cursor-pointer ${palette.fabMenuItemHover} ${palette.fabMenuItemText}`}
+                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl transition-colors cursor-pointer touch-manipulation ${palette.fabMenuItemHover} ${palette.fabMenuItemText}`}
               >
                 <Wallet size={15} className="text-indigo-500" />
                 <span>{lang === 'id' ? 'Catat Transaksi' : 'New Transaction'}</span>
@@ -1218,10 +1409,13 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
 
         {/* Main Action Button (Buat Catatan atau Tugas) */}
         <button
-          onClick={() => setShowFabMenu(!showFabMenu)}
+          onClick={() => {
+            triggerHaptic('light');
+            setShowFabMenu(!showFabMenu);
+          }}
           aria-label={lang === 'id' ? 'Buat Catatan atau Tugas Baru' : 'Create New Note or Task'}
           title={lang === 'id' ? 'Buat Catatan atau Tugas' : 'Create Note or Task'}
-          className={`relative z-10 w-14 h-14 rounded-full active:scale-90 text-white flex items-center justify-center pointer-events-auto transition-all cursor-pointer overflow-hidden p-0.5 border-2 shadow-lg ${palette.fabBtn}`}
+          className={`relative z-10 w-14 h-14 rounded-full active:scale-90 text-white flex items-center justify-center pointer-events-auto transition-all cursor-pointer overflow-hidden p-0.5 border-2 shadow-lg touch-manipulation select-none ${palette.fabBtn}`}
         >
           {palette.id === 'pink' ? (
             <div className={`w-full h-full flex items-center justify-center transition-transform duration-300 ${showFabMenu ? 'rotate-45 scale-105' : 'hover:scale-110'}`}>

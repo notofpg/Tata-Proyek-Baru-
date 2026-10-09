@@ -1287,12 +1287,6 @@ export default function HomeScreen({ appTheme, setAppTheme, onOpenNote, onNaviga
                               </span>
                             )}
                           </p>
-                          {task.repeat === 'daily' && (
-                            <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded flex-shrink-0 text-indigo-400 bg-indigo-500/10 flex items-center gap-1">
-                              <Repeat className="w-2.5 h-2.5" />
-                              {lang === 'id' ? 'Tiap Hari' : 'Daily'}
-                            </span>
-                          )}
                         </div>
                      </div>
                      <button 

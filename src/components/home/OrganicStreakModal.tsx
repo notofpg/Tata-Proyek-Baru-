@@ -308,8 +308,11 @@ export default function OrganicStreakModal({
 
               {/* Close Button */}
               <button
-                onClick={onClose}
-                className="w-7 h-7 rounded-full flex items-center justify-center opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                onClick={() => {
+                  triggerHaptic('light');
+                  onClose();
+                }}
+                className="w-7 h-7 rounded-full flex items-center justify-center opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer active:scale-90 touch-manipulation"
                 aria-label="Close"
               >
                 <X size={16} />

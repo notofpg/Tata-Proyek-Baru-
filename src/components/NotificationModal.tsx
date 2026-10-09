@@ -13,6 +13,7 @@ import {
   markAllNotifsAsRead, 
   NotificationItem 
 } from '../utils/notifications';
+import { triggerHaptic, playConfirmSound } from '../utils/sound';
 
 interface NotificationModalProps {
   isOpen: boolean;
@@ -104,6 +105,7 @@ export default function NotificationModal({
   });
 
   const handleItemClick = (item: NotificationItem) => {
+    triggerHaptic('light');
     markNotifAsRead(item.id);
     refreshNotifs();
 
@@ -122,11 +124,14 @@ export default function NotificationModal({
 
   const handleDismiss = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
+    triggerHaptic('light');
     markNotifAsRead(id);
     refreshNotifs();
   };
 
   const handleMarkAllRead = () => {
+    triggerHaptic('medium');
+    playConfirmSound();
     const allIds = notifications.map(n => n.id);
     markAllNotifsAsRead(allIds);
     refreshNotifs();
@@ -620,8 +625,11 @@ export default function NotificationModal({
             </div>
 
             <button 
-              onClick={onClose}
-              className={`p-2 rounded-xl transition-all cursor-pointer shrink-0 border ${ms.closeBtn}`}
+              onClick={() => {
+                triggerHaptic('light');
+                onClose();
+              }}
+              className={`p-2 rounded-xl transition-all cursor-pointer shrink-0 border active:scale-95 touch-manipulation ${ms.closeBtn}`}
               title={t('close') || 'Tutup'}
             >
               <X className="w-4 h-4" />
@@ -642,8 +650,11 @@ export default function NotificationModal({
                 ].map(tab => (
                   <button
                     key={tab.id}
-                    onClick={() => setFilterType(tab.id as any)}
-                    className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                    onClick={() => {
+                      triggerHaptic('light');
+                      setFilterType(tab.id as any);
+                    }}
+                    className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap active:scale-95 touch-manipulation select-none ${
                       filterType === tab.id ? ms.filterActive : ms.filterInactive
                     }`}
                   >
@@ -654,7 +665,7 @@ export default function NotificationModal({
 
               <button
                 onClick={handleMarkAllRead}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold transition-all cursor-pointer shrink-0 border ${ms.readAllBtn}`}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold transition-all cursor-pointer shrink-0 border active:scale-95 touch-manipulation select-none ${ms.readAllBtn}`}
                 title={lang === 'id' ? 'Tandai Semua Dibaca' : 'Mark All Read'}
               >
                 <CheckCheck className="w-3.5 h-3.5" />
@@ -755,8 +766,11 @@ export default function NotificationModal({
               {lang === 'id' ? 'Deteksi otomatis & terkelola' : 'Auto-detected alerts'}
             </span>
             <button
-              onClick={onClose}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${ms.footerBtn}`}
+              onClick={() => {
+                triggerHaptic('light');
+                onClose();
+              }}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer active:scale-95 touch-manipulation select-none ${ms.footerBtn}`}
             >
               {t('close') || 'Tutup'}
             </button>
