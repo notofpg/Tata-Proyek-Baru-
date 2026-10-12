@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Activity, Calendar, CheckCircle2, Clock, X, 
@@ -18,6 +18,9 @@ import {
   Icon3DEdit, Icon3DClose, Icon3DNavNotes
 } from '../components/home/Organic3DIcons';
 import { getOrganicThemePalette } from '../components/home/organicThemePalettes';
+import { TaskFormModal, TaskFormData } from '../components/TaskFormModal';
+import { CalendarQuickTaskBar } from '../components/CalendarQuickTaskBar';
+import { triggerHaptic } from '../utils/sound';
 
 const getLocalIsoDate = (date: Date) => {
   const year = date.getFullYear();
@@ -160,10 +163,15 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
   
   const { tasks, moods, notes, transactions, lang, streak, setMood, toggleTask, addTask, deleteTask, updateTask, isLiteMode, appVersion } = useAppStore();
   const t = useTranslation(lang);
-  const palette = useMemo(() => getOrganicThemePalette(appTheme), [appTheme]);
   const isLite = appTheme === 'lite' || appVersion === 'lite' || isLiteMode;
-  const isOrganic = !isLite && ['organic', 'pro_max'].includes(appTheme || (typeof window !== 'undefined' ? localStorage.getItem('tata_theme') : '') || '');
-  const is3D = !isLite && (appVersion === 'organic' || appVersion === 'pro_max' || isOrganic);
+  const isProMax = (appVersion === 'organic' || appVersion === 'pro_max') && !isLite;
+  const isOrganic = !isLite && (isProMax || ['organic', 'pro_max'].includes(appTheme || (typeof window !== 'undefined' ? localStorage.getItem('tata_theme') : '') || ''));
+  const is3D = !isLite && (isProMax || appVersion === 'organic' || isOrganic);
+  const palette = useMemo(() => {
+    const storedTheme = typeof window !== 'undefined' ? localStorage.getItem('tata_theme') : null;
+    const effectiveTheme = isOrganic ? 'organic' : (appTheme || storedTheme || 'dark');
+    return getOrganicThemePalette(effectiveTheme);
+  }, [appTheme, isOrganic]);
 
   useEffect(() => {
     if (isLiteMode && activeTab !== 'calendar') {
@@ -171,31 +179,13 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
     }
   }, [isLiteMode, activeTab]);
 
-  // Calendar task editing state
-  const [isEditingCalendarTask, setIsEditingCalendarTask] = useState(false);
-  const [editCalTaskTitle, setEditCalTaskTitle] = useState('');
-  const [editCalTaskTime, setEditCalTaskTime] = useState('09:00');
-  const [editCalTaskPriority, setEditCalTaskPriority] = useState<'Tinggi' | 'Sedang' | 'Rendah'>('Sedang');
-
-  // Quick task state
-  const [isAddingQuickTask, setIsAddingQuickTask] = useState(false);
-  const [quickTaskTitle, setQuickTaskTitle] = useState('');
-  const [quickTaskPriority, setQuickTaskPriority] = useState<'Tinggi' | 'Sedang' | 'Rendah'>('Sedang');
-  const [quickTaskRepeat, setQuickTaskRepeat] = useState<'once' | 'daily'>('once');
-  const [quickTaskTime, setQuickTaskTime] = useState('09:00');
+  // Task Modal state (Isolated 0ms latency full options)
+  const [isAddingModalTask, setIsAddingModalTask] = useState(false);
+  const [editingModalTask, setEditingModalTask] = useState<Task | null>(null);
 
   const selectedDetailTask = useMemo(() => {
     return tasks.find(tk => tk.id === selectedDetailTaskId) || null;
   }, [tasks, selectedDetailTaskId]);
-
-  useEffect(() => {
-    if (selectedDetailTask) {
-      setEditCalTaskTitle(selectedDetailTask.title);
-      setEditCalTaskTime(selectedDetailTask.time || '09:00');
-      setEditCalTaskPriority(selectedDetailTask.priority || 'Sedang');
-      setIsEditingCalendarTask(false);
-    }
-  }, [selectedDetailTask]);
 
   const locale = lang === 'en' ? 'en-US' : 'id-ID';
   
@@ -241,16 +231,20 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
   const isTaskActiveOnDate = (task: Task, dateStr: string, curTodayStr: string): boolean => {
     if (!task || task.deleted) return false;
     const tDateStr = parseDateToIso(task.date);
-    const createdDateStr = parseDateToIso(task.createdAt) || tDateStr;
+    const createdDateStr = parseDateToIso(task.createdAt) || tDateStr || curTodayStr;
 
     if (task.isDiscipline) {
       if (task.disciplineData?.dailyCheckins?.includes(dateStr)) return true;
-      return dateStr >= createdDateStr && dateStr <= curTodayStr;
+      const targetDateStr = task.disciplineData?.targetDate ? parseDateToIso(task.disciplineData.targetDate) : null;
+      if (targetDateStr) {
+        return dateStr >= createdDateStr && dateStr <= targetDateStr;
+      }
+      return dateStr >= createdDateStr;
     }
 
     if (task.repeat === 'daily') {
       if (task.completedDates?.includes(dateStr)) return true;
-      return dateStr >= createdDateStr && dateStr <= curTodayStr;
+      return dateStr >= createdDateStr;
     }
 
     return tDateStr === dateStr;
@@ -351,11 +345,20 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
     return day === selectedDate.getDate() && currentMonth === selectedDate.getMonth() && currentYear === selectedDate.getFullYear();
   };
 
+  const agendaSectionRef = useRef<HTMLDivElement>(null);
+
   const handleSelectDay = (day: number) => {
+    triggerHaptic('light');
     setSelectedDate(new Date(currentYear, currentMonth, day));
+    if (typeof window !== 'undefined' && window.innerWidth < 1024 && agendaSectionRef.current) {
+      setTimeout(() => {
+        agendaSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 50);
+    }
   };
 
   const handlePrevDay = () => {
+    triggerHaptic('light');
     const prev = new Date(selectedDate);
     prev.setDate(prev.getDate() - 1);
     setSelectedDate(prev);
@@ -365,6 +368,7 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
   };
 
   const handleNextDay = () => {
+    triggerHaptic('light');
     const next = new Date(selectedDate);
     next.setDate(next.getDate() + 1);
     setSelectedDate(next);
@@ -374,6 +378,7 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
   };
 
   const handleJumpToday = () => {
+    triggerHaptic('medium');
     const now = new Date();
     setSelectedDate(now);
     setCurrentDate(now);
@@ -426,6 +431,88 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
       setCurrentDate(next);
     }
   };
+
+  const handleOpenNewModalTask = useCallback(() => {
+    triggerHaptic('light');
+    setEditingModalTask(null);
+    setIsAddingModalTask(true);
+  }, []);
+
+  const handleOpenEditModalTask = useCallback((task: Task) => {
+    triggerHaptic('light');
+    setEditingModalTask(task);
+    setIsAddingModalTask(true);
+  }, []);
+
+  const handleSaveModalTask = useCallback((formData: TaskFormData) => {
+    triggerHaptic('medium');
+    const now = new Date();
+    const currentHour = now.getHours().toString().padStart(2, '0');
+    const currentMinute = now.getMinutes().toString().padStart(2, '0');
+    const currentTime = `${currentHour}:${currentMinute}`;
+    const todayDate = getLocalIsoDate(now);
+
+    if (editingModalTask) {
+      updateTask({
+        ...editingModalTask,
+        title: formData.title,
+        priority: formData.priority,
+        repeat: formData.repeat,
+        date: formData.date,
+        alarmTime: formData.alarmTime || undefined,
+        isDiscipline: formData.isDiscipline,
+        disciplineData: formData.isDiscipline ? {
+          ...(editingModalTask.disciplineData || {}),
+          targetDate: formData.targetDate || editingModalTask.disciplineData?.targetDate,
+          reward: formData.reward || editingModalTask.disciplineData?.reward,
+          punishment: formData.punishment || editingModalTask.disciplineData?.punishment,
+          motivation: formData.motivation || editingModalTask.disciplineData?.motivation,
+          startDate: editingModalTask.disciplineData?.startDate || todayDate
+        } : undefined
+      });
+    } else {
+      addTask({
+        id: generateId(),
+        title: formData.title,
+        completed: false,
+        priority: formData.priority,
+        repeat: formData.repeat,
+        date: formData.date || selectedDateStr,
+        createdAt: todayDate,
+        time: formData.alarmTime || currentTime,
+        alarmTime: formData.alarmTime || undefined,
+        isDiscipline: formData.isDiscipline,
+        disciplineData: formData.isDiscipline ? {
+          targetDate: formData.targetDate,
+          reward: formData.reward,
+          punishment: formData.punishment,
+          motivation: formData.motivation,
+          startDate: todayDate,
+          dailyCheckins: [],
+          usedRestDates: []
+        } : undefined
+      });
+    }
+    setIsAddingModalTask(false);
+    setEditingModalTask(null);
+  }, [editingModalTask, selectedDateStr, updateTask, addTask]);
+
+  const handleQuickAddFromBar = useCallback((taskData: {
+    title: string;
+    time: string;
+    priority: 'Tinggi' | 'Sedang' | 'Rendah';
+  }) => {
+    addTask({
+      id: generateId(),
+      title: taskData.title,
+      completed: false,
+      priority: taskData.priority,
+      date: selectedDateStr,
+      createdAt: todayStr,
+      time: taskData.time || '09:00',
+      repeat: 'once',
+    });
+  }, [addTask, selectedDateStr, todayStr]);
 
   const handleCreateNoteForSelectedDay = () => {
     const newNote: Note = {
@@ -890,10 +977,12 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
 
   const currentSelectedDayMood = (moods || []).find(x => x && x.date === selectedDateStr)?.mood;
 
-  const isLight = appTheme === 'light' || appTheme === 'cute' || appTheme === 'pink' || appTheme === 'organic' || appTheme === 'pro_max';
+  const isLight = isOrganic || isProMax || appTheme === 'light' || appTheme === 'cute' || appTheme === 'pink' || appTheme === 'organic' || appTheme === 'pro_max';
   
+  const isOrganicTheme = isOrganic || isProMax || appTheme === 'organic' || appTheme === 'pro_max';
+
   const cardThemeClass = isLight
-    ? (appTheme === 'organic' || appTheme === 'pro_max'
+    ? (isOrganicTheme
         ? 'bg-[#FAF5EA] border border-[#EADCC8] text-[#2B1E14] shadow-xs'
         : appTheme === 'cute'
           ? 'bg-[#FFF9F0] border border-[#F2DEBF] text-[#38230F] shadow-xs'
@@ -909,7 +998,7 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
             : 'bg-slate-900 border border-slate-800/80 text-slate-100');
 
   const innerCardThemeClass = isLight
-    ? (appTheme === 'organic' || appTheme === 'pro_max'
+    ? (isOrganicTheme
         ? 'bg-[#F2E8D5] border border-[#DFD0B8] text-[#2B1E14]'
         : appTheme === 'cute'
           ? 'bg-[#FDF0DE] border border-[#EED7B8] text-[#38230F]'
@@ -923,7 +1012,7 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
           : 'bg-slate-950/60 border border-slate-800/60 text-slate-100');
 
   const inputThemeClass = isLight
-    ? (appTheme === 'organic' || appTheme === 'pro_max'
+    ? (isOrganicTheme
         ? 'bg-[#FFFDF9] border border-[#D8C7B0] text-[#2B1E14] placeholder-[#9B876F] focus:border-[#A84A2E]'
         : appTheme === 'cute'
           ? 'bg-[#FFFDF8] border border-[#E8D0B3] text-[#38230F] placeholder-[#856543] focus:border-[#DB2777]'
@@ -933,7 +1022,7 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
     : 'bg-slate-950 border border-slate-800 text-slate-100 placeholder-slate-500 focus:border-indigo-500';
 
   const subTextThemeClass = isLight
-    ? (appTheme === 'organic' || appTheme === 'pro_max'
+    ? (isOrganicTheme
         ? 'text-[#78644E]'
         : appTheme === 'cute'
           ? 'text-[#6A4D2C]'
@@ -943,7 +1032,7 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
     : 'text-slate-400';
 
   const primaryTextThemeClass = isLight
-    ? (appTheme === 'organic' || appTheme === 'pro_max'
+    ? (isOrganicTheme
         ? 'text-[#2B1E14]'
         : appTheme === 'cute'
           ? 'text-[#38230F]'
@@ -953,7 +1042,7 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
     : 'text-slate-100';
 
   const borderThemeClass = isLight
-    ? (appTheme === 'organic' || appTheme === 'pro_max'
+    ? (isOrganicTheme
         ? 'border-[#EADCC8]'
         : appTheme === 'cute'
           ? 'border-[#F2DEBF]'
@@ -963,7 +1052,7 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
     : 'border-slate-800/80';
 
   const btnSecondaryThemeClass = isLight
-    ? (appTheme === 'organic' || appTheme === 'pro_max'
+    ? (isOrganicTheme
         ? 'bg-[#EFE3CF] hover:bg-[#E5D7BF] text-[#2B1E14] border border-[#DFD0B8]'
         : appTheme === 'cute'
           ? 'bg-[#FAECD5] hover:bg-[#F2DEBF] text-[#38230F] border border-[#EED7B8]'
@@ -973,7 +1062,7 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
     : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/60';
 
   const modalThemeClass = isLight
-    ? (appTheme === 'organic' || appTheme === 'pro_max'
+    ? (isOrganicTheme
         ? 'bg-[#FAF5EA] border border-[#EADCC8] text-[#2B1E14]'
         : appTheme === 'cute'
           ? 'bg-[#FFF9F0] border border-[#F2DEBF] text-[#38230F]'
@@ -983,7 +1072,7 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
     : 'bg-slate-900 border border-slate-800 text-slate-100';
 
   const modalHeaderThemeClass = isLight
-    ? (appTheme === 'organic' || appTheme === 'pro_max'
+    ? (isOrganicTheme
         ? 'bg-[#F2E8D5] border-b border-[#DFD0B8] text-[#2B1E14]'
         : appTheme === 'cute'
           ? 'bg-[#FDF0DE] border-b border-[#EED7B8] text-[#38230F]'
@@ -997,10 +1086,10 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
       
       {/* Top Header */}
       <div className={`flex-none pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-3 px-4 sm:px-6 flex items-center justify-between border-b transition-colors backdrop-blur-md z-20 shrink-0 ${
-        appTheme === 'wallpaper'
-          ? 'bg-slate-950/40 border-white/10 text-white backdrop-blur-xl'
-          : appTheme === 'organic'
-            ? 'bg-[#FAF5EA]/95 border-[#EADCC8] text-[#2B1E14]'
+        isOrganicTheme
+          ? 'bg-[#FAF5EA]/95 border-[#EADCC8] text-[#2B1E14]'
+          : appTheme === 'wallpaper'
+            ? 'bg-slate-950/40 border-white/10 text-white backdrop-blur-xl'
             : appTheme === 'light'
               ? 'bg-white/95 border-slate-200 text-slate-900'
               : appTheme === 'cute'
@@ -1028,12 +1117,22 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
       {/* Mode Switcher Tabs */}
       {!isLiteMode && (
         <div className="px-4 py-2.5 flex-none w-full max-w-md mx-auto">
-          <div className={`grid grid-cols-2 rounded-2xl p-1 shadow-xs ${innerCardThemeClass}`}>
+          <div className={`grid grid-cols-2 rounded-2xl p-1 shadow-xs border ${
+            isOrganic 
+              ? `${palette.streakCard} ${palette.streakBorder}` 
+              : innerCardThemeClass
+          }`}>
             <button 
-              onClick={() => setActiveTab('calendar')}
-              className={`flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold transition-all ${
+              type="button"
+              onClick={() => {
+                triggerHaptic('light');
+                setActiveTab('calendar');
+              }}
+              className={`flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer touch-manipulation active:scale-95 ${
                 activeTab === 'calendar' 
-                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20' 
+                  ? isOrganic 
+                    ? `${palette.chipActive} shadow-xs font-black`
+                    : 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20' 
                   : `${subTextThemeClass} hover:${primaryTextThemeClass}`
               }`}
             >
@@ -1041,10 +1140,16 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
               <span>{lang === 'id' ? 'Kalender & Agenda' : 'Calendar & Tasks'}</span>
             </button>
             <button 
-              onClick={() => setActiveTab('stats')}
-              className={`flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold transition-all ${
+              type="button"
+              onClick={() => {
+                triggerHaptic('light');
+                setActiveTab('stats');
+              }}
+              className={`flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer touch-manipulation active:scale-95 ${
                 activeTab === 'stats' 
-                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20' 
+                  ? isOrganic 
+                    ? `${palette.chipActive} shadow-xs font-black`
+                    : 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20' 
                   : `${subTextThemeClass} hover:${primaryTextThemeClass}`
               }`}
             >
@@ -1085,8 +1190,18 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
                       </h2>
                       {(currentMonth !== new Date().getMonth() || currentYear !== new Date().getFullYear()) && (
                         <button 
-                          onClick={() => { const now = new Date(); setCurrentDate(now); setSelectedDate(now); }}
-                          className="px-2 py-0.5 text-[10px] font-bold bg-indigo-500/10 text-indigo-400 dark:text-indigo-300 border border-indigo-500/30 hover:bg-indigo-500/20 rounded-lg transition-all"
+                          type="button"
+                          onClick={() => { 
+                            triggerHaptic('light');
+                            const now = new Date(); 
+                            setCurrentDate(now); 
+                            setSelectedDate(now); 
+                          }}
+                          className={`px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all cursor-pointer touch-manipulation active:scale-95 ${
+                            isOrganicTheme
+                              ? 'bg-[#4A6741]/15 text-[#4A6741] dark:text-[#8EBA7F] border border-[#4A6741]/30 hover:bg-[#4A6741]/25'
+                              : 'bg-indigo-500/10 text-indigo-400 dark:text-indigo-300 border border-indigo-500/30 hover:bg-indigo-500/20'
+                          }`}
                         >
                           {lang === 'id' ? 'Bulan Ini' : 'This Month'}
                         </button>
@@ -1094,8 +1209,12 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
                     </div>
 
                     <button 
-                      onClick={handleNextMonth}
-                      className={`p-2 rounded-xl transition-all ${btnSecondaryThemeClass}`}
+                      type="button"
+                      onClick={() => {
+                        triggerHaptic('light');
+                        handleNextMonth();
+                      }}
+                      className={`p-2 rounded-xl transition-all cursor-pointer touch-manipulation active:scale-95 ${btnSecondaryThemeClass}`}
                       title={lang === 'id' ? 'Bulan Berikutnya' : 'Next Month'}
                     >
                       <ChevronRight className="w-5 h-5" />
@@ -1139,6 +1258,8 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
                           txIncome={dayTxStats.income}
                           txExpense={dayTxStats.expense}
                           isLight={isLight}
+                          isOrganic={isOrganicTheme}
+                          palette={palette}
                         />
                       );
                     })}
@@ -1151,7 +1272,7 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
                       <span>{lang === 'id' ? 'Tugas Selesai' : 'Tasks Done'}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
+                      <span className={`w-2 h-2 rounded-full ${isOrganicTheme ? 'bg-[#8C4A1E]' : 'bg-indigo-500'}`}></span>
                       <span>{lang === 'id' ? 'Tugas Belum Selesai' : 'Tasks Pending'}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
@@ -1168,14 +1289,15 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
               </div>
 
               {/* Right Column: Daily Agenda & Content */}
-              <div className="lg:col-span-5 space-y-4">
+              <div ref={agendaSectionRef} className="lg:col-span-5 space-y-4 scroll-mt-20">
                 <div className={`rounded-3xl p-5 sm:p-6 shadow-lg space-y-4 ${cardThemeClass}`}>
                   
                   {/* Selected Day Header */}
                   <div className={`flex items-center justify-between gap-2 pb-3 border-b ${borderThemeClass}`}>
                     <button 
+                      type="button"
                       onClick={handlePrevDay}
-                      className={`p-1.5 rounded-xl transition-all ${btnSecondaryThemeClass}`}
+                      className={`p-1.5 rounded-xl transition-all cursor-pointer touch-manipulation active:scale-95 ${btnSecondaryThemeClass}`}
                       title={lang === 'id' ? 'Hari Sebelumnya' : 'Previous Day'}
                     >
                       <ChevronLeft className="w-4 h-4" />
@@ -1187,8 +1309,13 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
                       </h3>
                       {selectedDateStr !== todayStr && (
                         <button
+                          type="button"
                           onClick={handleJumpToday}
-                          className="text-[10px] text-indigo-500 dark:text-indigo-400 hover:underline font-semibold mt-0.5 inline-flex items-center gap-1 transition-colors"
+                          className={`text-[10px] font-semibold mt-0.5 inline-flex items-center gap-1 transition-colors cursor-pointer touch-manipulation active:scale-95 ${
+                            isOrganicTheme
+                              ? 'text-[#4A6741] dark:text-[#8EBA7F] hover:underline'
+                              : 'text-indigo-500 dark:text-indigo-400 hover:underline'
+                          }`}
                         >
                           <CalendarDays className="w-3 h-3" />
                           <span>{lang === 'id' ? 'Kembali ke Hari Ini' : 'Back to Today'}</span>
@@ -1197,8 +1324,9 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
                     </div>
 
                     <button 
+                      type="button"
                       onClick={handleNextDay}
-                      className={`p-1.5 rounded-xl transition-all ${btnSecondaryThemeClass}`}
+                      className={`p-1.5 rounded-xl transition-all cursor-pointer touch-manipulation active:scale-95 ${btnSecondaryThemeClass}`}
                       title={lang === 'id' ? 'Hari Berikutnya' : 'Next Day'}
                     >
                       <ChevronRight className="w-4 h-4" />
@@ -1223,10 +1351,16 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
                           return (
                             <button
                               key={m.id}
-                              onClick={() => setMood(selectedDateStr, m.id as any)}
-                              className={`p-1.5 rounded-xl transition-all ${
+                              type="button"
+                              onClick={() => {
+                                triggerHaptic('light');
+                                setMood(selectedDateStr, m.id as any);
+                              }}
+                              className={`p-1.5 rounded-xl transition-all cursor-pointer touch-manipulation active:scale-95 ${
                                 isSelected 
-                                  ? 'bg-indigo-600 text-white scale-110 shadow-sm' 
+                                  ? isOrganicTheme
+                                    ? 'bg-[#4A6741] text-white scale-110 shadow-sm'
+                                    : 'bg-indigo-600 text-white scale-110 shadow-sm' 
                                   : `${subTextThemeClass} hover:${primaryTextThemeClass} opacity-60 hover:opacity-100`
                               }`}
                               title={m.label}
@@ -1240,22 +1374,36 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
                   )}
 
                   {/* Filter Pills: Semua / Tugas / Catatan / Keuangan */}
-                  <div className={`grid grid-cols-4 rounded-xl p-1 text-center ${innerCardThemeClass}`}>
+                  <div className={`grid grid-cols-4 rounded-2xl p-1 text-center border ${
+                    isOrganic ? `${palette.streakCard} ${palette.streakBorder}` : innerCardThemeClass
+                  }`}>
                     <button
-                      onClick={() => setDailyContentFilter('all')}
-                      className={`py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      type="button"
+                      onClick={() => {
+                        triggerHaptic('light');
+                        setDailyContentFilter('all');
+                      }}
+                      className={`py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer touch-manipulation active:scale-95 ${
                         dailyContentFilter === 'all'
-                          ? 'bg-indigo-600 text-white shadow-sm'
+                          ? isOrganic
+                            ? `${palette.chipActive} shadow-xs font-black`
+                            : 'bg-indigo-600 text-white shadow-sm'
                           : `${subTextThemeClass} hover:${primaryTextThemeClass}`
                       }`}
                     >
                       {lang === 'id' ? 'Semua' : 'All'}
                     </button>
                     <button
-                      onClick={() => setDailyContentFilter('tasks')}
-                      className={`py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1 ${
+                      type="button"
+                      onClick={() => {
+                        triggerHaptic('light');
+                        setDailyContentFilter('tasks');
+                      }}
+                      className={`py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer touch-manipulation active:scale-95 flex items-center justify-center gap-1 ${
                         dailyContentFilter === 'tasks'
-                          ? 'bg-indigo-600 text-white shadow-sm'
+                          ? isOrganic
+                            ? `${palette.chipActive} shadow-xs font-black`
+                            : 'bg-indigo-600 text-white shadow-sm'
                           : `${subTextThemeClass} hover:${primaryTextThemeClass}`
                       }`}
                     >
@@ -1265,10 +1413,16 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
                       )}
                     </button>
                     <button
-                      onClick={() => setDailyContentFilter('notes')}
-                      className={`py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1 ${
+                      type="button"
+                      onClick={() => {
+                        triggerHaptic('light');
+                        setDailyContentFilter('notes');
+                      }}
+                      className={`py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer touch-manipulation active:scale-95 flex items-center justify-center gap-1 ${
                         dailyContentFilter === 'notes'
-                          ? 'bg-indigo-600 text-white shadow-sm'
+                          ? isOrganic
+                            ? `${palette.chipActive} shadow-xs font-black`
+                            : 'bg-indigo-600 text-white shadow-sm'
                           : `${subTextThemeClass} hover:${primaryTextThemeClass}`
                       }`}
                     >
@@ -1278,10 +1432,16 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
                       )}
                     </button>
                     <button
-                      onClick={() => setDailyContentFilter('finance')}
-                      className={`py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1 ${
+                      type="button"
+                      onClick={() => {
+                        triggerHaptic('light');
+                        setDailyContentFilter('finance');
+                      }}
+                      className={`py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer touch-manipulation active:scale-95 flex items-center justify-center gap-1 ${
                         dailyContentFilter === 'finance'
-                          ? 'bg-indigo-600 text-white shadow-sm'
+                          ? isOrganic
+                            ? `${palette.chipActive} shadow-xs font-black`
+                            : 'bg-indigo-600 text-white shadow-sm'
                           : `${subTextThemeClass} hover:${primaryTextThemeClass}`
                       }`}
                     >
@@ -1335,21 +1495,30 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
                                   }`}
                                 >
                                   <button
+                                    type="button"
                                     disabled={task.deleted}
-                                    onClick={() => toggleTask(task.id, selectedDateStr)}
-                                    className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all shrink-0 ${
-                                      isTaskCompleted ? 'bg-emerald-500 border-emerald-500' : 'border-slate-400 dark:border-slate-600 hover:border-indigo-400'
+                                    onClick={() => {
+                                      triggerHaptic('medium');
+                                      toggleTask(task.id, selectedDateStr);
+                                    }}
+                                    className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all shrink-0 cursor-pointer touch-manipulation active:scale-90 ${
+                                      isTaskCompleted 
+                                        ? 'bg-emerald-500 border-emerald-500 text-white shadow-xs' 
+                                        : isOrganic
+                                        ? 'border-[#D8C7B0] hover:border-[#4A6741]'
+                                        : 'border-slate-400 dark:border-slate-600 hover:border-indigo-400'
                                     }`}
                                   >
-                                    {isTaskCompleted && <Check className="w-3.5 h-3.5 text-zinc-950 stroke-[3]" />}
+                                    {isTaskCompleted && <Check className="w-3.5 h-3.5 text-white stroke-[3]" />}
                                   </button>
 
                                   <div 
                                     onClick={() => {
+                                      triggerHaptic('light');
                                       setSelectedDetailTaskId(task.id);
                                       setSelectedDetailModalTab('info');
                                     }}
-                                    className="flex-1 min-w-0 cursor-pointer"
+                                    className="flex-1 min-w-0 cursor-pointer touch-manipulation"
                                   >
                                     <div className="flex items-center gap-1.5 mb-0.5">
                                       <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${pColor}`} />
@@ -1365,8 +1534,12 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
                                   </div>
 
                                   <button
-                                    onClick={() => deleteTask(task.id)}
-                                    className={`p-1.5 ${subTextThemeClass} hover:text-rose-500 rounded-lg transition-colors`}
+                                    type="button"
+                                    onClick={() => {
+                                      triggerHaptic('light');
+                                      deleteTask(task.id);
+                                    }}
+                                    className={`p-1.5 ${subTextThemeClass} hover:text-rose-500 rounded-lg transition-colors cursor-pointer touch-manipulation active:scale-90`}
                                     title={lang === 'id' ? 'Hapus' : 'Delete'}
                                   >
                                     <Trash2 className="w-3.5 h-3.5" />
@@ -1405,78 +1578,19 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
                           </div>
                         )}
 
-                        {/* Quick Add Task Button or Form */}
-                        {!isAddingQuickTask ? (
-                          <button
-                            onClick={() => setIsAddingQuickTask(true)}
-                            className="w-full py-2 bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-500 dark:text-indigo-400 rounded-xl border border-indigo-500/20 flex items-center justify-center gap-1.5 text-xs font-bold transition-all"
-                          >
-                            <Plus className="w-3.5 h-3.5" />
-                            <span>{lang === 'id' ? 'Tambah Tugas' : 'Add Task'}</span>
-                          </button>
-                        ) : (
-                          <form 
-                            onSubmit={(e) => {
-                              e.preventDefault();
-                              if (!quickTaskTitle.trim()) return;
-                              addTask({
-                                id: generateId(),
-                                title: quickTaskTitle.trim(),
-                                completed: false,
-                                priority: quickTaskPriority,
-                                date: selectedDateStr,
-                                createdAt: todayStr,
-                                time: quickTaskTime || '09:00',
-                                repeat: quickTaskRepeat,
-                              });
-                              setQuickTaskTitle('');
-                              setIsAddingQuickTask(false);
-                            }}
-                            className={`rounded-2xl p-3 space-y-2.5 ${innerCardThemeClass}`}
-                          >
-                            <input
-                              type="text"
-                              required
-                              autoFocus
-                              value={quickTaskTitle}
-                              onChange={(e) => setQuickTaskTitle(e.target.value)}
-                              placeholder={lang === 'id' ? 'Tulis tugas baru...' : 'Enter task title...'}
-                              className={`w-full rounded-xl px-3 py-2 text-xs outline-none ${inputThemeClass}`}
-                            />
-                            <div className="flex items-center gap-2">
-                              <input
-                                type="time"
-                                value={quickTaskTime}
-                                onChange={(e) => setQuickTaskTime(e.target.value)}
-                                className={`rounded-xl px-2 py-1 text-xs outline-none ${inputThemeClass}`}
-                              />
-                              <select
-                                value={quickTaskPriority}
-                                onChange={(e) => setQuickTaskPriority(e.target.value as any)}
-                                className={`rounded-xl px-2 py-1 text-xs outline-none flex-1 ${inputThemeClass}`}
-                              >
-                                <option value="Rendah">{lang === 'id' ? 'Prioritas Rendah' : 'Low Priority'}</option>
-                                <option value="Sedang">{lang === 'id' ? 'Prioritas Sedang' : 'Medium Priority'}</option>
-                                <option value="Tinggi">{lang === 'id' ? 'Prioritas Wajib' : 'High Priority'}</option>
-                              </select>
-                            </div>
-                            <div className="flex items-center gap-2 pt-1">
-                              <button
-                                type="button"
-                                onClick={() => setIsAddingQuickTask(false)}
-                                className={`flex-1 py-1.5 rounded-lg text-xs font-semibold ${btnSecondaryThemeClass}`}
-                              >
-                                {lang === 'id' ? 'Batal' : 'Cancel'}
-                              </button>
-                              <button
-                                type="submit"
-                                className="flex-1 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold shadow-sm"
-                              >
-                                {lang === 'id' ? 'Simpan' : 'Save'}
-                              </button>
-                            </div>
-                          </form>
-                        )}
+                        {/* High-Performance 0ms Quick Task Bar + Full Option Modal Trigger */}
+                        <CalendarQuickTaskBar
+                          selectedDateStr={selectedDateStr}
+                          isOrganic={isOrganicTheme}
+                          innerCardThemeClass={innerCardThemeClass}
+                          inputThemeClass={inputThemeClass}
+                          subTextThemeClass={subTextThemeClass}
+                          primaryTextThemeClass={primaryTextThemeClass}
+                          btnSecondaryThemeClass={btnSecondaryThemeClass}
+                          lang={lang}
+                          onAddTask={handleQuickAddFromBar}
+                          onOpenDetailedModal={handleOpenNewModalTask}
+                        />
                       </div>
                     );
                   })()}
@@ -1628,8 +1742,13 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
               {/* Period Selector Bar */}
               <div className={`flex items-center justify-between rounded-2xl p-2 max-w-2xl mx-auto shadow-xs ${cardThemeClass}`}>
                 <button
-                  onClick={handlePrevPeriod}
-                  className={`p-1.5 rounded-lg transition-all ${btnSecondaryThemeClass}`}
+                  type="button"
+                  onClick={() => {
+                    triggerHaptic('light');
+                    handlePrevPeriod();
+                  }}
+                  className={`p-1.5 rounded-lg transition-all cursor-pointer touch-manipulation active:scale-95 ${btnSecondaryThemeClass}`}
+                  title={lang === 'id' ? 'Periode Sebelumnya' : 'Previous Period'}
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
@@ -1638,10 +1757,16 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
                   {(['Harian', 'Mingguan', 'Bulanan', 'Tahunan'] as const).map((type) => (
                     <button
                       key={type}
-                      onClick={() => setViewType(type)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                      type="button"
+                      onClick={() => {
+                        triggerHaptic('light');
+                        setViewType(type);
+                      }}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer touch-manipulation active:scale-95 ${
                         viewType === type 
-                          ? 'bg-indigo-600 text-white shadow-sm' 
+                          ? isOrganicTheme
+                            ? `${palette.chipActive} shadow-xs font-black`
+                            : 'bg-indigo-600 text-white shadow-sm' 
                           : `${subTextThemeClass} hover:${primaryTextThemeClass}`
                       }`}
                     >
@@ -1654,8 +1779,13 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
                 </div>
 
                 <button
-                  onClick={handleNextPeriod}
-                  className={`p-1.5 rounded-lg transition-all ${btnSecondaryThemeClass}`}
+                  type="button"
+                  onClick={() => {
+                    triggerHaptic('light');
+                    handleNextPeriod();
+                  }}
+                  className={`p-1.5 rounded-lg transition-all cursor-pointer touch-manipulation active:scale-95 ${btnSecondaryThemeClass}`}
+                  title={lang === 'id' ? 'Periode Berikutnya' : 'Next Period'}
                 >
                   <ChevronRight className="w-4 h-4" />
                 </button>
@@ -1984,110 +2114,45 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
                 </div>
 
                 {selectedDetailModalTab === 'info' ? (
-                  isEditingCalendarTask ? (
-                    <form 
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        if (!editCalTaskTitle.trim()) return;
-                        updateTask({
-                          ...selectedDetailTask,
-                          title: editCalTaskTitle.trim(),
-                          time: editCalTaskTime,
-                          priority: editCalTaskPriority,
-                        });
-                        setIsEditingCalendarTask(false);
-                      }} 
-                      className="space-y-3"
-                    >
-                      <div>
-                        <label className={`text-[10px] uppercase font-bold block mb-1 ${subTextThemeClass}`}>
-                          {lang === 'id' ? 'Judul' : 'Title'}
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={editCalTaskTitle}
-                          onChange={(e) => setEditCalTaskTitle(e.target.value)}
-                          className={`w-full rounded-xl px-3 py-2 text-xs outline-none ${inputThemeClass}`}
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <label className={`text-[10px] uppercase font-bold block mb-1 ${subTextThemeClass}`}>
-                            {lang === 'id' ? 'Waktu' : 'Time'}
-                          </label>
-                          <input
-                            type="time"
-                            value={editCalTaskTime}
-                            onChange={(e) => setEditCalTaskTime(e.target.value)}
-                            className={`w-full rounded-xl px-3 py-2 text-xs outline-none ${inputThemeClass}`}
-                          />
-                        </div>
-                        <div>
-                          <label className={`text-[10px] uppercase font-bold block mb-1 ${subTextThemeClass}`}>
-                            {lang === 'id' ? 'Prioritas' : 'Priority'}
-                          </label>
-                          <select
-                            value={editCalTaskPriority}
-                            onChange={(e) => setEditCalTaskPriority(e.target.value as any)}
-                            className={`w-full rounded-xl px-3 py-2 text-xs outline-none ${inputThemeClass}`}
-                          >
-                            <option value="Rendah">{lang === 'id' ? 'Rendah' : 'Low'}</option>
-                            <option value="Sedang">{lang === 'id' ? 'Sedang' : 'Medium'}</option>
-                            <option value="Tinggi">{lang === 'id' ? 'Wajib (Tinggi)' : 'High'}</option>
-                          </select>
-                        </div>
-                      </div>
-                      <div className="flex gap-2 pt-2">
-                        <button
-                          type="button"
-                          onClick={() => setIsEditingCalendarTask(false)}
-                          className={`flex-1 py-2 rounded-xl text-xs font-semibold ${btnSecondaryThemeClass}`}
-                        >
-                          {lang === 'id' ? 'Batal' : 'Cancel'}
-                        </button>
-                        <button
-                          type="submit"
-                          className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold shadow-sm"
-                        >
-                          {lang === 'id' ? 'Simpan' : 'Save'}
-                        </button>
-                      </div>
-                    </form>
-                  ) : (
-                    <div className="space-y-4">
-                      <div>
-                        <h3 className={`text-base font-bold ${primaryTextThemeClass}`}>{selectedDetailTask.title}</h3>
-                        <div className={`flex items-center gap-2 mt-1.5 text-xs ${subTextThemeClass}`}>
-                          <span>{selectedDetailTask.priority}</span>
-                          <span>•</span>
-                          <span>{selectedDetailTask.time || '--:--'}</span>
-                          <span>•</span>
-                          <span>{isDaily ? (lang === 'id' ? 'Harian' : 'Daily') : (lang === 'id' ? 'Sekali' : 'Once')}</span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 pt-2">
-                        <button
-                          onClick={() => setIsEditingCalendarTask(true)}
-                          className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 ${btnSecondaryThemeClass}`}
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                          <span>{lang === 'id' ? 'Edit' : 'Edit'}</span>
-                        </button>
-                        <button
-                          onClick={() => {
-                            deleteTask(selectedDetailTask.id);
-                            setSelectedDetailTaskId(null);
-                          }}
-                          className="flex-1 py-2 bg-rose-600/10 hover:bg-rose-600/20 text-rose-500 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 border border-rose-500/20"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                          <span>{lang === 'id' ? 'Hapus' : 'Delete'}</span>
-                        </button>
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className={`text-base font-bold ${primaryTextThemeClass}`}>{selectedDetailTask.title}</h3>
+                      <div className={`flex items-center gap-2 mt-1.5 text-xs ${subTextThemeClass}`}>
+                        <span className="font-semibold">{selectedDetailTask.priority}</span>
+                        <span>•</span>
+                        <span>{selectedDetailTask.time || '--:--'}</span>
+                        <span>•</span>
+                        <span>{isDaily ? (lang === 'id' ? 'Harian' : 'Daily') : (lang === 'id' ? 'Sekali' : 'Once')}</span>
                       </div>
                     </div>
-                  )
+
+                    <div className="flex items-center gap-2 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const taskToEdit = selectedDetailTask;
+                          setSelectedDetailTaskId(null);
+                          handleOpenEditModalTask(taskToEdit);
+                        }}
+                        className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation active:scale-95 ${btnSecondaryThemeClass}`}
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                        <span>{lang === 'id' ? 'Edit Lengkap' : 'Full Edit'}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          triggerHaptic('medium');
+                          deleteTask(selectedDetailTask.id);
+                          setSelectedDetailTaskId(null);
+                        }}
+                        className="flex-1 py-2 bg-rose-600/10 hover:bg-rose-600/20 text-rose-500 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 border border-rose-500/20 cursor-pointer touch-manipulation active:scale-95"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>{lang === 'id' ? 'Hapus' : 'Delete'}</span>
+                      </button>
+                    </div>
+                  </div>
                 ) : (
                   <div className="space-y-4">
                     <div className="grid grid-cols-3 gap-2 text-center">
@@ -2159,6 +2224,22 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
         );
       })()}
 
+      {/* Isolated High-Performance TaskFormModal */}
+      <TaskFormModal
+        isOpen={isAddingModalTask}
+        onClose={() => {
+          setIsAddingModalTask(false);
+          setEditingModalTask(null);
+        }}
+        editingTask={editingModalTask}
+        initialType="Sekarang"
+        onSave={handleSaveModalTask}
+        appTheme={appTheme}
+        isOrganic={isOrganicTheme}
+        palette={palette}
+        lang={lang as any}
+      />
+
     </div>
   );
 }
@@ -2177,35 +2258,61 @@ const Day: React.FC<{
   txIncome?: number;
   txExpense?: number;
   isLight?: boolean;
-}> = ({ num, mute = false, active = false, isToday = false, onClick, mood, taskCount = 0, completedTaskCount = 0, noteCount = 0, txCount = 0, txIncome = 0, txExpense = 0, isLight = false }) => {
-  
+  isOrganic?: boolean;
+  palette?: any;
+}> = ({ 
+  num, 
+  mute = false, 
+  active = false, 
+  isToday = false, 
+  onClick, 
+  taskCount = 0, 
+  completedTaskCount = 0, 
+  noteCount = 0, 
+  txCount = 0, 
+  isOrganic = false,
+  palette
+}) => {
   const hasTasks = taskCount > 0;
   const allTasksDone = hasTasks && completedTaskCount === taskCount;
   const hasNotes = noteCount > 0;
   const hasTx = txCount > 0;
 
+  const handleClick = () => {
+    triggerHaptic('light');
+    if (onClick) onClick();
+  };
+
   return (
     <div className="flex items-center justify-center">
       <button 
         type="button"
-        onClick={onClick} 
-        className={`w-full h-10 sm:h-11 md:h-12 flex flex-col items-center justify-center rounded-2xl transition-all relative ${
+        onClick={handleClick} 
+        className={`w-full h-10 sm:h-11 md:h-12 flex flex-col items-center justify-center rounded-2xl transition-all relative cursor-pointer touch-manipulation active:scale-95 ${
           active 
-            ? 'bg-indigo-600 text-white font-black shadow-md shadow-indigo-600/30 scale-105 z-10' 
+            ? isOrganic
+              ? 'bg-[#4A6741] text-white font-black shadow-md shadow-[#4A6741]/30 scale-105 z-10'
+              : 'bg-indigo-600 text-white font-black shadow-md shadow-indigo-600/30 scale-105 z-10' 
             : isToday 
-            ? 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-300 border border-indigo-500/60 font-bold hover:bg-indigo-500/25' 
+            ? isOrganic
+              ? 'bg-[#4A6741]/15 text-[#4A6741] dark:text-[#8EBA7F] border border-[#4A6741]/50 font-bold hover:bg-[#4A6741]/25'
+              : 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-300 border border-indigo-500/60 font-bold hover:bg-indigo-500/25' 
             : mute 
             ? 'text-slate-400/40 dark:text-slate-500/40' 
+            : isOrganic
+            ? `${palette?.titleText || 'text-[#2B1E14]'} hover:bg-[#EADCC8]/50`
             : 'text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-950 dark:hover:text-slate-50'
         }`}
       >
-        <span className="text-xs sm:text-sm leading-none">{num}</span>
+        <span className="text-xs sm:text-sm leading-none font-semibold">{num}</span>
         
         {/* Subtle, Non-cluttered Dots */}
         <div className="flex items-center justify-center gap-1 mt-1 h-1.5">
           {hasTasks && (
             <span className={`w-1.5 h-1.5 rounded-full ${
-              allTasksDone ? (active ? 'bg-white' : 'bg-emerald-500') : (active ? 'bg-indigo-200' : 'bg-indigo-500')
+              allTasksDone 
+                ? (active ? 'bg-white' : 'bg-emerald-500') 
+                : (active ? 'bg-emerald-200' : isOrganic ? 'bg-[#8C4A1E]' : 'bg-indigo-500')
             }`} />
           )}
           {hasNotes && (

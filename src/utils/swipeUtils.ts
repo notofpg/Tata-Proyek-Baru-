@@ -47,21 +47,16 @@ export function isSwipeOnInteractiveOrScrollable(target: HTMLElement | null): bo
     return true;
   }
 
-  // 2. Traversal check up the DOM tree: Is any ancestor horizontally scrollable?
+  // 2. Traversal check up the DOM tree without forced getComputedStyle reflow
   let curr: HTMLElement | null = target;
   while (curr && curr !== document.body && curr !== document.documentElement) {
-    const style = window.getComputedStyle(curr);
-    const overflowX = style.overflowX;
-    const isScrollableX = overflowX === 'auto' || overflowX === 'scroll' || overflowX === 'touch';
-
-    if (isScrollableX && curr.scrollWidth > curr.clientWidth + 5) {
-      return true; // Inside an actively scrollable horizontal container
-    }
-
     if (curr.classList.contains('no-swipe') || curr.dataset.noSwipe === 'true') {
       return true;
     }
-
+    // Check if container has scrollable class or active horizontal scroll
+    if (curr.classList.contains('overflow-x-auto') || curr.classList.contains('overflow-x-scroll')) {
+      return true;
+    }
     curr = curr.parentElement;
   }
 

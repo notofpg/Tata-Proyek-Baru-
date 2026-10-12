@@ -21,6 +21,7 @@ interface AppContextType {
   deleteNote: (id: string) => void;
   addTask: (task: Task) => void;
   updateTask: (task: Task) => void;
+  batchUpdateTasks: (tasks: Task[]) => void;
   toggleTask: (id: string, dateStr?: string) => void;
   restartTask: (id: string, customTargetDate?: string) => void;
   deleteTask: (id: string) => void;
@@ -2127,6 +2128,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
     return next.map(t => t.id === task.id ? updatedTask : t);
   });
+  const batchUpdateTasks = (updatedTaskList: Task[]) => setTasks(prev => {
+    const updateMap = new Map(updatedTaskList.map(t => [t.id, t]));
+    return prev.map(t => updateMap.get(t.id) || t);
+  });
   const toggleTask = (id: string, dateStr?: string) => {
     const task = tasks.find(t => t.id === id);
     if (!task) return;
@@ -2971,7 +2976,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const contextValue = React.useMemo(() => ({
     notes, tasks, transactions, moods, user, updateUser: setUser,
     addNote, updateNote, deleteNote, 
-    addTask, updateTask, toggleTask, restartTask, deleteTask, restoreTask, emptyTrash, restoreAllTasks, setMood,
+    addTask, updateTask, batchUpdateTasks, toggleTask, restartTask, deleteTask, restoreTask, emptyTrash, restoreAllTasks, setMood,
     addTransaction, updateTransaction, deleteTransaction, clearAllTransactions, importTransactions,
     importData, importFullBackup, createFullBackup, clearAllData,
     searchQuery, setSearchQuery, appPin, setAppPin, notePin, setNotePin, useScrambledPin, setUseScrambledPin,

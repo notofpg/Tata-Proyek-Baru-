@@ -73,30 +73,153 @@ const parseDateToIso = (dateStr?: string): string | null => {
 const AutoResizeTextarea: React.FC<{
   value: string;
   onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  onBlur?: (e: React.FocusEvent<HTMLTextAreaElement>) => void;
   placeholder?: string;
   className?: string;
   minHeight?: number;
-}> = ({ value, onChange, placeholder, className = '', minHeight = 45 }) => {
+}> = ({ value, onChange, onBlur, placeholder, className = '', minHeight = 45 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${Math.max(minHeight, textareaRef.current.scrollHeight)}px`;
-    }
-  }, [value, minHeight]);
+  const handleInput = (e: React.FormEvent<HTMLTextAreaElement>) => {
+    const el = e.currentTarget;
+    requestAnimationFrame(() => {
+      if (el) {
+        el.style.height = 'auto';
+        el.style.height = `${Math.max(minHeight, el.scrollHeight)}px`;
+      }
+    });
+  };
 
   return (
     <textarea
       ref={textareaRef}
       value={value}
       onChange={onChange}
+      onInput={handleInput}
+      onBlur={onBlur}
       placeholder={placeholder}
+      autoComplete="off"
+      autoCorrect="off"
+      spellCheck="false"
       rows={1}
-      className={`w-full resize-none overflow-hidden leading-relaxed ${className}`}
+      className={`w-full resize-none overflow-hidden leading-relaxed transition-colors select-text ${className}`}
     />
   );
 };
+
+// Isolated Journal Tab: zero re-renders of parent DisciplineView while typing
+const DisciplineJournalTab = React.memo<{
+  task: Task;
+  d: any;
+  updateTask: (task: Task) => void;
+  lang: string;
+  palette: any;
+}>(({ task, d, updateTask, lang, palette }) => {
+  const [motivationText, setMotivationText] = useState(d.motivation || '');
+  const [newNoteText, setNewNoteText] = useState('');
+
+  useEffect(() => {
+    setMotivationText(d.motivation || '');
+  }, [d.motivation]);
+
+  const handleSaveMotivation = () => {
+    if (motivationText !== (d.motivation || '')) {
+      updateTask({ ...task, disciplineData: { ...d, motivation: motivationText } });
+    }
+  };
+
+  const handleSaveLog = () => {
+    if (newNoteText.trim()) {
+      const newLog = [...(d.journeyLog || []), {
+        id: Date.now().toString(),
+        date: new Date().toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { day: 'numeric', month: 'short' }),
+        content: newNoteText.trim()
+      }];
+      updateTask({ ...task, disciplineData: { ...d, journeyLog: newLog } });
+      setNewNoteText('');
+    }
+  };
+
+  return (
+    <div className="space-y-3 animate-in fade-in duration-200">
+      {/* Motivation / Why */}
+      <div className={`rounded-2xl p-3.5 space-y-1.5 border ${palette.disciplineCard} ${palette.disciplineBorder}`}>
+        <h3 className={`text-xs font-bold uppercase tracking-wider ${palette.disciplineTitle}`}>
+          {lang === 'id' ? 'Alasan Kuat (Why)' : 'Strong Reason (Why)'}
+        </h3>
+        <AutoResizeTextarea 
+          value={motivationText}
+          onChange={(e) => setMotivationText(e.target.value)}
+          onBlur={handleSaveMotivation}
+          placeholder={lang === 'id' ? 'Kenapa target ini sangat penting bagi masa depanmu?' : 'Why is this goal important to you?'}
+          minHeight={50}
+          className={`w-full rounded-xl p-2.5 text-xs focus:outline-none border ${palette.disciplineInner} ${palette.disciplineInnerBorder} ${palette.disciplineTitle} placeholder:${palette.disciplineSub}`}
+        />
+        {motivationText !== (d.motivation || '') && (
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={handleSaveMotivation}
+              className={`px-3 py-1 text-white font-bold text-[11px] rounded-lg cursor-pointer transition-all active:scale-95 ${palette.disciplineBtnAction}`}
+            >
+              {lang === 'id' ? 'Simpan Alasan' : 'Save Reason'}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Daily Logs */}
+      <div className={`rounded-2xl p-3.5 space-y-2.5 border ${palette.disciplineCard} ${palette.disciplineBorder}`}>
+        <h3 className={`text-xs font-bold uppercase tracking-wider ${palette.disciplineTitle}`}>
+          {lang === 'id' ? 'Catatan Refleksi Harian' : 'Daily Reflection Logs'}
+        </h3>
+        <div className="space-y-2">
+          <AutoResizeTextarea 
+            value={newNoteText}
+            onChange={(e) => setNewNoteText(e.target.value)}
+            placeholder={lang === 'id' ? 'Tulis refleksi atau evaluasi progresmu hari ini...' : 'Write your daily reflection...'}
+            minHeight={45}
+            className={`w-full rounded-xl p-2.5 text-xs focus:outline-none border ${palette.disciplineInner} ${palette.disciplineInnerBorder} ${palette.disciplineTitle} placeholder:${palette.disciplineSub}`}
+          />
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={handleSaveLog}
+              disabled={!newNoteText.trim()}
+              className={`px-3 py-1.5 text-white font-bold text-xs rounded-xl cursor-pointer transition-colors ${
+                newNoteText.trim() ? palette.disciplineBtnAction : 'opacity-50 cursor-not-allowed bg-slate-700'
+              }`}
+            >
+              {lang === 'id' ? 'Simpan Catatan' : 'Save Log'}
+            </button>
+          </div>
+        </div>
+
+        {/* List of journal entries */}
+        <div className="space-y-1.5 pt-1">
+          {d.journeyLog?.slice().reverse().map((entry: any) => (
+            <div key={entry.id} className={`p-2.5 rounded-xl border ${palette.disciplineInner} ${palette.disciplineInnerBorder}`}>
+              <div className="flex items-center justify-between mb-1">
+                <span className={`text-[10px] font-bold uppercase ${palette.disciplineSub}`}>{entry.date}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newLog = d.journeyLog?.filter((n: any) => n.id !== entry.id);
+                    updateTask({ ...task, disciplineData: { ...d, journeyLog: newLog } });
+                  }}
+                  className={`p-0.5 cursor-pointer ${palette.disciplineSub} hover:text-rose-500`}
+                >
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              </div>
+              <p className={`text-xs whitespace-pre-wrap ${palette.disciplineTitle}`}>{entry.content}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+});
 
 export const DisciplineView = React.memo<DisciplineViewProps>(({ 
   task, 
@@ -108,12 +231,11 @@ export const DisciplineView = React.memo<DisciplineViewProps>(({
   palette: propPalette 
 }) => {
   const { tasks, updateTask, restartTask, checkInDaily, deleteTask, appVersion, isLiteMode } = useAppStore();
-  const isOrganic = appVersion === 'organic' || appVersion === 'pro_max';
+  const isLite = appTheme === 'lite' || appVersion === 'lite' || isLiteMode;
+  const isOrganic = !isLite && (appVersion === 'organic' || appVersion === 'pro_max' || appTheme === 'organic');
   const is3D = isOrganic;
-  const isLite = appVersion === 'lite' || isLiteMode;
   const palette = useMemo(() => propPalette || getOrganicThemePalette(appTheme), [propPalette, appTheme]);
   const [activeTab, setActiveTab] = useState<'Aksi' | 'Jurnal' | 'Galeri'>('Aksi');
-  const [newNoteText, setNewNoteText] = useState<string>('');
   const [showTaskPickerModal, setShowTaskPickerModal] = useState(false);
   const [showRestartModal, setShowRestartModal] = useState(false);
   const [restartTargetDays, setRestartTargetDays] = useState<number>(30);
@@ -201,122 +323,150 @@ export const DisciplineView = React.memo<DisciplineViewProps>(({
   const rawRests = d.usedRestDates || [];
   const completedPunishments = d.punishmentCompletedDates || [];
 
-  // Sinkronkan status check-in hari ini
-  const isCheckedInToday = Boolean(
-    rawCheckins.includes(today) ||
-    rawRests.includes(today) ||
-    task.completed
-  );
-  const isRestDayToday = rawRests.includes(today);
+  const {
+    isCheckedInToday,
+    isRestDayToday,
+    actualStartDate,
+    daysDone,
+    daysMissed,
+    unredeemedPunishments,
+    currentStreak,
+    isRestDayDisabled,
+    daysLeftText,
+    totalTargetDays,
+    isTargetReached
+  } = useMemo(() => {
+    // Sinkronkan status check-in hari ini
+    const isCheckedInToday = Boolean(
+      rawCheckins.includes(today) ||
+      rawRests.includes(today) ||
+      task.completed
+    );
+    const isRestDayToday = rawRests.includes(today);
 
-  // Daftar tanggal selesai unik (hari check-in & hari libur)
-  const allCheckinsList = isCheckedInToday && !rawCheckins.includes(today) && !isRestDayToday
-    ? [...rawCheckins, today]
-    : rawCheckins;
+    // Daftar tanggal selesai unik (hari check-in & hari libur)
+    const allCheckinsList = isCheckedInToday && !rawCheckins.includes(today) && !isRestDayToday
+      ? [...rawCheckins, today]
+      : rawCheckins;
 
-  // 1. Tanggal Start yang Akurat
-  const candidateDates = [
-    d.startDate,
-    ...rawCheckins,
-    ...rawRests,
-    task.createdAt,
-    task.date
-  ].filter(Boolean).map(dt => parseDateToIso(dt)).filter(Boolean) as string[];
+    // 1. Tanggal Start yang Akurat
+    const candidateDates = [
+      d.startDate,
+      ...rawCheckins,
+      ...rawRests,
+      task.createdAt,
+      task.date
+    ].filter(Boolean).map(dt => parseDateToIso(dt)).filter(Boolean) as string[];
 
-  let actualStartDate = today;
-  if (candidateDates.length > 0) {
-    candidateDates.sort();
-    actualStartDate = candidateDates[0];
-  }
-  if (actualStartDate > today) {
-    actualStartDate = today;
-  }
-
-  // 2. Penghitungan Hari Selesai
-  const allDoneDatesSet = new Set([...allCheckinsList, ...rawRests]);
-  const daysDone = allDoneDatesSet.size;
-
-  // 3. Penghitungan Hari Bolong
-  const startObj = getLocalDateFromStr(actualStartDate);
-  const todayObj = getLocalDateFromStr(today);
-  startObj.setHours(0, 0, 0, 0);
-  todayObj.setHours(0, 0, 0, 0);
-
-  let daysMissed = 0;
-  const curr = new Date(startObj);
-  let loopGuard = 0;
-  const yesterdayObj = new Date(todayObj);
-  yesterdayObj.setDate(yesterdayObj.getDate() - 1);
-
-  while (curr <= yesterdayObj && loopGuard < 2000) {
-    const currStr = getLocalIsoDate(curr);
-    if (!allDoneDatesSet.has(currStr)) {
-      daysMissed++;
+    let actualStartDate = today;
+    if (candidateDates.length > 0) {
+      candidateDates.sort();
+      actualStartDate = candidateDates[0];
     }
-    curr.setDate(curr.getDate() + 1);
-    loopGuard++;
-  }
+    if (actualStartDate > today) {
+      actualStartDate = today;
+    }
 
-  // 4. Hukuman yang belum ditebus
-  const unredeemedPunishments = Math.max(0, daysMissed - completedPunishments.length);
+    // 2. Penghitungan Hari Selesai
+    const allDoneDatesSet = new Set([...allCheckinsList, ...rawRests]);
+    const daysDone = allDoneDatesSet.size;
 
-  // 5. Streak Berurutan Disiplin
-  let currentStreak = 0;
-  const checkDate = new Date(todayObj);
-  if (!isCheckedInToday) {
-    checkDate.setDate(checkDate.getDate() - 1);
-  }
+    // 3. Penghitungan Hari Bolong
+    const startObj = getLocalDateFromStr(actualStartDate);
+    const todayObj = getLocalDateFromStr(today);
+    startObj.setHours(0, 0, 0, 0);
+    todayObj.setHours(0, 0, 0, 0);
 
-  let streakGuard = 0;
-  while (streakGuard < 1000) {
-    const iso = getLocalIsoDate(checkDate);
-    if (allDoneDatesSet.has(iso)) {
-      currentStreak++;
+    let daysMissed = 0;
+    const curr = new Date(startObj);
+    let loopGuard = 0;
+    const yesterdayObj = new Date(todayObj);
+    yesterdayObj.setDate(yesterdayObj.getDate() - 1);
+
+    while (curr <= yesterdayObj && loopGuard < 2000) {
+      const currStr = getLocalIsoDate(curr);
+      if (!allDoneDatesSet.has(currStr)) {
+        daysMissed++;
+      }
+      curr.setDate(curr.getDate() + 1);
+      loopGuard++;
+    }
+
+    // 4. Hukuman yang belum ditebus
+    const unredeemedPunishments = Math.max(0, daysMissed - completedPunishments.length);
+
+    // 5. Streak Berurutan Disiplin
+    let currentStreak = 0;
+    const checkDate = new Date(todayObj);
+    if (!isCheckedInToday) {
       checkDate.setDate(checkDate.getDate() - 1);
-      streakGuard++;
-    } else {
-      break;
     }
-  }
 
-  const getDaysDiff = (startStr: string, endStr: string) => {
-    const start = getLocalDateFromStr(startStr);
-    const end = getLocalDateFromStr(endStr);
-    start.setHours(0, 0, 0, 0);
-    end.setHours(0, 0, 0, 0);
-    return Math.round((end.getTime() - start.getTime()) / 86400000);
-  };
-
-  // Rest day eligibility (max 1 rest day in past 7 days)
-  const recentRestDates = rawRests.filter(date => {
-    if (!date || date === today) return false;
-    const diff = getDaysDiff(date, today);
-    return diff > 0 && diff < 7;
-  });
-  const isRestDayDisabled = recentRestDates.length >= 1;
-
-  // 6. Target & Sisa Berapa Hari
-  let daysLeftText = '';
-  let daysLeftCount: number | null = null;
-  let totalTargetDays = 0;
-  let isTargetReached = false;
-
-  if (d.targetDate) {
-    const rawDaysLeft = getDaysDiff(today, d.targetDate);
-    daysLeftCount = Math.max(0, rawDaysLeft);
-    totalTargetDays = Math.max(1, getDaysDiff(actualStartDate, d.targetDate) + 1);
-
-    if (today >= d.targetDate || (daysDone >= totalTargetDays && totalTargetDays > 0)) {
-      isTargetReached = true;
-      daysLeftText = lang === 'id' ? 'Target Selesai' : 'Goal Completed';
-    } else {
-      isTargetReached = false;
-      daysLeftText = lang === 'id' ? `Sisa ${daysLeftCount} hari lagi` : `${daysLeftCount} days left`;
+    let streakGuard = 0;
+    while (streakGuard < 1000) {
+      const iso = getLocalIsoDate(checkDate);
+      if (allDoneDatesSet.has(iso)) {
+        currentStreak++;
+        checkDate.setDate(checkDate.getDate() - 1);
+        streakGuard++;
+      } else {
+        break;
+      }
     }
-  } else {
-    totalTargetDays = Math.max(daysDone + daysMissed, 30);
-    daysLeftText = lang === 'id' ? 'Tantangan Berkelanjutan' : 'Ongoing Target';
-  }
+
+    const getDaysDiff = (startStr: string, endStr: string) => {
+      const start = getLocalDateFromStr(startStr);
+      const end = getLocalDateFromStr(endStr);
+      start.setHours(0, 0, 0, 0);
+      end.setHours(0, 0, 0, 0);
+      return Math.round((end.getTime() - start.getTime()) / 86400000);
+    };
+
+    // Rest day eligibility (max 1 rest day in past 7 days)
+    const recentRestDates = rawRests.filter(date => {
+      if (!date || date === today) return false;
+      const diff = getDaysDiff(date, today);
+      return diff > 0 && diff < 7;
+    });
+    const isRestDayDisabled = recentRestDates.length >= 1;
+
+    // 6. Target & Sisa Berapa Hari
+    let daysLeftText = '';
+    let daysLeftCount: number | null = null;
+    let totalTargetDays = 0;
+    let isTargetReached = false;
+
+    if (d.targetDate) {
+      const rawDaysLeft = getDaysDiff(today, d.targetDate);
+      daysLeftCount = Math.max(0, rawDaysLeft);
+      totalTargetDays = Math.max(1, getDaysDiff(actualStartDate, d.targetDate) + 1);
+
+      if (today >= d.targetDate || (daysDone >= totalTargetDays && totalTargetDays > 0)) {
+        isTargetReached = true;
+        daysLeftText = lang === 'id' ? 'Target Selesai' : 'Goal Completed';
+      } else {
+        isTargetReached = false;
+        daysLeftText = lang === 'id' ? `Sisa ${daysLeftCount} hari lagi` : `${daysLeftCount} days left`;
+      }
+    } else {
+      totalTargetDays = Math.max(daysDone + daysMissed, 30);
+      daysLeftText = lang === 'id' ? 'Tantangan Berkelanjutan' : 'Ongoing Target';
+    }
+
+    return {
+      isCheckedInToday,
+      isRestDayToday,
+      actualStartDate,
+      daysDone,
+      daysMissed,
+      unredeemedPunishments,
+      currentStreak,
+      isRestDayDisabled,
+      daysLeftText,
+      totalTargetDays,
+      isTargetReached
+    };
+  }, [task, today, rawCheckins, rawRests, completedPunishments, d.startDate, d.targetDate, task.createdAt, task.date, task.completed, lang]);
 
   // Handlers for Check-in
   const handleCheckInToday = () => {
@@ -870,78 +1020,15 @@ export const DisciplineView = React.memo<DisciplineViewProps>(({
         </div>
       )}
 
-      {/* Tab 2: Jurnal & Refleksi */}
+      {/* Tab 2: Jurnal & Refleksi - Isolated 0ms lag */}
       {activeTab === 'Jurnal' && (
-        <div className="space-y-3 animate-in fade-in duration-200">
-          {/* Motivation / Why */}
-          <div className={`rounded-2xl p-3.5 space-y-1.5 border ${palette.disciplineCard} ${palette.disciplineBorder}`}>
-            <h3 className={`text-xs font-bold uppercase tracking-wider ${palette.disciplineTitle}`}>
-              {lang === 'id' ? 'Alasan Kuat (Why)' : 'Strong Reason (Why)'}
-            </h3>
-            <AutoResizeTextarea 
-              value={d.motivation || ''}
-              onChange={(e) => updateTask({ ...task, disciplineData: { ...d, motivation: e.target.value } })}
-              placeholder={lang === 'id' ? 'Kenapa target ini sangat penting bagi masa depanmu?' : 'Why is this goal important to you?'}
-              minHeight={50}
-              className={`w-full rounded-xl p-2.5 text-xs focus:outline-none border ${palette.disciplineInner} ${palette.disciplineInnerBorder} ${palette.disciplineTitle} placeholder:${palette.disciplineSub}`}
-            />
-          </div>
-
-          {/* Daily Logs */}
-          <div className={`rounded-2xl p-3.5 space-y-2.5 border ${palette.disciplineCard} ${palette.disciplineBorder}`}>
-            <h3 className={`text-xs font-bold uppercase tracking-wider ${palette.disciplineTitle}`}>
-              {lang === 'id' ? 'Catatan Refleksi Harian' : 'Daily Reflection Logs'}
-            </h3>
-            <div className="space-y-2">
-              <AutoResizeTextarea 
-                value={newNoteText}
-                onChange={(e) => setNewNoteText(e.target.value)}
-                placeholder={lang === 'id' ? 'Tulis refleksi atau evaluasi progresmu hari ini...' : 'Write your daily reflection...'}
-                minHeight={45}
-                className={`w-full rounded-xl p-2.5 text-xs focus:outline-none border ${palette.disciplineInner} ${palette.disciplineInnerBorder} ${palette.disciplineTitle} placeholder:${palette.disciplineSub}`}
-              />
-              <div className="flex justify-end">
-                <button
-                  onClick={() => {
-                    if (newNoteText.trim()) {
-                      const newLog = [...(d.journeyLog || []), {
-                        id: Date.now().toString(),
-                        date: new Date().toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { day: 'numeric', month: 'short' }),
-                        content: newNoteText.trim()
-                      }];
-                      updateTask({ ...task, disciplineData: { ...d, journeyLog: newLog } });
-                      setNewNoteText('');
-                    }
-                  }}
-                  className={`px-3 py-1.5 text-white font-bold text-xs rounded-xl cursor-pointer transition-colors ${palette.disciplineBtnAction}`}
-                >
-                  {lang === 'id' ? 'Simpan Catatan' : 'Save Log'}
-                </button>
-              </div>
-            </div>
-
-            {/* List of journal entries */}
-            <div className="space-y-1.5 pt-1">
-              {d.journeyLog?.slice().reverse().map((entry) => (
-                <div key={entry.id} className={`p-2.5 rounded-xl border ${palette.disciplineInner} ${palette.disciplineInnerBorder}`}>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className={`text-[10px] font-bold uppercase ${palette.disciplineSub}`}>{entry.date}</span>
-                    <button
-                      onClick={() => {
-                        const newLog = d.journeyLog?.filter(n => n.id !== entry.id);
-                        updateTask({ ...task, disciplineData: { ...d, journeyLog: newLog } });
-                      }}
-                      className={`p-0.5 cursor-pointer ${palette.disciplineSub} hover:text-rose-500`}
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  </div>
-                  <p className={`text-xs whitespace-pre-wrap ${palette.disciplineTitle}`}>{entry.content}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        <DisciplineJournalTab 
+          task={task} 
+          d={d} 
+          updateTask={updateTask} 
+          lang={lang} 
+          palette={palette} 
+        />
       )}
 
       {/* Tab 3: Galeri Transformasi */}

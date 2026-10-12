@@ -385,12 +385,13 @@ export default function HomeScreen({ appTheme, setAppTheme, onOpenNote, onNaviga
         recentNotesList: []
       };
     }
-    const actTasks = tasks.filter(t => !t.completed && !t.isDiscipline && !t.disciplineData);
-    const pTasks = tasks.filter(t => t.pinned && !t.isDiscipline && !t.disciplineData).slice(0, 5);
+    const nonDeletedTasks = tasks.filter(t => !t.deleted);
+    const actTasks = nonDeletedTasks.filter(t => !t.completed && !t.isDiscipline && !t.disciplineData);
+    const pTasks = nonDeletedTasks.filter(t => t.pinned && !t.isDiscipline && !t.disciplineData).slice(0, 5);
     const pNotes = notes.filter(n => n.pinned).slice(0, 5);
-    const dTask = tasks.find(t => (t.isDiscipline || !!t.disciplineData) && !t.deleted);
-    const tTasks = tasks.length;
-    const completedCount = tasks.filter(t => t.completed).length;
+    const dTask = nonDeletedTasks.find(t => t.isDiscipline || !!t.disciplineData);
+    const tTasks = nonDeletedTasks.length;
+    const completedCount = nonDeletedTasks.filter(t => t.completed).length;
     const pPercent = tTasks === 0 ? 0 : Math.round((completedCount / tTasks) * 100);
     const frontStreak = completedCount === 0 ? 0 : Math.max(1, streak);
 
