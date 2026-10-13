@@ -193,7 +193,11 @@ export default function SearchScreen({
     if (q) {
       list = list.filter(n => {
         const titleMatch = (n.title || '').toLowerCase().includes(q);
-        const contentMatch = (n.content || '').toLowerCase().includes(q);
+        const cleanContent = (n.content || '')
+          .replace(/<img[^>]*>/gi, '')
+          .replace(/<[^>]*>?/gm, ' ')
+          .toLowerCase();
+        const contentMatch = cleanContent.includes(q);
         const tagMatch = n.tags?.some(tag => tag.toLowerCase().includes(q));
         return titleMatch || contentMatch || tagMatch;
       });
@@ -326,34 +330,38 @@ export default function SearchScreen({
           </div>
 
           {/* Action buttons */}
-          <div className="flex items-center gap-1 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-black/5 justify-end">
+          <div className="flex items-center gap-1.5 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-black/5 justify-end">
             <button
+              type="button"
               onClick={(e) => handleToggleNoteLock(e, note)}
-              className={`p-1.5 rounded-xl border transition-all cursor-pointer ${palette.streakCard} ${palette.streakBorder} ${palette.subText} hover:${palette.titleText}`}
+              className={`p-2 min-w-[34px] min-h-[34px] flex items-center justify-center rounded-xl border transition-all cursor-pointer touch-manipulation active:scale-90 ${palette.streakCard} ${palette.streakBorder} ${palette.subText} hover:${palette.titleText}`}
               title={note.isLocked ? (lang === 'id' ? 'Buka Kunci' : 'Unlock') : (lang === 'id' ? 'Kunci dengan PIN' : 'Lock with PIN')}
             >
-              <Icon3DLock size={14} />
+              <Icon3DLock size={15} />
             </button>
             <button
+              type="button"
               onClick={(e) => { e.stopPropagation(); updateNote({ ...note, isArchived: !note.isArchived }); }}
-              className={`p-1.5 rounded-xl border transition-all cursor-pointer ${palette.streakCard} ${palette.streakBorder} ${palette.subText} hover:${palette.titleText}`}
+              className={`p-2 min-w-[34px] min-h-[34px] flex items-center justify-center rounded-xl border transition-all cursor-pointer touch-manipulation active:scale-90 ${palette.streakCard} ${palette.streakBorder} ${palette.subText} hover:${palette.titleText}`}
               title={note.isArchived ? (lang === 'id' ? 'Batal Arsipkan' : 'Unarchive') : (lang === 'id' ? 'Arsipkan' : 'Archive')}
             >
-              <Icon3DArchive size={14} />
+              <Icon3DArchive size={15} />
             </button>
             <button 
+              type="button"
               onClick={(e) => { e.stopPropagation(); setNoteToDelete(note.id); }}
-              className={`p-1.5 rounded-xl border transition-all cursor-pointer ${palette.streakCard} ${palette.streakBorder} ${palette.subText} hover:text-red-500 hover:border-red-300`}
+              className={`p-2 min-w-[34px] min-h-[34px] flex items-center justify-center rounded-xl border transition-all cursor-pointer touch-manipulation active:scale-90 ${palette.streakCard} ${palette.streakBorder} ${palette.subText} hover:text-red-500 hover:border-red-300`}
               title={lang === 'id' ? 'Hapus Catatan' : 'Delete Note'}
             >
-              <Icon3DTrash size={14} />
+              <Icon3DTrash size={15} />
             </button>
             <button 
+              type="button"
               onClick={(e) => handleTogglePinNote(e, note)}
-              className={`p-1.5 rounded-xl border transition-all cursor-pointer ${palette.streakCard} ${palette.streakBorder} ${palette.subText} hover:${palette.titleText}`}
+              className={`p-2 min-w-[34px] min-h-[34px] flex items-center justify-center rounded-xl border transition-all cursor-pointer touch-manipulation active:scale-90 ${palette.streakCard} ${palette.streakBorder} ${palette.subText} hover:${palette.titleText}`}
               title={note.pinned ? (lang === 'id' ? 'Lepas Sematan' : 'Unpin') : (lang === 'id' ? 'Sematkan' : 'Pin')}
             >
-              <Icon3DPin size={14} />
+              <Icon3DPin size={15} />
             </button>
           </div>
         </div>
@@ -469,43 +477,52 @@ export default function SearchScreen({
             )}
           </div>
           
-          <div className="flex gap-1 flex-shrink-0 opacity-100 transition-opacity">
+          <div className="flex gap-1.5 flex-shrink-0 opacity-100 transition-opacity">
             <button
+              type="button"
               onClick={(e) => handleToggleNoteLock(e, note)}
-              className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+              className={`p-2 min-w-[34px] min-h-[34px] flex items-center justify-center rounded-xl transition-all cursor-pointer touch-manipulation active:scale-90 border ${
                 isOrganic 
-                  ? `${palette.subText} hover:${palette.titleText}` 
-                  : note.isLocked ? 'text-amber-400 hover:text-amber-300 hover:bg-slate-700' : 'text-slate-400 hover:text-amber-400 hover:bg-slate-700'
+                  ? `${palette.streakCard} ${palette.streakBorder} ${palette.subText} hover:${palette.titleText}` 
+                  : note.isLocked ? 'text-amber-400 hover:text-amber-300 hover:bg-slate-700 border-slate-700' : 'text-slate-400 hover:text-amber-400 hover:bg-slate-700 border-slate-800'
               }`}
               title={note.isLocked ? (lang === 'id' ? 'Buka Kunci Catatan' : 'Unlock Note') : (lang === 'id' ? 'Kunci Catatan dengan PIN' : 'Lock Note with PIN')}
             >
               {is3D ? <Icon3DLock size={15} /> : note.isLocked ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
             </button>
             <button
+              type="button"
               onClick={(e) => { e.stopPropagation(); updateNote({ ...note, isArchived: !note.isArchived }); }}
-              className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+              className={`p-2 min-w-[34px] min-h-[34px] flex items-center justify-center rounded-xl transition-all cursor-pointer touch-manipulation active:scale-90 border ${
                 isOrganic 
-                  ? `${palette.subText} hover:${palette.titleText}` 
-                  : 'text-slate-400 hover:text-indigo-400 hover:bg-slate-700'
+                  ? `${palette.streakCard} ${palette.streakBorder} ${palette.subText} hover:${palette.titleText}` 
+                  : 'text-slate-400 hover:text-indigo-400 hover:bg-slate-700 border-slate-800'
               }`}
               title={note.isArchived ? (lang === 'id' ? 'Batal Arsipkan' : 'Unarchive') : (lang === 'id' ? 'Arsipkan' : 'Archive')}
             >
               {is3D ? <Icon3DArchive size={15} /> : <Archive className="w-3.5 h-3.5" />}
             </button>
             <button 
+              type="button"
               onClick={(e) => { e.stopPropagation(); setNoteToDelete(note.id); }}
-              className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+              className={`p-2 min-w-[34px] min-h-[34px] flex items-center justify-center rounded-xl transition-all cursor-pointer touch-manipulation active:scale-90 border ${
                 isOrganic 
-                  ? `${palette.subText} hover:text-red-500` 
-                  : 'text-slate-400 hover:text-red-400 hover:bg-slate-700'
+                  ? `${palette.streakCard} ${palette.streakBorder} ${palette.subText} hover:text-red-500` 
+                  : 'text-slate-400 hover:text-red-400 hover:bg-slate-700 border-slate-800'
               }`}
               title={lang === 'id' ? 'Hapus Catatan' : 'Delete Note'}
             >
               {is3D ? <Icon3DTrash size={15} /> : isLite ? <LiteStickerIcon variant="trash" size="xs" /> : <Trash2 className="w-3.5 h-3.5" />}
             </button>
-            <div 
+            <button 
+              type="button"
               onClick={(e) => handleTogglePinNote(e, note)}
-              className="p-1.5 rounded-lg transition-colors cursor-pointer"
+              className={`p-2 min-w-[34px] min-h-[34px] flex items-center justify-center rounded-xl transition-all cursor-pointer touch-manipulation active:scale-90 border ${
+                isOrganic 
+                  ? `${palette.streakCard} ${palette.streakBorder} ${palette.subText} hover:${palette.titleText}` 
+                  : 'text-slate-400 hover:text-amber-400 hover:bg-slate-700 border-slate-800'
+              }`}
+              title={note.pinned ? (lang === 'id' ? 'Lepas Sematan' : 'Unpin') : (lang === 'id' ? 'Sematkan' : 'Pin')}
             >
               {isOrganic ? (
                 <Icon3DPin size={15} />
@@ -514,7 +531,7 @@ export default function SearchScreen({
               ) : (
                 <Pin className={`w-3.5 h-3.5 ${note.pinned ? 'fill-orange-400 text-orange-400' : 'text-slate-400 hover:text-orange-400'}`} />
               )}
-            </div>
+            </button>
           </div>
         </div>
       </div>

@@ -119,6 +119,8 @@ export default function DocumentScannerModal({
     setCameraError(null);
     stopCameraStream();
 
+    let lastError: any = null;
+
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         throw new Error(lang === 'id' ? 'Kamera tidak didukung di peranti ini.' : 'Camera not supported.');
@@ -126,9 +128,8 @@ export default function DocumentScannerModal({
 
       let mediaStream: MediaStream | null = null;
       const constraints = [
-        { video: { facingMode: { ideal: facingMode }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false },
+        { video: { facingMode: { ideal: facingMode }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false },
         { video: { facingMode: { ideal: facingMode } }, audio: false },
-        { video: { facingMode: facingMode }, audio: false },
         { video: { facingMode: facingMode === 'environment' ? 'environment' : 'user' }, audio: false },
         { video: true, audio: false }
       ];
@@ -137,28 +138,29 @@ export default function DocumentScannerModal({
         try {
           mediaStream = await navigator.mediaDevices.getUserMedia(c);
           if (mediaStream) break;
-        } catch (e) {
+        } catch (e: any) {
+          lastError = e;
           console.warn('DocumentScanner camera constraint failed:', c, e);
         }
       }
 
       if (!mediaStream) {
+        if (lastError) throw lastError;
         throw new Error(lang === 'id' ? 'Gagal mengakses kamera' : 'Failed to access camera');
       }
 
       streamRef.current = mediaStream;
       setCameraStream(mediaStream);
-      setIsCameraLoading(false);
     } catch (err: any) {
-      console.error('Camera access error:', err);
+      console.warn('Camera stream unavailable or permission restricted:', err?.message || err);
       setIsCameraLoading(false);
       let errMsg = lang === 'id'
-        ? 'Izin akses kamera belum aktif di browser. Tekan "Minta Izin / Buka Kamera Live" untuk mengaktifkan pemindai live dokumen, atau gunakan opsi kamera HP native di bawah.'
-        : 'Camera access permission not active in browser. Tap "Request Permission / Open Live Camera" to start live document scanner, or use native camera option below.';
-      if (err?.name === 'NotAllowedError' || err?.message?.includes('Permission denied')) {
+        ? 'Akses kamera live tidak dapat dibuka di peramban ini. Gunakan opsi kamera native HP di bawah.'
+        : 'Live camera could not be started in this browser. Use native phone camera below.';
+      if (err?.name === 'NotAllowedError' || err?.name === 'SecurityError' || err?.message?.includes('Permission') || err?.message?.includes('disallowed')) {
         errMsg = lang === 'id'
-          ? 'Izin kamera ditolak oleh browser. Tekan "Minta Izin / Buka Kamera Live" atau berikan izin pada ikon gembok/pengaturan di browser Anda.'
-          : 'Camera permission denied by browser. Tap "Request Permission / Open Live Camera" or enable permission in browser site settings.';
+          ? 'Izin kamera ditolak atau dibatasi peramban. Silakan gunakan opsi kamera native HP di bawah.'
+          : 'Camera permission denied or restricted. Please use native phone camera option below.';
       } else if (err?.name === 'NotFoundError' || err?.name === 'DevicesNotFoundError') {
         errMsg = lang === 'id'
           ? 'Perangkat kamera tidak ditemukan. Pilih foto dari galeri atau kamera native HP.'
@@ -175,14 +177,20 @@ export default function DocumentScannerModal({
       videoEl.srcObject = cameraStream;
       videoEl.setAttribute('playsinline', 'true');
       videoEl.setAttribute('webkit-playsinline', 'true');
-      const handleMetadata = () => {
+      videoEl.muted = true; // Crucial for mobile browser autoplay policy
+      
+      const handleReady = () => {
+        setIsCameraLoading(false);
         videoEl.play().catch((err) => console.log('DocScanner play metadata err:', err));
       };
-      videoEl.addEventListener('loadedmetadata', handleMetadata);
+      
+      videoEl.addEventListener('loadeddata', handleReady);
+      videoEl.addEventListener('loadedmetadata', handleReady);
       videoEl.play().catch((err) => console.log('DocScanner play direct err:', err));
 
       return () => {
-        videoEl.removeEventListener('loadedmetadata', handleMetadata);
+        videoEl.removeEventListener('loadeddata', handleReady);
+        videoEl.removeEventListener('loadedmetadata', handleReady);
       };
     }
   }, [cameraStream, studioMode]);
@@ -958,14 +966,6 @@ export default function DocumentScannerModal({
                     >
                       <Camera size={16} />
                       <span>{lang === 'id' ? 'Kamera HP (Native OS Fallback)' : 'Native OS Camera (Fallback)'}</span>
-                    </button>
-
-                    <button
-                      onClick={() => window.open(window.location.href, '_blank')}
-                      className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-bold text-xs rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
-                    >
-                      <ExternalLink size={14} />
-                      <span>{lang === 'id' ? 'Buka Aplikasi di Tab Baru' : 'Open App in New Tab'}</span>
                     </button>
 
                     <button

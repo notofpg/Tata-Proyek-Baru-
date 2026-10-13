@@ -16,7 +16,7 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
         globIgnores: ['**/node_modules/**/*', 'dist/**/*'],
-        maximumFileSizeToCacheInBytes: 3000000, // Reduced from 5MB to 3MB
+        maximumFileSizeToCacheInBytes: 5000000, // 5MB to accommodate single bundle
         navigateFallback: '/index.html',
         // ✅ Aggressive cleanup to allow reinstalls
         cleanupOutdatedCaches: true,

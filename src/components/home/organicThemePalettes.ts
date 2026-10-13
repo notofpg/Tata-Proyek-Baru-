@@ -802,9 +802,9 @@ export function getOrganicThemePalette(themeName?: string): OrganicThemePalette 
     };
   }
 
-  // 8. DEFAULT: ORGANIC (Day Linen Cream & Terracotta)
+  // 8. DEFAULT: ORGANIC / PRO MAX (Day Linen Cream & Terracotta)
   return {
-    id: 'organic',
+    id: theme === 'pro_max' ? 'pro_max' : 'organic',
     isDark: false,
     rootText: 'text-[#2B1E14]',
     selection: 'selection:bg-[#EAD6C3] selection:text-[#2B1E14]',

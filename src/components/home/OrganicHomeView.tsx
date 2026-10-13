@@ -1225,10 +1225,10 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
                                   <button
                                     type="button"
                                     onClick={(e) => handleTogglePinNote(note, e)}
-                                    className="w-6 h-6 rounded-lg flex items-center justify-center opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5 active:scale-90 transition-all cursor-pointer touch-manipulation"
+                                    className="w-7 h-7 min-w-[28px] min-h-[28px] sm:w-8 sm:h-8 rounded-lg flex items-center justify-center opacity-70 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5 active:scale-90 transition-all cursor-pointer touch-manipulation"
                                     title={lang === 'id' ? 'Lepas dari Prioritas Utama' : 'Unpin note'}
                                   >
-                                    <X size={12} />
+                                    <X size={14} />
                                   </button>
                                 </div>
                               </div>

@@ -425,7 +425,11 @@ const builtInProviders: SearchProvider[] = [
 
       notes.forEach(n => {
         const title = (n.title || '').toLowerCase();
-        const content = (n.content || '').toLowerCase();
+        const cleanContent = (n.content || '')
+          .replace(/<img[^>]*>/gi, '')
+          .replace(/<[^>]*>?/gm, ' ')
+          .replace(/\s+/g, ' ');
+        const content = cleanContent.toLowerCase();
         const tags = (n.tags || []).map(t => t.toLowerCase());
         const reminder = (n.reminder || '').toLowerCase();
 

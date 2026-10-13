@@ -60,16 +60,18 @@ export default function CameraModal({
     setCameraError(null);
     stopCameraStream();
 
+    let lastError: any = null;
+
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         throw new Error(lang === 'id' ? 'Kamera tidak didukung di peramban ini.' : 'Camera not supported in this browser.');
       }
 
       let mediaStream: MediaStream | null = null;
+      // Progressive fallback constraints: from preferred to generic
       const constraints = [
-        { video: { facingMode: { ideal: facingMode }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false },
+        { video: { facingMode: { ideal: facingMode }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false },
         { video: { facingMode: { ideal: facingMode } }, audio: false },
-        { video: { facingMode: facingMode }, audio: false },
         { video: { facingMode: facingMode === 'environment' ? 'environment' : 'user' }, audio: false },
         { video: true, audio: false }
       ];
@@ -78,32 +80,33 @@ export default function CameraModal({
         try {
           mediaStream = await navigator.mediaDevices.getUserMedia(c);
           if (mediaStream) break;
-        } catch (e) {
+        } catch (e: any) {
+          lastError = e;
           console.warn('Camera constraint attempt failed:', c, e);
         }
       }
 
       if (!mediaStream) {
+        if (lastError) throw lastError;
         throw new Error(lang === 'id' ? 'Gagal mengakses kamera' : 'Failed to access camera');
       }
 
       streamRef.current = mediaStream;
       setStream(mediaStream);
-      setIsCameraLoading(false);
     } catch (err: any) {
-      console.error('Camera access error:', err);
+      console.warn('Camera stream unavailable or permission restricted:', err?.message || err);
       setIsCameraLoading(false);
       let errMsg = lang === 'id'
-        ? 'Izin akses kamera belum aktif di browser. Tekan "Minta Izin / Buka Kamera Live" di bawah untuk mengaktifkan kamera.'
-        : 'Camera access permission not active in browser. Tap "Request Permission / Open Live Camera" below.';
-      if (err?.name === 'NotAllowedError' || err?.message?.includes('Permission denied')) {
+        ? 'Akses kamera live tidak dapat dimulai di peramban ini. Anda dapat menggunakan tombol hijau "Kamera HP (Native OS)" di bawah untuk mengambil foto langsung.'
+        : 'Live camera could not be opened in this browser. You can use the green "Native OS Camera" button below to take a photo directly.';
+      if (err?.name === 'NotAllowedError' || err?.name === 'SecurityError' || err?.message?.includes('Permission') || err?.message?.includes('disallowed')) {
         errMsg = lang === 'id'
-          ? 'Izin kamera ditolak oleh browser. Tekan "Minta Izin / Buka Kamera Live" atau izinkan di pengaturan situs browser Anda.'
-          : 'Camera permission denied by browser. Tap "Request Permission / Open Live Camera" or allow in browser site settings.';
+          ? 'Izin kamera ditolak atau dibatasi peramban. Silakan gunakan tombol hijau "Kamera HP (Native OS)" di bawah untuk mengambil foto langsung.'
+          : 'Camera permission denied or restricted. Please use the green "Native OS Camera" button below to take a photo directly.';
       } else if (err?.name === 'NotFoundError' || err?.name === 'DevicesNotFoundError') {
         errMsg = lang === 'id'
-          ? 'Perangkat kamera tidak ditemukan pada perangkat ini.'
-          : 'Camera device not found on this device.';
+          ? 'Perangkat kamera tidak ditemukan. Gunakan opsi foto galeri atau kamera native HP.'
+          : 'Camera device not found. Use gallery or native OS camera.';
       }
       setCameraError(errMsg);
     }
@@ -116,14 +119,20 @@ export default function CameraModal({
       videoEl.srcObject = stream;
       videoEl.setAttribute('playsinline', 'true');
       videoEl.setAttribute('webkit-playsinline', 'true');
-      const handleMetadata = () => {
-        videoEl.play().catch((err) => console.log('Camera play metadata err:', err));
+      videoEl.muted = true; // Crucial for mobile browser autoplay policy
+      
+      const handleReady = () => {
+        setIsCameraLoading(false);
+        videoEl.play().catch((err) => console.log('Camera play direct err:', err));
       };
-      videoEl.addEventListener('loadedmetadata', handleMetadata);
+      
+      videoEl.addEventListener('loadeddata', handleReady);
+      videoEl.addEventListener('loadedmetadata', handleReady);
       videoEl.play().catch((err) => console.log('Camera play direct err:', err));
 
       return () => {
-        videoEl.removeEventListener('loadedmetadata', handleMetadata);
+        videoEl.removeEventListener('loadeddata', handleReady);
+        videoEl.removeEventListener('loadedmetadata', handleReady);
       };
     }
   }, [stream, isOpen, capturedImage]);
@@ -154,8 +163,8 @@ export default function CameraModal({
     setTimeout(() => setFlashAnimation(false), 200);
 
     const video = videoRef.current;
-    const width = video.videoWidth || 1280;
-    const height = video.videoHeight || 720;
+    const width = (video.videoWidth > 0 ? video.videoWidth : video.clientWidth) || 1280;
+    const height = (video.videoHeight > 0 ? video.videoHeight : video.clientHeight) || 720;
 
     const canvas = document.createElement('canvas');
     canvas.width = width;
@@ -170,15 +179,19 @@ export default function CameraModal({
       ctx.scale(-1, 1);
     }
 
-    ctx.drawImage(video, 0, 0, width, height);
-    const rawDataUrl = canvas.toDataURL('image/jpeg', 0.92);
+    try {
+      ctx.drawImage(video, 0, 0, width, height);
+      const rawDataUrl = canvas.toDataURL('image/jpeg', 0.92);
 
-    // Compress image
-    const compressed = await compressImageBase64(rawDataUrl, 1600, 1600, 0.82);
-    setCapturedImage(compressed);
+      // Compress image
+      const compressed = await compressImageBase64(rawDataUrl, 1600, 1600, 0.82);
+      setCapturedImage(compressed);
 
-    // Stop video stream during review
-    stopCameraStream();
+      // Stop video stream during review
+      stopCameraStream();
+    } catch (err) {
+      console.error('Snap error:', err);
+    }
   };
 
   // Toggle camera direction (Front / Rear)
@@ -371,35 +384,27 @@ export default function CameraModal({
                 </p>
                 <div className="flex flex-col gap-2.5 w-full">
                   <button
-                    onClick={startCamera}
-                    className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs rounded-xl transition-all cursor-pointer shadow-lg shadow-indigo-600/30 active:scale-95 flex items-center justify-center gap-2"
-                  >
-                    <RotateCw size={16} />
-                    <span>{lang === 'id' ? 'Minta Izin / Buka Kamera Live' : 'Request Permission / Open Live Camera'}</span>
-                  </button>
-
-                  <button
                     onClick={() => nativeCameraInputRef.current?.click()}
-                    className="w-full py-2.5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 font-bold text-xs rounded-xl transition-all cursor-pointer active:scale-95 flex items-center justify-center gap-2"
+                    className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-xl transition-all cursor-pointer shadow-lg shadow-emerald-600/30 active:scale-95 flex items-center justify-center gap-2"
                   >
-                    <Camera size={16} />
-                    <span>{lang === 'id' ? 'Kamera HP (Native OS Fallback)' : 'Native OS Camera (Fallback)'}</span>
+                    <Camera size={18} />
+                    <span>{lang === 'id' ? 'Gunakan Kamera Bawaan HP (Native)' : 'Use Native Phone Camera'}</span>
                   </button>
 
                   <button
-                    onClick={() => window.open(window.location.href, '_blank')}
-                    className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-bold text-xs rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
+                    onClick={startCamera}
+                    className="w-full py-2.5 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 font-bold text-xs rounded-xl transition-all cursor-pointer active:scale-95 flex items-center justify-center gap-2"
                   >
-                    <ExternalLink size={14} />
-                    <span>{lang === 'id' ? 'Buka Aplikasi di Tab Baru' : 'Open App in New Tab'}</span>
+                    <RotateCw size={15} />
+                    <span>{lang === 'id' ? 'Coba Buka Kamera Live Lagi' : 'Retry Live Camera'}</span>
                   </button>
 
                   <button
                     onClick={() => galleryInputRef.current?.click()}
-                    className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
+                    className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
                   >
-                    <ImageIcon size={14} className="text-indigo-400" />
-                    <span>{lang === 'id' ? 'Pilih Foto dari Galeri (Bisa Banyak)' : 'Choose Photos from Gallery (Multi-select)'}</span>
+                    <ImageIcon size={15} className="text-indigo-400" />
+                    <span>{lang === 'id' ? 'Pilih Foto dari Galeri' : 'Choose from Gallery'}</span>
                   </button>
                 </div>
               </div>

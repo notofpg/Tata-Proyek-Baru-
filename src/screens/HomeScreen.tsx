@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useAppStore } from '../store';
-import { CheckSquare, Flame, Pin, Sparkles, Target, X, FileText, Bell, Repeat, Bot, Plus, Laugh, Smile, Meh, Frown, CloudRain, Wallet, Crop, Image as ImageIcon, RefreshCw, Scan, Camera, Lock, Shuffle, Gamepad2, ArrowRight, TrendingUp, Zap, PiggyBank, CreditCard, ChevronRight, ChevronUp, Search as SearchIcon, Compass, Heart, ShieldAlert, Tag as TagIcon, ArrowUpRight, Calendar, ShieldCheck, User as UserIcon } from 'lucide-react';
+import { CheckSquare, Flame, Pin, Sparkles, Target, X, FileText, Bell, Repeat, Bot, Plus, Laugh, Smile, Meh, Frown, CloudRain, Wallet, Crop, Image as ImageIcon, RefreshCw, Camera, Lock, Shuffle, Gamepad2, ArrowRight, TrendingUp, Zap, PiggyBank, CreditCard, ChevronRight, ChevronUp, Search as SearchIcon, Compass, Heart, ShieldAlert, Tag as TagIcon, ArrowUpRight, Calendar, ShieldCheck, User as UserIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { getLargeItem, getLargeItemSync, setLargeItem } from '../utils/db';
 import { useTranslation } from '../translations';
 import NotificationModal from '../components/NotificationModal';
 import ImageCropperModal from '../components/ImageCropperModal';
-import DocumentScannerModal from '../components/DocumentScannerModal';
 import { buildAllNotifications } from '../utils/notifications';
 import { executeUniversalSearch, SearchResultItem } from '../services/searchEngine';
 import { OrganicHomeView } from '../components/home/OrganicHomeView';
@@ -283,25 +282,6 @@ export default function HomeScreen({ appTheme, setAppTheme, onOpenNote, onNaviga
   const [bannerWallpaper, setBannerWallpaper] = useState<string | null>(() => getLargeItemSync("tata_banner_wallpaper"));
   const [showCropperModal, setShowCropperModal] = useState(false);
   const [cropperImageSrc, setCropperImageSrc] = useState<string | null>(null);
-  const [showHomeScannerModal, setShowHomeScannerModal] = useState(false);
-
-  const handleScanInsertNote = (scannedImages: string[]) => {
-    if (scannedImages.length > 0) {
-      const imgsHtml = scannedImages
-        .map((imgUrl) => `<br><img src="${imgUrl}" alt="scanned_doc" style="max-width: 100%; border-radius: 8px; margin-top: 8px;" />`)
-        .join('<br>');
-      const newNote = {
-        id: crypto.randomUUID(),
-        title: lang === 'id' ? 'Hasil Scan Dokumen' : 'Scanned Document',
-        content: `<br>${imgsHtml}<br><br>`,
-        date: new Date().toISOString().split('T')[0],
-        updatedAt: Date.now(),
-        pinned: false,
-        tags: ['#scan']
-      };
-      onOpenNote(newNote);
-    }
-  };
 
   useEffect(() => {
     getLargeItem('tata_banner_wallpaper').then(setBannerWallpaper);
@@ -1402,13 +1382,6 @@ export default function HomeScreen({ appTheme, setAppTheme, onOpenNote, onNaviga
           setCropperImageSrc(null);
         }}
         onCropComplete={handleBannerCropSave}
-      />
-      {/* Document Scanner Modal */}
-      <DocumentScannerModal
-        isOpen={showHomeScannerModal}
-        onClose={() => setShowHomeScannerModal(false)}
-        onInsertToNote={handleScanInsertNote}
-        lang={lang}
       />
     </div>
   );

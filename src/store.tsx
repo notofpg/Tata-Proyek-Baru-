@@ -1989,9 +1989,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       } catch (e) {
         console.warn("Storage write error (notes):", e);
       }
-    }, 350);
+    }, 80);
+
+    const flushNotesSave = () => {
+      try {
+        const str = JSON.stringify(notes);
+        safeSetItem('tata_notes', str);
+        setLargeItem('tata_notes', str).catch(() => {});
+      } catch (e) {}
+    };
+
+    window.addEventListener('beforeunload', flushNotesSave);
+    window.addEventListener('pagehide', flushNotesSave);
+
     return () => {
       if (notesSaveTimerRef.current) clearTimeout(notesSaveTimerRef.current);
+      window.removeEventListener('beforeunload', flushNotesSave);
+      window.removeEventListener('pagehide', flushNotesSave);
     };
   }, [notes]);
 

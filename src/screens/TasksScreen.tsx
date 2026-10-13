@@ -91,7 +91,7 @@ const QuickTaskBar = React.memo<{
           : 'bg-slate-900/80 border-slate-800'
       }`}
     >
-      <div className="text-slate-400 shrink-0 pointer-events-none">
+      <div className={`shrink-0 pointer-events-none ${isOrganic ? organicPalette.brandText : 'text-slate-400'}`}>
         {icon}
       </div>
       <input
@@ -103,14 +103,14 @@ const QuickTaskBar = React.memo<{
         autoCorrect="off"
         spellCheck="false"
         className={`flex-1 bg-transparent text-xs sm:text-sm font-medium focus:outline-none placeholder:opacity-60 select-text ${
-          isOrganic ? organicPalette.titleText : 'text-slate-200 placeholder:text-slate-500'
+          isOrganic ? `${organicPalette.titleText} placeholder:${organicPalette.subText}` : 'text-slate-200 placeholder:text-slate-500'
         }`}
       />
       {text.trim() ? (
         <button
           type="submit"
-          className={`px-3 py-1.5 rounded-xl text-xs font-bold text-white transition-all active:scale-95 shadow-xs cursor-pointer touch-manipulation flex items-center gap-1 shrink-0 ${
-            isOrganic ? organicPalette.brandBg : (buttonColorClass || 'bg-indigo-600')
+          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-xs cursor-pointer touch-manipulation flex items-center gap-1 shrink-0 ${
+            isOrganic ? `${organicPalette.chipActive} text-white` : (buttonColorClass || 'bg-indigo-600 text-white')
           }`}
           title={lang === 'id' ? 'Tambah tugas cepat' : 'Add simple task'}
         >
@@ -165,9 +165,13 @@ export default function TasksScreen({
   } = useAppStore();
   
   const isLite = appTheme === 'lite' || appVersion === 'lite' || isLiteMode;
-  const isOrganic = !isLite && (appVersion === 'organic' || appVersion === 'pro_max' || appTheme === 'organic');
+  const isOrganic = !isLite && (appVersion === 'organic' || appVersion === 'pro_max' || appTheme === 'organic' || appTheme === 'pro_max');
   const is3D = isOrganic;
-  const organicPalette = useMemo(() => getOrganicThemePalette(appTheme), [appTheme]);
+  const organicPalette = useMemo(() => {
+    const storedTheme = typeof window !== 'undefined' ? localStorage.getItem('tata_theme') : null;
+    const effectiveTheme = appTheme || storedTheme || (isOrganic ? 'organic' : 'dark');
+    return getOrganicThemePalette(effectiveTheme);
+  }, [appTheme, isOrganic]);
   const [activeTab, setActiveTab] = useState<'Sekarang' | 'Harian' | 'Disiplin'>('Sekarang');
   const tasksScrollRef = useRef<HTMLElement>(null);
 
@@ -187,6 +191,24 @@ export default function TasksScreen({
 
   const [priorityFilter, setPriorityFilter] = useState<'semua' | 'Tinggi' | 'Sedang' | 'Rendah'>('semua');
   const [showFilterMenu, setShowFilterMenu] = useState(false);
+  const filterMenuRef = useRef<HTMLDivElement>(null);
+
+  // Click outside listener for Priority Filter dropdown
+  useEffect(() => {
+    if (!showFilterMenu) return;
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
+      if (filterMenuRef.current && !filterMenuRef.current.contains(e.target as Node)) {
+        setShowFilterMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [showFilterMenu]);
+
   const [showCompleted, setShowCompleted] = useState(false);
   const [showTrashModal, setShowTrashModal] = useState(false);
   const [confirmEmptyTrash, setConfirmEmptyTrash] = useState(false);
@@ -508,11 +530,11 @@ export default function TasksScreen({
             {/* Quick Action Toolbar */}
             <div className="flex items-center gap-1.5 shrink-0 relative">
               {/* Priority Filter Dropdown */}
-              <div className="relative">
+              <div ref={filterMenuRef} className="relative">
                 <button
                   type="button"
                   onClick={() => setShowFilterMenu(!showFilterMenu)}
-                  className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer touch-manipulation active:scale-95 ${
+                  className={`flex items-center gap-1.5 px-3 py-2 min-h-[38px] rounded-xl text-xs font-semibold border transition-all cursor-pointer touch-manipulation active:scale-95 ${
                     priorityFilter !== 'semua'
                       ? isOrganic
                         ? `${organicPalette.chipActive} shadow-xs`
@@ -528,20 +550,20 @@ export default function TasksScreen({
                     {priorityFilter === 'semua' ? (lang === 'id' ? 'Filter' : 'Filter') : (priorityFilter === 'Tinggi' ? (lang === 'id' ? 'Wajib' : 'High') : priorityFilter)}
                   </span>
                   {priorityFilter !== 'semua' && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
+                    <span className={`w-1.5 h-1.5 rounded-full ${isOrganic ? 'bg-[#D66532]' : 'bg-indigo-400'}`} />
                   )}
                 </button>
 
                 {showFilterMenu && (
                   <div 
-                    className={`absolute right-0 top-full mt-1.5 w-36 border rounded-2xl shadow-xl p-1 z-50 animate-in fade-in zoom-in-95 duration-150 ${
+                    className={`absolute right-0 top-full mt-1.5 w-40 border rounded-2xl shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150 ${
                       isOrganic 
                         ? `${organicPalette.cardHero} ${organicPalette.cardHeroBorder}` 
                         : 'bg-slate-900 border-slate-800'
                     }`}
                   >
                     {(['semua', 'Tinggi', 'Sedang', 'Rendah'] as const).map(p => {
-                      const label = p === 'semua' ? (lang === 'id' ? 'Semua' : 'All') : p === 'Tinggi' ? (lang === 'id' ? 'Wajib' : 'High') : p === 'Sedang' ? (lang === 'id' ? 'Sedang' : 'Medium') : (lang === 'id' ? 'Rendah' : 'Low');
+                      const label = p === 'semua' ? (lang === 'id' ? 'Semua Prioritas' : 'All Priorities') : p === 'Tinggi' ? (lang === 'id' ? 'Wajib (Tinggi)' : 'High Priority') : p === 'Sedang' ? (lang === 'id' ? 'Sedang' : 'Medium') : (lang === 'id' ? 'Rendah' : 'Low');
                       const isSelected = priorityFilter === p;
                       return (
                         <button
@@ -551,18 +573,18 @@ export default function TasksScreen({
                             setPriorityFilter(p);
                             setShowFilterMenu(false);
                           }}
-                          className={`w-full text-left px-3 py-1.5 rounded-xl text-xs font-medium transition-colors flex items-center justify-between cursor-pointer touch-manipulation ${
+                          className={`w-full text-left px-3 py-2.5 min-h-[38px] rounded-xl text-xs font-medium transition-colors flex items-center justify-between cursor-pointer touch-manipulation ${
                             isSelected 
                               ? isOrganic
-                                ? `${organicPalette.chipActive} font-bold`
+                                ? `${organicPalette.chipActive} text-white font-bold`
                                 : 'bg-indigo-600 text-white font-bold' 
                               : isOrganic
-                              ? `${organicPalette.titleText} hover:opacity-80`
+                              ? `${organicPalette.titleText} hover:bg-black/5 dark:hover:bg-white/5`
                               : 'text-slate-300 hover:bg-slate-800'
                           }`}
                         >
                           <span>{label}</span>
-                          {isSelected && <Check className="w-3 h-3" />}
+                          {isSelected && <Check className="w-3.5 h-3.5" />}
                         </button>
                       );
                     })}
@@ -575,13 +597,13 @@ export default function TasksScreen({
                 type="button"
                 onClick={toggleSort}
                 title={sortBy === 'waktu' ? (lang === 'id' ? 'Urutkan: Waktu' : 'Sort: Time') : (lang === 'id' ? 'Urutkan: Prioritas' : 'Sort: Priority')}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer touch-manipulation active:scale-95 ${
+                className={`flex items-center gap-1.5 px-3 py-2 min-h-[38px] rounded-xl text-xs font-semibold border transition-all cursor-pointer touch-manipulation active:scale-95 ${
                   isOrganic 
                     ? `${organicPalette.streakCard} ${organicPalette.streakBorder} ${organicPalette.titleText} hover:opacity-90` 
                     : 'bg-slate-900 border-slate-800 hover:border-slate-700 text-slate-300'
                 }`}
               >
-                {is3D ? <Icon3DClock size={15} /> : <Clock className="w-3.5 h-3.5 text-indigo-400" />}
+                {is3D ? <Icon3DClock size={15} /> : <Clock className={`w-3.5 h-3.5 ${isOrganic ? 'text-amber-600 dark:text-amber-400' : 'text-indigo-400'}`} />}
                 <span className="text-[11px] font-medium hidden sm:inline">{sortBy === 'waktu' ? (lang === 'id' ? 'Waktu' : 'Time') : (lang === 'id' ? 'Prioritas' : 'Priority')}</span>
               </button>
 
@@ -589,7 +611,7 @@ export default function TasksScreen({
               <button
                 type="button"
                 onClick={() => setShowTrashModal(true)}
-                className={`relative p-2 rounded-xl border transition-colors cursor-pointer touch-manipulation active:scale-95 ${
+                className={`relative p-2 min-w-[38px] min-h-[38px] flex items-center justify-center rounded-xl border transition-colors cursor-pointer touch-manipulation active:scale-95 ${
                   isOrganic 
                     ? `${organicPalette.streakCard} ${organicPalette.streakBorder} ${organicPalette.titleText} hover:opacity-90` 
                     : 'text-slate-400 hover:text-slate-200 bg-slate-900 border-slate-800 hover:border-slate-700'
@@ -598,7 +620,9 @@ export default function TasksScreen({
               >
                 {is3D ? <Icon3DTrash size={16} /> : <Trash2 className="w-3.5 h-3.5" />}
                 {deletedTasks.length > 0 && (
-                  <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-rose-500 text-white rounded-full text-[8px] font-bold flex items-center justify-center ring-2 ring-slate-950">
+                  <span className={`absolute -top-1 -right-1 w-3.5 h-3.5 bg-rose-500 text-white rounded-full text-[8px] font-bold flex items-center justify-center ring-2 ${
+                    organicPalette.isDark ? 'ring-slate-950' : 'ring-[#FAF5EA]'
+                  }`}>
                     {deletedTasks.length}
                   </span>
                 )}
@@ -606,8 +630,8 @@ export default function TasksScreen({
             </div>
           </div>
 
-          {/* Segmented Tab Navigation: Sleek & Tactile */}
-          <nav aria-label="Task category tabs" className={`flex p-1 rounded-2xl gap-1 relative shadow-inner border ${
+          {/* Segmented Tab Navigation: Sleek, Tactile & Smooth Animation */}
+          <nav aria-label="Task category tabs" className={`flex p-1 rounded-2xl gap-1 relative shadow-inner border transition-colors ${
             isOrganic 
               ? `${organicPalette.streakCard} ${organicPalette.streakBorder}` 
               : 'bg-slate-950/80 border-slate-800/80'
@@ -618,23 +642,25 @@ export default function TasksScreen({
                 triggerHaptic('light');
                 setActiveTab('Sekarang');
               }}
-              className={`flex-1 py-1.5 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation relative active:scale-95 ${
+              className={`flex-1 py-2 sm:py-2.5 min-h-[38px] sm:min-h-[40px] text-xs font-bold rounded-xl transition-all duration-300 ease-out flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation relative active:scale-95 ${
                 activeTab === 'Sekarang'
                   ? isOrganic 
-                    ? `${organicPalette.chipActive} shadow-xs`
+                    ? `${organicPalette.chipActive} text-white shadow-xs font-bold`
                     : 'bg-indigo-600 text-white shadow-md'
                   : isOrganic
                   ? `${organicPalette.subText} hover:${organicPalette.titleText}`
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              {is3D ? <Icon3DNavTasks size={14} /> : <ClipboardList className="w-3.5 h-3.5" />}
+              {is3D ? <Icon3DNavTasks size={15} /> : <ClipboardList className="w-3.5 h-3.5" />}
               <span>{lang === 'id' ? 'Sekarang' : 'Now'}</span>
               {activeNowTasksCount > 0 && (
-                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold transition-all ${
                   activeTab === 'Sekarang' 
-                    ? 'bg-white/20 text-white' 
-                    : `${organicPalette.streakCard} ${organicPalette.brandText}`
+                    ? 'bg-white/25 text-white' 
+                    : isOrganic
+                    ? `${organicPalette.taskCard} ${organicPalette.streakBorder} border ${organicPalette.brandText}`
+                    : 'bg-slate-800 text-slate-400'
                 }`}>
                   {activeNowTasksCount}
                 </span>
@@ -647,28 +673,30 @@ export default function TasksScreen({
                 triggerHaptic('light');
                 setActiveTab('Harian');
               }}
-              className={`flex-1 py-1.5 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation relative active:scale-95 ${
+              className={`flex-1 py-2 sm:py-2.5 min-h-[38px] sm:min-h-[40px] text-xs font-bold rounded-xl transition-all duration-300 ease-out flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation relative active:scale-95 ${
                 activeTab === 'Harian'
                   ? isOrganic 
-                    ? `${organicPalette.chipActive} shadow-xs`
+                    ? `${organicPalette.chipActive} text-white shadow-xs font-bold`
                     : 'bg-violet-600 text-white shadow-md'
                   : isOrganic
                   ? `${organicPalette.subText} hover:${organicPalette.titleText}`
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              {is3D ? <Icon3DRepeat size={14} /> : <Repeat className="w-3.5 h-3.5" />}
+              {is3D ? <Icon3DRepeat size={15} /> : <Repeat className="w-3.5 h-3.5" />}
               <span>{lang === 'id' ? 'Rutinitas' : 'Routines'}</span>
               {dailyPendingTasks.length > 0 ? (
-                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold transition-all ${
                   activeTab === 'Harian' 
-                    ? 'bg-white/20 text-white' 
-                    : `${organicPalette.streakCard} ${organicPalette.brandText}`
+                    ? 'bg-white/25 text-white' 
+                    : isOrganic
+                    ? `${organicPalette.taskCard} ${organicPalette.streakBorder} border ${organicPalette.brandText}`
+                    : 'bg-slate-800 text-slate-400'
                 }`}>
                   {dailyPendingTasks.length}
                 </span>
               ) : allDailyTasks.length > 0 ? (
-                <Check className={`w-3 h-3 ${organicPalette.isDark ? 'text-emerald-400' : 'text-emerald-600'}`} />
+                <Check className={`w-3.5 h-3.5 ${organicPalette.isDark ? 'text-emerald-400' : 'text-emerald-600'}`} />
               ) : null}
             </button>
 
@@ -678,17 +706,17 @@ export default function TasksScreen({
                 triggerHaptic('light');
                 setActiveTab('Disiplin');
               }}
-              className={`flex-1 py-1.5 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation relative active:scale-95 ${
+              className={`flex-1 py-2 sm:py-2.5 min-h-[38px] sm:min-h-[40px] text-xs font-bold rounded-xl transition-all duration-300 ease-out flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation relative active:scale-95 ${
                 activeTab === 'Disiplin'
                   ? isOrganic 
-                    ? `${organicPalette.chipActive} shadow-xs`
+                    ? `${organicPalette.chipActive} text-white shadow-xs font-bold`
                     : 'bg-gradient-to-r from-orange-500 to-rose-500 text-white shadow-md'
                   : isOrganic
                   ? `${organicPalette.subText} hover:${organicPalette.titleText}`
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              {is3D ? <Icon3DTarget size={14} /> : <Target className="w-3.5 h-3.5" />}
+              {is3D ? <Icon3DTarget size={15} /> : <Target className="w-3.5 h-3.5" />}
               <span>{lang === 'id' ? 'Disiplin' : 'Discipline'}</span>
               {disciplineTask && (
                 <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
@@ -797,13 +825,23 @@ export default function TasksScreen({
                   ))}
                 </div>
               ) : overdueTasks.length === 0 && (
-                <div className={`p-5 rounded-2xl border border-dashed text-center ${
+                <div className={`p-5 rounded-2xl sm:rounded-3xl border border-dashed text-center flex flex-col items-center justify-center gap-2 transition-all ${
                   isOrganic 
                     ? `${organicPalette.taskCard} ${organicPalette.taskCardBorder}` 
                     : 'bg-slate-900/40 border-slate-800/80'
                 }`}>
-                  <p className={`text-xs font-medium ${organicPalette.subText}`}>
-                    {lang === 'id' ? 'Belum ada tugas untuk hari ini.' : 'No tasks scheduled for today.'}
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center border ${
+                    isOrganic 
+                      ? `${organicPalette.streakCard} ${organicPalette.streakBorder} ${organicPalette.brandText}` 
+                      : 'bg-slate-800/60 border-slate-700 text-slate-400'
+                  }`}>
+                    {is3D ? <Icon3DNavTasks size={18} /> : <CalendarIcon className="w-4 h-4 text-indigo-400" />}
+                  </div>
+                  <p className={`text-xs font-bold ${organicPalette.titleText}`}>
+                    {lang === 'id' ? 'Belum ada agenda tugas untuk hari ini' : 'No tasks scheduled for today'}
+                  </p>
+                  <p className={`text-[11px] font-medium max-w-xs ${organicPalette.subText}`}>
+                    {lang === 'id' ? 'Nikmati harimu atau gunakan kolom di atas untuk menambah tugas baru.' : 'Enjoy your day or use the quick bar above to add a new task.'}
                   </p>
                 </div>
               )}
@@ -935,34 +973,68 @@ export default function TasksScreen({
 
             {/* Empty State when no tasks match */}
             {todayNowTasks.length === 0 && overdueTasks.length === 0 && upcomingTasks.length === 0 && noDateTasks.length === 0 && completedNowTasks.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-14 px-4 text-center">
-                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-3 border ${
+              <div className={`flex flex-col items-center justify-center py-12 px-6 text-center rounded-3xl border shadow-xs transition-all relative overflow-hidden ${
+                isOrganic 
+                  ? `${organicPalette.cardHero} ${organicPalette.cardHeroBorder}` 
+                  : 'bg-slate-900/60 border-slate-800'
+              }`}>
+                {isOrganic && (
+                  <>
+                    <div className={`absolute -right-8 -top-8 w-36 h-36 rounded-full blur-2xl pointer-events-none opacity-40 ${organicPalette.cardHeroBlob1}`} />
+                    <div className={`absolute -left-6 -bottom-6 w-32 h-32 rounded-full blur-xl pointer-events-none opacity-30 ${organicPalette.cardHeroBlob2}`} />
+                  </>
+                )}
+                <div className={`w-16 h-16 rounded-3xl flex items-center justify-center mb-4 border shadow-xs relative z-10 ${
                   isOrganic 
                     ? `${organicPalette.streakCard} ${organicPalette.streakBorder} ${organicPalette.brandText}` 
                     : 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400'
                 }`}>
-                  {is3D ? <Icon3DNavTasks size={28} /> : <CheckSquare className="w-7 h-7" />}
+                  {is3D ? <Icon3DNavTasks size={34} /> : <CheckSquare className="w-8 h-8 text-indigo-400" />}
                 </div>
-                <h3 className={`text-sm font-bold mb-1 ${organicPalette.titleText}`}>
+                <h3 className={`text-base font-extrabold mb-1.5 tracking-tight relative z-10 ${organicPalette.titleText}`}>
                   {priorityFilter !== 'semua' 
-                    ? (lang === 'id' ? 'Tidak ada tugas dengan prioritas ini' : 'No tasks with this priority')
-                    : (lang === 'id' ? 'Semua tugas telah beres!' : 'All tasks are completed!')}
+                    ? (lang === 'id' ? `Tidak Ada Tugas Prioritas ${priorityFilter === 'Tinggi' ? 'Wajib' : priorityFilter}` : `No ${priorityFilter} Priority Tasks`)
+                    : (lang === 'id' ? 'Semua Agenda Telah Beres!' : 'All Tasks Completed!')}
                 </h3>
-                <p className={`text-xs max-w-xs mb-4 ${organicPalette.subText}`}>
-                  {lang === 'id' ? 'Tulis tugas pada kolom di atas atau klik Detail untuk opsi lengkap.' : 'Write a task above or click Detail for full options.'}
+                <p className={`text-xs max-w-sm mb-5 leading-relaxed font-medium relative z-10 ${organicPalette.subText}`}>
+                  {priorityFilter !== 'semua'
+                    ? (lang === 'id' ? 'Tidak ada tugas yang cocok dengan filter saat ini. Atur ulang filter atau buat tugas baru.' : 'No tasks match your selected filter. Reset filter or create a new one.')
+                    : (lang === 'id' ? 'Bagus sekali! Tidak ada tugas mendesak untuk saat ini. Nikmati harimu atau susun rencana baru.' : 'Great job! No pending tasks right now. Relax or plan ahead.')}
                 </p>
-                <button
-                  type="button"
-                  onClick={() => openNewTaskModal('Sekarang')}
-                  className={`px-4 py-2 text-white rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer touch-manipulation flex items-center gap-1.5 ${
-                    isOrganic 
-                      ? `${organicPalette.actionBtn} shadow-xs` 
-                      : 'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-600/20'
-                  }`}
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>{lang === 'id' ? 'Tambah Tugas' : 'Add Task'}</span>
-                </button>
+                <div className="flex flex-wrap items-center justify-center gap-2.5 relative z-10">
+                  {priorityFilter !== 'semua' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        triggerHaptic('light');
+                        setPriorityFilter('semua');
+                      }}
+                      className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all border active:scale-95 cursor-pointer touch-manipulation flex items-center gap-1.5 ${
+                        isOrganic 
+                          ? `${organicPalette.streakCard} ${organicPalette.streakBorder} ${organicPalette.titleText} hover:opacity-90` 
+                          : 'bg-slate-800 border-slate-700 text-slate-200 hover:text-white'
+                      }`}
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>{lang === 'id' ? 'Tampilkan Semua' : 'Show All'}</span>
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      triggerHaptic('light');
+                      openNewTaskModal('Sekarang');
+                    }}
+                    className={`px-5 py-2.5 rounded-2xl text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer touch-manipulation flex items-center gap-2 ${
+                      isOrganic 
+                        ? `${organicPalette.chipActive} text-white shadow-xs` 
+                        : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20'
+                    }`}
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>{lang === 'id' ? 'Tambah Tugas' : 'Add Task'}</span>
+                  </button>
+                </div>
               </div>
             )}
 
@@ -987,65 +1059,106 @@ export default function TasksScreen({
               onOpenAdvanced={handleOpenDailyAdvanced}
             />
             
-            {/* Daily Habit Progress Hero Card */}
+            {/* Daily Habit Progress Hero Card - Flagship Pro Max Design */}
             {allDailyTasks.length > 0 && (
-              <div className={`rounded-2xl p-3.5 shadow-xs border ${
+              <div className={`rounded-3xl p-4 sm:p-5 shadow-xs border transition-all relative overflow-hidden ${
                 isOrganic 
                   ? `${organicPalette.cardHero} ${organicPalette.cardHeroBorder}` 
                   : 'bg-gradient-to-br from-violet-600/15 via-slate-900 to-slate-900 border-violet-500/20'
               }`}>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <div className={`p-1.5 rounded-lg border ${
+                {isOrganic && (
+                  <>
+                    <div className={`absolute -right-8 -top-8 w-36 h-36 rounded-full blur-2xl pointer-events-none opacity-40 ${organicPalette.cardHeroBlob1}`} />
+                    <div className={`absolute -left-6 -bottom-6 w-32 h-32 rounded-full blur-xl pointer-events-none opacity-30 ${organicPalette.cardHeroBlob2}`} />
+                  </>
+                )}
+
+                <div className="flex items-center justify-between mb-3.5 gap-3 relative z-10">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center shrink-0 border shadow-xs ${
                       isOrganic 
                         ? `${organicPalette.streakCard} ${organicPalette.streakBorder} ${organicPalette.brandText}` 
                         : 'bg-violet-500/20 border-violet-500/30 text-violet-300'
                     }`}>
-                      {is3D ? <Icon3DRepeat size={15} /> : <Repeat className="w-3.5 h-3.5" />}
+                      {is3D ? <Icon3DRepeat size={28} /> : <Repeat className="w-5 h-5 text-violet-400" />}
                     </div>
-                    <div>
-                      <h3 className={`text-xs font-bold ${
-                        organicPalette.titleText
-                      }`}>
+                    <div className="min-w-0">
+                      <h3 className={`text-sm sm:text-base font-extrabold tracking-tight truncate ${organicPalette.titleText}`}>
                         {t('routineProgress') || (lang === 'id' ? 'Progres Rutinitas Harian' : 'Daily Routine Progress')}
                       </h3>
-                      <p className={`text-[11px] font-medium ${
-                        organicPalette.subText
-                      }`}>
-                        {dailyCompletedTasks.length} dari {allDailyTasks.length} selesai ({dailyProgressPercent}%)
+                      <p className={`text-xs font-semibold mt-0.5 ${organicPalette.subText}`}>
+                        {dailyCompletedTasks.length} dari {allDailyTasks.length} rutinitas selesai
                       </p>
                     </div>
                   </div>
-                  {dailyProgressPercent === 100 && (
-                    <span className={`text-xs font-extrabold px-2 py-0.5 rounded-lg flex items-center gap-1 border ${
-                      isOrganic 
-                        ? 'bg-emerald-500/15 text-emerald-600 border-emerald-500/30' 
-                        : 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
-                    }`}>
-                      <Check className="w-3 h-3 text-emerald-500 shrink-0" />
-                      <span>{lang === 'id' ? 'Lengkap' : 'Complete'}</span>
-                    </span>
-                  )}
+
+                  {/* Percentage Stat Chip */}
+                  <div className="shrink-0 flex items-center gap-1.5">
+                    {dailyProgressPercent === 100 ? (
+                      <span className={`text-xs font-extrabold px-3 py-1.5 rounded-xl flex items-center gap-1.5 border shadow-xs ${
+                        isOrganic 
+                          ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30' 
+                          : 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
+                      }`}>
+                        {is3D ? <Icon3DTaskChecked size={16} /> : <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0 stroke-[3]" />}
+                        <span>{lang === 'id' ? '100% Selesai' : '100% Done'}</span>
+                      </span>
+                    ) : (
+                      <span className={`text-xs font-black px-2.5 py-1 rounded-xl border flex items-center gap-1 font-mono shadow-xs ${
+                        isOrganic
+                          ? `${organicPalette.streakCard} ${organicPalette.brandText} ${organicPalette.streakBorder}`
+                          : 'bg-violet-500/15 text-violet-300 border-violet-500/30'
+                      }`}>
+                        <span>{dailyProgressPercent}%</span>
+                      </span>
+                    )}
+                  </div>
                 </div>
 
-                {/* Smooth Progress Bar */}
-                <div className={`w-full h-1.5 rounded-full overflow-hidden border ${
+                {/* Tactile Progress Bar with Track */}
+                <div className={`w-full h-2.5 rounded-full overflow-hidden border p-0.5 relative z-10 ${
                   isOrganic 
-                    ? organicPalette.progressBarTrack 
+                    ? `${organicPalette.progressBarTrack} ${organicPalette.streakBorder}` 
                     : 'bg-slate-950/80 border-slate-800/80'
                 }`}>
                   <motion.div 
                     initial={{ width: 0 }}
                     animate={{ width: `${dailyProgressPercent}%` }}
-                    transition={{ duration: 0.3, ease: "easeOut" }}
-                    className={`h-full rounded-full ${
+                    transition={{ duration: 0.4, ease: "easeOut" }}
+                    className={`h-full rounded-full transition-all relative ${
                       dailyProgressPercent === 100 
-                        ? 'bg-emerald-500 shadow-xs shadow-emerald-500/50' 
+                        ? 'bg-gradient-to-r from-emerald-500 to-teal-400 shadow-sm shadow-emerald-500/50' 
                         : isOrganic 
                         ? organicPalette.progressBarFill 
-                        : 'bg-violet-500'
+                        : 'bg-gradient-to-r from-violet-500 to-indigo-500'
                     }`}
-                  />
+                  >
+                    {dailyProgressPercent > 10 && (
+                      <div className="absolute inset-0 bg-white/20 rounded-full animate-pulse" />
+                    )}
+                  </motion.div>
+                </div>
+
+                {/* Motivational Footnote */}
+                <div className={`flex items-center justify-between mt-3 pt-2.5 border-t border-dashed text-[11px] font-medium relative z-10 ${
+                  isOrganic ? 'border-[#E6DAC8] dark:border-white/10' : 'border-slate-800'
+                }`}>
+                  <span className={`${organicPalette.subText}`}>
+                    {dailyProgressPercent === 100 
+                      ? (lang === 'id' ? '🔥 Luar biasa! Semua rutinitas hari ini tuntas terjaga.' : '🔥 Outstanding! All routines completed today.')
+                      : dailyProgressPercent >= 50
+                      ? (lang === 'id' ? '⚡ Lebih dari separuh tuntas. Pertahankan konsistensi!' : '⚡ Over halfway done. Keep the momentum going!')
+                      : dailyProgressPercent > 0
+                      ? (lang === 'id' ? '✨ Langkah awal bagus. Lanjutkan rutinitas berikutnya!' : '✨ Good start. Continue to the next routine!')
+                      : (lang === 'id' ? '🎯 Mulai hari dengan menyelesaikan rutinitas pertamamu.' : '🎯 Ready to start? Complete your first routine.')}
+                  </span>
+                  <span className={`font-mono text-[10px] font-bold px-2 py-0.5 rounded-lg border ${
+                    isOrganic 
+                      ? `${organicPalette.streakCard} ${organicPalette.streakBorder} ${organicPalette.subText}` 
+                      : 'bg-slate-800/80 border-slate-700/60 text-slate-400'
+                  }`}>
+                    {allDailyTasks.length - dailyCompletedTasks.length} {lang === 'id' ? 'tersisa' : 'left'}
+                  </span>
                 </div>
               </div>
             )}
@@ -1088,14 +1201,17 @@ export default function TasksScreen({
                   ))}
                 </div>
               ) : allDailyTasks.length > 0 ? (
-                <div className={`p-3.5 rounded-2xl border text-center ${
+                <div className={`p-4 sm:p-5 rounded-2xl sm:rounded-3xl border text-center transition-all flex flex-col items-center justify-center gap-1.5 ${
                   isOrganic 
-                    ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-300' 
-                    : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                    ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-800 dark:text-emerald-200' 
+                    : 'bg-emerald-500/10 border-emerald-500/25 text-emerald-300'
                 }`}>
-                  <p className="text-xs font-bold flex items-center justify-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4" />
+                  <div className="flex items-center gap-2 font-bold text-xs sm:text-sm">
+                    {is3D ? <Icon3DTaskChecked size={20} /> : <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />}
                     <span>{t('allDailyDone') || (lang === 'id' ? 'Semua rutinitas hari ini telah selesai!' : 'All routines completed today!')}</span>
+                  </div>
+                  <p className="text-[11px] font-medium opacity-85">
+                    {lang === 'id' ? 'Konsistensimu terjaga dengan luar biasa. Rutinitas akan otomatis reset esok pagi.' : 'Great job keeping your consistency. Routines reset tomorrow morning.'}
                   </p>
                 </div>
               ) : null}
@@ -1141,37 +1257,78 @@ export default function TasksScreen({
               </section>
             )}
 
-            {/* Empty State for Daily Habits */}
+            {/* Empty State for Daily Habits - Flagship Pro Max Design */}
             {allDailyTasks.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-14 px-4 text-center">
-                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-3 border ${
+              <div className={`flex flex-col items-center justify-center py-10 px-5 sm:px-8 text-center rounded-3xl border shadow-xs transition-all relative overflow-hidden ${
+                isOrganic 
+                  ? `${organicPalette.cardHero} ${organicPalette.cardHeroBorder}` 
+                  : 'bg-slate-900/60 border-slate-800'
+              }`}>
+                {isOrganic && (
+                  <>
+                    <div className={`absolute -right-8 -top-8 w-36 h-36 rounded-full blur-2xl pointer-events-none opacity-40 ${organicPalette.cardHeroBlob1}`} />
+                    <div className={`absolute -left-6 -bottom-6 w-32 h-32 rounded-full blur-xl pointer-events-none opacity-30 ${organicPalette.cardHeroBlob2}`} />
+                  </>
+                )}
+                <div className={`w-16 h-16 rounded-3xl flex items-center justify-center mb-4 border shadow-xs relative z-10 ${
                   isOrganic 
                     ? `${organicPalette.streakCard} ${organicPalette.streakBorder} ${organicPalette.brandText}` 
                     : 'bg-violet-500/10 border-violet-500/20 text-violet-400'
                 }`}>
-                  {is3D ? <Icon3DRepeat size={28} /> : <Repeat className="w-7 h-7" />}
+                  {is3D ? <Icon3DRepeat size={34} /> : <Repeat className="w-8 h-8 text-violet-400" />}
                 </div>
-                <h3 className={`text-sm font-bold mb-1 ${
-                  organicPalette.titleText
-                }`}>
-                  {lang === 'id' ? 'Belum Ada Rutinitas Harian' : 'No Daily Routines Yet'}
+                <h3 className={`text-base font-extrabold mb-1.5 tracking-tight relative z-10 ${organicPalette.titleText}`}>
+                  {lang === 'id' ? 'Bangun Konsistensi Rutinitas Harian' : 'Build Daily Routine Habits'}
                 </h3>
-                <p className={`text-xs max-w-xs mb-4 ${
-                  organicPalette.subText
-                }`}>
-                  {lang === 'id' ? 'Buat kebiasaan harian (misal: Minum Air 2L, Olahraga 15 Menit) yang otomatis di-reset setiap hari.' : 'Create daily habits (e.g. Drink 2L water, 15m exercise) that reset automatically every day.'}
+                <p className={`text-xs max-w-sm mb-5 leading-relaxed font-medium relative z-10 ${organicPalette.subText}`}>
+                  {lang === 'id' 
+                    ? 'Kebiasaan kecil yang diulang setiap hari menciptakan perubahan besar. Rutinitas otomatis siap dikerjakan kembali setiap pagi.' 
+                    : 'Small daily habits repeated consistently yield massive transformations. Routines reset automatically every morning.'}
                 </p>
+
+                {/* Quick Start Suggestions */}
+                <div className="w-full max-w-md mb-5 relative z-10">
+                  <p className={`text-[10px] font-bold uppercase tracking-wider mb-2.5 text-center ${organicPalette.subText}`}>
+                    {lang === 'id' ? '💡 Mulai Cepat Rekomendasi Rutinitas:' : '💡 Quick Start Habit Templates:'}
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-left">
+                    {[
+                      { title: lang === 'id' ? '💧 Minum 2L Air' : '💧 Drink 2L Water' },
+                      { title: lang === 'id' ? '🏃 Olahraga 15 Menit' : '🏃 15m Exercise' },
+                      { title: lang === 'id' ? '📖 Membaca 10 Halaman' : '📖 Read 10 Pages' },
+                      { title: lang === 'id' ? '🧘 Refleksi & Jurnal' : '🧘 Evening Reflection' },
+                    ].map((habit) => (
+                      <button
+                        key={habit.title}
+                        type="button"
+                        onClick={() => {
+                          triggerHaptic('success');
+                          handleQuickAdd(habit.title, 'Harian');
+                        }}
+                        className={`p-2.5 rounded-2xl border text-xs font-semibold flex items-center justify-between transition-all active:scale-95 cursor-pointer touch-manipulation group ${
+                          isOrganic 
+                            ? `${organicPalette.streakCard} ${organicPalette.streakBorder} ${organicPalette.titleText} hover:border-[#D66532]/50` 
+                            : 'bg-slate-900/80 border-slate-800 text-slate-200 hover:border-violet-500/40'
+                        }`}
+                      >
+                        <span className="truncate">{habit.title}</span>
+                        <Plus className={`w-3.5 h-3.5 shrink-0 opacity-70 group-hover:opacity-100 ${isOrganic ? 'text-[#D66532]' : 'text-violet-400'}`} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <button
                   type="button"
                   onClick={() => openNewTaskModal('Harian')}
-                  className={`px-4 py-2 text-white rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer touch-manipulation flex items-center gap-1.5 ${
+                  className={`px-5 py-2.5 text-white rounded-2xl text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer touch-manipulation flex items-center gap-2 relative z-10 ${
                     isOrganic 
-                      ? `${organicPalette.actionBtn} shadow-xs` 
-                      : 'bg-violet-600 hover:bg-violet-500 shadow-violet-600/20'
+                      ? `${organicPalette.chipActive} text-white shadow-xs` 
+                      : 'bg-violet-600 hover:bg-violet-500 text-white shadow-violet-600/20'
                   }`}
                 >
                   <Plus className="w-4 h-4" />
-                  <span>{lang === 'id' ? 'Buat Rutinitas' : 'Create Routine'}</span>
+                  <span>{lang === 'id' ? 'Buat Rutinitas Kustom' : 'Create Custom Routine'}</span>
                 </button>
               </div>
             )}
@@ -1324,8 +1481,13 @@ export default function TasksScreen({
                 </div>
               </div>
             ) : (
-              <div className={`py-8 text-center ${organicPalette.subText}`}>
-                <p className="text-xs">{lang === 'id' ? 'Tempat sampah kosong.' : 'Trash is empty.'}</p>
+              <div className={`py-10 px-4 text-center flex flex-col items-center justify-center gap-2.5 ${organicPalette.subText}`}>
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border ${
+                  isOrganic ? `${organicPalette.streakCard} ${organicPalette.streakBorder} ${organicPalette.subText}` : 'bg-slate-900 border-slate-800 text-slate-500'
+                }`}>
+                  {is3D ? <Icon3DTrash size={22} /> : <Trash2 className="w-5 h-5 opacity-70" />}
+                </div>
+                <p className="text-xs font-semibold">{lang === 'id' ? 'Tempat sampah kosong. Tidak ada tugas terhapus.' : 'Trash is empty. No deleted tasks.'}</p>
               </div>
             )}
           </div>
@@ -1376,7 +1538,7 @@ export default function TasksScreen({
             </div>
 
             <div className={`p-3.5 rounded-2xl border space-y-2 text-xs ${
-              `${organicPalette.disciplineInner} ${organicPalette.disciplineInnerBorder}`
+              isOrganic ? `${organicPalette.disciplineInner} ${organicPalette.disciplineInnerBorder}` : 'bg-slate-800/80 border-slate-700'
             }`}>
               <div className="text-amber-400 font-semibold flex items-start gap-1.5">
                 <RotateCcw className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
@@ -1553,7 +1715,7 @@ const TaskCard = React.memo<TaskCardProps>(({
             triggerHaptic('light');
             onToggle(task.id);
           }} 
-          className="flex-none p-0.5 cursor-pointer focus:outline-none touch-manipulation active:scale-85 transition-transform"
+          className="flex-none p-1 sm:p-1.5 -m-1 sm:-m-0.5 min-w-[38px] min-h-[38px] flex items-center justify-center cursor-pointer focus:outline-none touch-manipulation active:scale-90 transition-transform"
           title={task.completed ? (lang === 'id' ? 'Batal Selesai' : 'Mark Incomplete') : (lang === 'id' ? 'Tandai Selesai' : 'Mark Complete')}
         >
           {is3D ? (
@@ -1682,8 +1844,8 @@ const TaskCard = React.memo<TaskCardProps>(({
         </div>
       </div>
 
-      {/* 3. Action Buttons */}
-      <div className="flex items-center gap-1 shrink-0">
+      {/* 3. Action Buttons - Comfortable Touch Targets */}
+      <div className="flex items-center gap-1.5 shrink-0">
         {task.deleted ? (
           <>
             <button 
@@ -1693,10 +1855,10 @@ const TaskCard = React.memo<TaskCardProps>(({
                 triggerHaptic('success');
                 if (onRestore) onRestore(task.id); 
               }} 
-              className="p-1.5 text-emerald-500 hover:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-xl transition-all active:scale-90 cursor-pointer touch-manipulation"
+              className="p-2 min-w-[36px] min-h-[36px] flex items-center justify-center text-emerald-500 hover:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-xl transition-all active:scale-90 cursor-pointer touch-manipulation"
               title={lang === 'id' ? 'Pulihkan' : 'Restore'}
             >
-              <Check className="w-3.5 h-3.5" />
+              <Check className="w-4 h-4" />
             </button>
             <button 
               type="button"
@@ -1705,14 +1867,14 @@ const TaskCard = React.memo<TaskCardProps>(({
                 triggerHaptic('warning');
                 onDelete(task.id); 
               }} 
-              className={`p-1.5 rounded-xl border transition-all active:scale-90 cursor-pointer touch-manipulation ${
+              className={`p-2 min-w-[36px] min-h-[36px] flex items-center justify-center rounded-xl border transition-all active:scale-90 cursor-pointer touch-manipulation ${
                 isOrganic 
                   ? `${palette.streakCard} ${palette.streakBorder} ${palette.subText} hover:text-rose-500` 
                   : 'text-slate-400 hover:text-rose-400 bg-slate-800 border-slate-700'
               }`}
               title={lang === 'id' ? 'Hapus Permanen' : 'Delete Permanently'}
             >
-              <Trash2 className="w-3.5 h-3.5" />
+              <Trash2 className="w-4 h-4" />
             </button>
           </>
         ) : (
@@ -1725,14 +1887,14 @@ const TaskCard = React.memo<TaskCardProps>(({
                   triggerHaptic('medium');
                   onRestart(task); 
                 }} 
-                className={`p-1.5 rounded-xl border transition-all active:scale-90 cursor-pointer touch-manipulation ${
+                className={`p-2 min-w-[36px] min-h-[36px] flex items-center justify-center rounded-xl border transition-all active:scale-90 cursor-pointer touch-manipulation ${
                   isOrganic 
                     ? `${palette.subText} hover:text-amber-500 ${palette.streakCard}/50 border-transparent hover:${palette.streakBorder}` 
                     : 'text-slate-500 hover:text-amber-400 bg-slate-800/40 border border-transparent hover:border-slate-700'
                 }`}
                 title={lang === 'id' ? 'Mulai Ulang dari Awal' : 'Restart from Beginning'}
               >
-                {is3D ? <Icon3DRotateCcw size={14} /> : <RotateCcw className="w-3.5 h-3.5" />}
+                {is3D ? <Icon3DRotateCcw size={15} /> : <RotateCcw className="w-3.5 h-3.5" />}
               </button>
             )}
             <button 
@@ -1742,7 +1904,7 @@ const TaskCard = React.memo<TaskCardProps>(({
                 triggerHaptic('light');
                 onPin(task); 
               }} 
-              className={`p-1.5 rounded-xl border transition-all active:scale-90 cursor-pointer touch-manipulation ${
+              className={`p-2 min-w-[36px] min-h-[36px] flex items-center justify-center rounded-xl border transition-all active:scale-90 cursor-pointer touch-manipulation ${
                 task.pinned 
                   ? isOrganic 
                     ? `${palette.streakCard} ${palette.streakBorder} text-amber-600`
@@ -1762,7 +1924,7 @@ const TaskCard = React.memo<TaskCardProps>(({
                 triggerHaptic('light');
                 onDelete(task.id); 
               }} 
-              className={`p-1.5 rounded-xl border transition-all active:scale-90 cursor-pointer touch-manipulation ${
+              className={`p-2 min-w-[36px] min-h-[36px] flex items-center justify-center rounded-xl border transition-all active:scale-90 cursor-pointer touch-manipulation ${
                 isOrganic 
                   ? `${palette.subText} hover:text-rose-500 ${palette.streakCard}/50 border-transparent hover:${palette.streakBorder}` 
                   : 'text-slate-500 hover:text-rose-400 bg-slate-800/40 border border-transparent hover:border-slate-700'

@@ -232,9 +232,14 @@ export const DisciplineView = React.memo<DisciplineViewProps>(({
 }) => {
   const { tasks, updateTask, restartTask, checkInDaily, deleteTask, appVersion, isLiteMode } = useAppStore();
   const isLite = appTheme === 'lite' || appVersion === 'lite' || isLiteMode;
-  const isOrganic = !isLite && (appVersion === 'organic' || appVersion === 'pro_max' || appTheme === 'organic');
+  const isOrganic = !isLite && (appVersion === 'organic' || appVersion === 'pro_max' || appTheme === 'organic' || appTheme === 'pro_max');
   const is3D = isOrganic;
-  const palette = useMemo(() => propPalette || getOrganicThemePalette(appTheme), [propPalette, appTheme]);
+  const palette = useMemo(() => {
+    if (propPalette) return propPalette;
+    const storedTheme = typeof window !== 'undefined' ? localStorage.getItem('tata_theme') : null;
+    const effectiveTheme = appTheme || storedTheme || (isOrganic ? 'organic' : 'dark');
+    return getOrganicThemePalette(effectiveTheme);
+  }, [propPalette, appTheme, isOrganic]);
   const [activeTab, setActiveTab] = useState<'Aksi' | 'Jurnal' | 'Galeri'>('Aksi');
   const [showTaskPickerModal, setShowTaskPickerModal] = useState(false);
   const [showRestartModal, setShowRestartModal] = useState(false);

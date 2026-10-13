@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import {
   ArrowLeft,
   Trash2,
@@ -63,6 +63,48 @@ import {
   Icon3DArchive,
 } from "../components/home/Organic3DIcons";
 
+// =============================================================================
+// ISOLATED NOTE TITLE INPUT: 0ms Typing Latency, Touch-Friendly, Zero Re-renders
+// =============================================================================
+const NoteTitleInput = React.memo<{
+  initialValue: string;
+  isOrganic: boolean;
+  palette: any;
+  placeholder: string;
+  label: string;
+  onChange: (val: string) => void;
+}>(({ initialValue, isOrganic, palette, placeholder, label, onChange }) => {
+  const [val, setVal] = useState(initialValue);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const nextVal = e.target.value;
+    setVal(nextVal);
+    onChange(nextVal);
+  };
+
+  return (
+    <div className="flex flex-col mb-4">
+      <span className={`text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider mb-1 opacity-70 ${
+        isOrganic ? palette.subText : 'text-slate-400'
+      }`}>
+        {label}
+      </span>
+      <input
+        type="text"
+        value={val}
+        onChange={handleChange}
+        autoComplete="off"
+        autoCorrect="off"
+        spellCheck="false"
+        className={`w-full text-xl sm:text-2xl font-normal bg-transparent border-none outline-none tracking-tight transition-colors select-text ${
+          isOrganic ? `${palette.titleText.replace('font-black', '').replace('font-bold', '')} placeholder:opacity-40` : 'text-slate-100 placeholder-slate-500'
+        }`}
+        placeholder={placeholder}
+      />
+    </div>
+  );
+});
+
 interface NoteEditorProps {
   note: Note;
   onBack: () => void;
@@ -71,22 +113,51 @@ interface NoteEditorProps {
 }
 
 export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }: NoteEditorProps) {
-  const { notes, addNote, updateNote, deleteNote, lang, setTempNoteContext, setAutoSendNoteToAI, geminiApiKey, appPin, notePin, setNotePin, setAppPin, appVersion, pinRecoveryQuestion, pinRecoveryAnswer, setPinRecoveryAnswer, sessionUnlockedNoteIds, unlockNoteForSession, lockNoteForSession, isLiteMode } = useAppStore();
+  const { 
+    notes,
+    addNote, 
+    updateNote, 
+    deleteNote, 
+    lang, 
+    setTempNoteContext, 
+    setAutoSendNoteToAI, 
+    geminiApiKey, 
+    appPin, 
+    notePin, 
+    setNotePin, 
+    setAppPin, 
+    appVersion, 
+    pinRecoveryQuestion, 
+    pinRecoveryAnswer, 
+    setPinRecoveryAnswer, 
+    sessionUnlockedNoteIds, 
+    unlockNoteForSession, 
+    lockNoteForSession, 
+    isLiteMode 
+  } = useAppStore();
+
+  const notesRef = useRef(notes);
+  useEffect(() => {
+    notesRef.current = notes;
+  }, [notes]);
+
   const isLite = appTheme === 'lite' || appVersion === 'lite' || isLiteMode;
-  const isOrganic = !isLite && (appVersion === 'organic' || appVersion === 'pro_max' || appTheme === 'organic');
+  const isOrganic = !isLite && (appVersion === 'organic' || appVersion === 'pro_max' || appTheme === 'organic' || appTheme === 'pro_max');
   const is3D = isOrganic;
   const effectiveNotePin = notePin || appPin;
 
   const palette = useMemo(() => {
     const storedTheme = typeof window !== 'undefined' ? localStorage.getItem('tata_theme') : null;
-    const effectiveTheme = appTheme || storedTheme || 'organic';
+    const effectiveTheme = appTheme || storedTheme || (isOrganic ? 'organic' : 'dark');
     return getOrganicThemePalette(effectiveTheme);
-  }, [appTheme]);
+  }, [appTheme, isOrganic]);
+
   const t = useTranslation(lang);
-  const [title, setTitle] = useState(note.title);
+  const titleRef = useRef(note.title || '');
+
   const [initialHtml] = useState(() => {
     let html = note.content || "";
-    if (html && !html.includes("<") && html.includes("**")) {
+    if (html && !html.includes("<")) {
       html = html
         .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
         .replace(/\*(.*?)\*/g, "<i>$1</i>")
@@ -99,14 +170,9 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
   const contentRef = useRef(initialHtml);
   const editorRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const statsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isExplicitImageDeletion = useRef<boolean>(false);
-
-  const titleRef = useRef(note.title);
-  
-  // Keep refs in sync for save callback without dependencies
-  useEffect(() => {
-    titleRef.current = title;
-  }, [title]);
+  const mediaListCountRef = useRef<number>(0);
 
   const [tags, setTags] = useState<string[]>(note.tags || []);
   const tagsRef = useRef<string[]>(note.tags || []);
@@ -195,6 +261,18 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
       });
     });
 
+    const vids = Array.from(div.querySelectorAll('video'));
+    vids.forEach((vid, idx) => {
+      items.push({
+        id: `vid-${idx}-${vid.src.slice(0, 20)}`,
+        type: 'file',
+        src: vid.src,
+        filename: lang === 'id' ? `Video Catatan ${idx + 1}` : `Note Video ${idx + 1}`,
+        size: 'Video'
+      });
+    });
+
+    mediaListCountRef.current = items.length;
     setMediaList(items);
   };
 
@@ -288,18 +366,18 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
   };
 
   const handleEditorKeyUp = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    saveSelection();
     if (
       e.key === 'ArrowLeft' ||
       e.key === 'ArrowRight' ||
       e.key === 'ArrowUp' ||
       e.key === 'ArrowDown' ||
+      e.key === 'Home' ||
+      e.key === 'End' ||
       e.ctrlKey ||
       e.metaKey
     ) {
+      saveSelection();
       updateActiveFormats();
-    } else {
-      checkActiveFormatsDebounced();
     }
   };
 
@@ -322,19 +400,21 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
 
   const handleCopyText = () => {
     const plainText = (editorRef.current ? editorRef.current.innerText : contentRef.current) || '';
-    navigator.clipboard.writeText(`${title ? title + '\n\n' : ''}${plainText}`);
+    const currentTitle = titleRef.current;
+    navigator.clipboard.writeText(`${currentTitle ? currentTitle + '\n\n' : ''}${plainText}`);
     setCopiedToast(true);
     setTimeout(() => setCopiedToast(false), 2500);
   };
 
   const handleExportTxt = () => {
     const plainText = (editorRef.current ? editorRef.current.innerText : contentRef.current) || '';
-    const fullContent = `${title || (lang === 'id' ? 'Catatan Tata' : 'Tata Note')}\nDate: ${note.date}\n----------------------------------------\n\n${plainText}`;
+    const currentTitle = titleRef.current;
+    const fullContent = `${currentTitle || (lang === 'id' ? 'Catatan Tata' : 'Tata Note')}\nDate: ${note.date}\n----------------------------------------\n\n${plainText}`;
     const blob = new Blob([fullContent], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${(title || 'catatan_tata').replace(/[^a-z0-9]/gi, '_').toLowerCase()}.txt`;
+    a.download = `${(currentTitle || 'catatan_tata').replace(/[^a-z0-9]/gi, '_').toLowerCase()}.txt`;
     a.click();
     URL.revokeObjectURL(url);
     setExportedToast(true);
@@ -412,13 +492,13 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
     }
   };
 
-  const stats = useMemo(() => {
-    const rawText = (editorRef.current ? editorRef.current.textContent : contentRef.current) || '';
-    const cleanText = rawText.replace(/\s+/g, ' ').trim();
-    const words = cleanText ? cleanText.split(' ').filter(Boolean).length : 0;
-    const chars = cleanText.length;
-    return { words, chars };
-  }, [hasUnsavedChanges, title]);
+  const [stats, setStats] = useState(() => {
+    const raw = (note.content || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    return {
+      words: raw ? raw.split(' ').filter(Boolean).length : 0,
+      chars: raw.length
+    };
+  });
 
   useEffect(() => {
     if (editorRef.current) {
@@ -442,8 +522,8 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
       // If deletion was explicitly triggered by user clicking the dedicated photo delete button, allow it
       if (isExplicitImageDeletion.current) return;
 
-      // Fast path: if there are no images in the editor at all, skip checking
-      if (!editorRef.current?.querySelector('img')) return;
+      // Fast path: if there are no images in the note at all, skip checking immediately
+      if (mediaListCountRef.current === 0 && !editorRef.current?.querySelector('img')) return;
 
       // Fast check: verify if any removed node was an IMG element or contains an IMG
       let hasImageRemoved = false;
@@ -526,13 +606,13 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
     sharedWithAIRef.current = true;
     
     setTempNoteContext({
-      title: title || (lang === 'id' ? 'Catatan Tanpa Judul' : 'Untitled Note'),
+      title: titleRef.current || (lang === 'id' ? 'Catatan Tanpa Judul' : 'Untitled Note'),
       content: fullContent,
       thumbnailUrl: note.thumbnailUrl
     });
     setAutoSendNoteToAI(true);
     
-    const existing = notes.find((n) => n.id === note.id);
+    const existing = notesRef.current.find((n) => n.id === note.id);
     const currTitle = titleRef.current || '';
     const currContent = (editorRef.current ? editorRef.current.innerHTML : contentRef.current) || '';
     const currTags = tagsRef.current || [];
@@ -554,11 +634,10 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
     setSharedWithAI(false);
     sharedWithAIRef.current = false;
     
-    const currTitleVal = title || (lang === 'id' ? 'Catatan Tanpa Judul' : 'Untitled Note');
     // Also clear from temp context if currently selected
     setTempNoteContext(null);
     
-    const existing = notes.find((n) => n.id === note.id);
+    const existing = notesRef.current.find((n) => n.id === note.id);
     const currTitle = titleRef.current || '';
     const currContent = (editorRef.current ? editorRef.current.innerHTML : contentRef.current) || '';
     const currTags = tagsRef.current || [];
@@ -573,8 +652,8 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
     setShowGiveToAIModal(false);
   };
 
-  const saveNote = () => {
-    const existing = notes.find((n) => n.id === note.id);
+  const saveNote = (silent: boolean = false) => {
+    const existing = notesRef.current.find((n) => n.id === note.id);
     const currTitle = titleRef.current || '';
     const currContent = (editorRef.current ? editorRef.current.innerHTML : contentRef.current) || '';
     const currTags = tagsRef.current || [];
@@ -592,15 +671,20 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
       existing.sharedWithAI === currSharedWithAI &&
       existing.isLocked === currIsLocked
     ) {
-      setHasUnsavedChanges(false);
+      if (!silent) {
+        setHasUnsavedChanges(false);
+        setIsSaving(false);
+      }
       hasUnsavedChangesRef.current = false;
-      setIsSaving(false);
       return;
     }
 
-    setIsSaving(true);
+    if (!silent) setIsSaving(true);
     
-    if (currTitle.trim() || currContent.trim() || currTags.length > 0 || currReminder || currSharedWithAI || currIsLocked) {
+    const hasMedia = currContent.includes('<img') || currContent.includes('<video') || currContent.includes('<a') || currContent.includes('src=');
+    const cleanText = currContent.replace(/<br\s*\/?>/gi, '').replace(/<div>\s*<\/div>/gi, '').replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, '').trim();
+
+    if (currTitle.trim() || cleanText || hasMedia || currTags.length > 0 || currReminder || currSharedWithAI || currIsLocked) {
       if (existing) {
         updateNote({ ...existing, title: currTitle, content: currContent, tags: currTags, reminder: currReminder, sharedWithAI: currSharedWithAI, isLocked: currIsLocked });
       } else {
@@ -612,10 +696,12 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
       }
     }
     
-    setHasUnsavedChanges(false);
     hasUnsavedChangesRef.current = false;
-    setIsSaving(false);
-    setLastSaved(Date.now());
+    if (!silent) {
+      setHasUnsavedChanges(false);
+      setIsSaving(false);
+      setLastSaved(Date.now());
+    }
   };
 
   const triggerAutosave = () => {
@@ -623,26 +709,39 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
       clearTimeout(typingTimeoutRef.current);
     }
     typingTimeoutRef.current = setTimeout(() => {
-      saveNote();
-    }, 2000);
+      saveNote(true);
+    }, 1000);
   };
 
-  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTitle(e.target.value);
-    titleRef.current = e.target.value;
-    if (!hasUnsavedChangesRef.current) {
-      hasUnsavedChangesRef.current = true;
-      setHasUnsavedChanges(true);
-    }
+  // Safe flush on unmount or navigation change
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      if (statsTimeoutRef.current) clearTimeout(statsTimeoutRef.current);
+      saveNote(true);
+    };
+  }, []);
+
+  const handleTitleChange = useCallback((newTitle: string) => {
+    titleRef.current = newTitle;
+    hasUnsavedChangesRef.current = true;
     triggerAutosave();
-  };
+  }, []);
 
   const handleInput = (e: React.FormEvent<HTMLDivElement>) => {
     contentRef.current = e.currentTarget.innerHTML;
-    if (!hasUnsavedChangesRef.current) {
-      hasUnsavedChangesRef.current = true;
-      setHasUnsavedChanges(true);
-    }
+    hasUnsavedChangesRef.current = true;
+
+    // Debounced stats calculation for butter-smooth typing
+    if (statsTimeoutRef.current) clearTimeout(statsTimeoutRef.current);
+    statsTimeoutRef.current = setTimeout(() => {
+      const rawText = (editorRef.current ? editorRef.current.textContent : contentRef.current) || '';
+      const cleanText = rawText.replace(/\s+/g, ' ').trim();
+      const words = cleanText ? cleanText.split(' ').filter(Boolean).length : 0;
+      const chars = cleanText.length;
+      setStats({ words, chars });
+    }, 400);
+
     triggerAutosave();
   };
 
@@ -650,35 +749,50 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
-    if (hasUnsavedChanges) {
-      saveNote();
+    if (statsTimeoutRef.current) {
+      clearTimeout(statsTimeoutRef.current);
     }
+    // Always flush save so images, audio, video and text are persisted
+    saveNote(false);
     
     // Also remove if perfectly empty (and no reminder set)
-    const currTitle = titleRef.current || '';
+    const currTitle = (titleRef.current || '').trim();
     const currContent = (editorRef.current ? editorRef.current.innerHTML : contentRef.current) || '';
     const currTags = tagsRef.current || [];
     const currReminder = reminderRef.current;
     const currSharedWithAI = sharedWithAIRef.current;
     
-    if (!currTitle.trim() && !currContent.trim() && currTags.length === 0 && !currReminder && !currSharedWithAI) {
-      const existing = notes.find((n) => n.id === note.id);
+    const hasMedia = currContent.includes('<img') || currContent.includes('<video') || currContent.includes('<a') || currContent.includes('src=');
+    const cleanText = currContent.replace(/<br\s*\/?>/gi, '').replace(/<div>\s*<\/div>/gi, '').replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, '').trim();
+
+    if (!currTitle && !cleanText && !hasMedia && currTags.length === 0 && !currReminder && !currSharedWithAI) {
+      const existing = notesRef.current.find((n) => n.id === note.id);
       if (existing) deleteNote(note.id);
     }
     onBack();
   };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const docAttachRef = useRef<HTMLInputElement>(null);
+
+  const handleNativeCamera = () => {
+    if (cameraInputRef.current) {
+      cameraInputRef.current.value = '';
+      cameraInputRef.current.click();
+    }
+  };
 
   const insertHtmlToEditor = (htmlToInsert: string) => {
     if (!editorRef.current) return;
-    editorRef.current.focus();
+    
+    // Attempt to restore user cursor location
+    restoreSelection();
 
     let success = false;
     try {
       const sel = window.getSelection();
-      if (sel && sel.rangeCount > 0) {
+      if (sel && sel.rangeCount > 0 && editorRef.current.contains(sel.getRangeAt(0).commonAncestorContainer)) {
         success = document.execCommand("insertHTML", false, htmlToInsert);
       }
     } catch (e) {
@@ -696,12 +810,16 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
       img.style.userSelect = 'none';
       img.style.maxWidth = '100%';
       img.style.borderRadius = '8px';
+      img.style.display = 'block';
+      img.style.margin = '12px 0';
     });
 
     contentRef.current = editorRef.current.innerHTML;
+    hasUnsavedChangesRef.current = true;
     setHasUnsavedChanges(true);
-    triggerAutosave();
-    setTimeout(syncMediaList, 50);
+    syncMediaList();
+    // Flush immediate save so photos & media are saved synchronously into state and IndexedDB
+    saveNote(true);
   };
 
   // Helper to determine if a backspace/delete action would remove or target an image
@@ -946,6 +1064,7 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
 
     if (deleted) {
       contentRef.current = editorRef.current.innerHTML;
+      hasUnsavedChangesRef.current = true;
       setHasUnsavedChanges(true);
       saveNote();
       syncMediaList();
@@ -963,13 +1082,15 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
 
   const handleDeleteAttachment = (href: string) => {
     if (!editorRef.current) return;
-    const links = editorRef.current.querySelectorAll('a[download]');
+    const links = editorRef.current.querySelectorAll('a[download], video');
     let deleted = false;
     for (let i = 0; i < links.length; i++) {
-      if (links[i].getAttribute('href') === href) {
-        const prev = links[i].previousSibling;
-        const next = links[i].nextSibling;
-        links[i].remove();
+      const el = links[i];
+      if (el.getAttribute('href') === href || (el as HTMLVideoElement).src === href || el.closest('div')?.innerHTML.includes(href)) {
+        const wrapper = el.closest('div[contenteditable="false"]') || el;
+        const prev = wrapper.previousSibling;
+        const next = wrapper.nextSibling;
+        wrapper.remove();
         if (prev && prev.nodeName === 'BR' && next && next.nodeName === 'BR') {
           prev.remove();
         }
@@ -979,6 +1100,7 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
     }
     if (deleted) {
       contentRef.current = editorRef.current.innerHTML;
+      hasUnsavedChangesRef.current = true;
       setHasUnsavedChanges(true);
       saveNote();
       syncMediaList();
@@ -1013,6 +1135,7 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
             }
           }
           contentRef.current = editorRef.current?.innerHTML || '';
+          hasUnsavedChangesRef.current = true;
           setHasUnsavedChanges(true);
           saveNote();
           syncMediaList();
@@ -1153,31 +1276,59 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
     e.target.value = '';
 
     files.forEach((file) => {
+      // Safeguard against massive video/file crash: allow up to 25MB for IndexedDB safety
+      if (file.size > 25 * 1024 * 1024) {
+        setToastMessage(
+          lang === 'id' 
+            ? `File "${file.name}" melebihi 25MB. Untuk menjaga performa browser lokal tetap ringan, gunakan file/video di bawah 25MB.` 
+            : `File "${file.name}" exceeds 25MB limit for offline storage.`
+        );
+        setTimeout(() => setToastMessage(null), 4000);
+        return;
+      }
+
       const reader = new FileReader();
       reader.onload = (event) => {
         const dataUrl = event.target?.result as string;
         const fileExt = file.name.split('.').pop()?.toUpperCase() || 'FILE';
-        const html = `
-          <br><br>
-          <a href="${dataUrl}" download="${file.name}" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background-color: #1e293b; border: 1px solid #334155; border-radius: 12px; text-decoration: none; color: #f8fafc; max-width: 300px; margin: 4px 0;" contenteditable="false">
-            <div style="width: 40px; height: 40px; border-radius: 8px; background-color: #312e81; color: #818cf8; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; flex-shrink: 0;">
-              ${fileExt.substring(0, 4)}
+        const isVideo = file.type.startsWith('video/') || ['MP4', 'WEBM', 'MOV', 'M4V'].includes(fileExt);
+
+        let html = '';
+        if (isVideo) {
+          html = `
+            <br>
+            <div style="margin: 14px 0; max-width: 100%; border-radius: 12px; overflow: hidden; background: #090d16; border: 1px solid #1e293b;" contenteditable="false">
+              <video src="${dataUrl}" controls playsinline style="width: 100%; max-height: 380px; display: block; border-radius: 10px;" preload="metadata"></video>
+              <div style="padding: 8px 12px; font-size: 11px; color: #94a3b8; display: flex; justify-content: space-between; align-items: center; background: #0f172a; border-top: 1px solid #1e293b;">
+                <span style="font-weight: 600; color: #f1f5f9;">🎥 ${file.name}</span>
+                <span>${(file.size / (1024 * 1024)).toFixed(1)} MB</span>
+              </div>
             </div>
-            <div style="flex: 1; min-width: 0;">
-              <div style="font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${file.name}</div>
-              <div style="font-size: 12px; color: #94a3b8;">${(file.size / 1024).toFixed(1)} KB • Klik untuk unduh</div>
-            </div>
-          </a>
-          <br><br>
-        `;
+            <br>
+          `;
+        } else {
+          html = `
+            <br><br>
+            <a href="${dataUrl}" download="${file.name}" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background-color: #1e293b; border: 1px solid #334155; border-radius: 12px; text-decoration: none; color: #f8fafc; max-width: 300px; margin: 4px 0;" contenteditable="false">
+              <div style="width: 40px; height: 40px; border-radius: 8px; background-color: #312e81; color: #818cf8; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; flex-shrink: 0;">
+                ${fileExt.substring(0, 4)}
+              </div>
+              <div style="flex: 1; min-width: 0;">
+                <div style="font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${file.name}</div>
+                <div style="font-size: 12px; color: #94a3b8;">${(file.size / 1024).toFixed(1)} KB • Klik untuk unduh</div>
+              </div>
+            </a>
+            <br><br>
+          `;
+        }
         insertHtmlToEditor(html);
       };
       reader.readAsDataURL(file);
     });
 
     const msg = lang === 'id'
-      ? (files.length > 1 ? `${files.length} dokumen dilampirkan` : 'Dokumen dilampirkan')
-      : (files.length > 1 ? `${files.length} documents attached` : 'Document attached');
+      ? (files.length > 1 ? `${files.length} file dilampirkan` : 'File dilampirkan ke catatan')
+      : (files.length > 1 ? `${files.length} files attached` : 'File attached');
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 2500);
   };
@@ -1224,11 +1375,11 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
 
   const allExistingTags = useMemo(() => {
     const tagSet = new Set<string>();
-    notes.forEach(n => {
+    notesRef.current.forEach(n => {
       n.tags?.forEach(tag => tagSet.add(tag));
     });
     return Array.from(tagSet);
-  }, [notes]);
+  }, []);
   
   const suggestedTags = useMemo(() => {
     const defaultTags = ['#penting', '#ide', '#kerja', '#pribadi', '#tugas'];
@@ -1276,7 +1427,7 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
             </div>
           ) : hasUnsavedChanges ? (
             <button 
-              onClick={saveNote}
+              onClick={() => saveNote(false)}
               className={`flex items-center justify-center gap-2 px-4 py-2 rounded-full transition-all cursor-pointer mr-2 shadow-md ${
                 isOrganic 
                   ? `${palette.brandBg} active:scale-95` 
@@ -1320,7 +1471,7 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
               const currContent = contentRef.current;
               const currTags = tagsRef.current;
               
-              if (note.id && notes.some(n => n.id === note.id)) {
+              if (note.id && notesRef.current.some(n => n.id === note.id)) {
                  updateNote({ ...note, title: currTitle, content: currContent, tags: currTags, isArchived: !note.isArchived, reminder: reminderRef.current, isLocked: isLockedRef.current });
               } else {
                  addNote({ ...note, title: currTitle, content: currContent, tags: currTags, isArchived: !note.isArchived, reminder: reminderRef.current, isLocked: isLockedRef.current });
@@ -1353,23 +1504,15 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
 
       <div className="flex-1 overflow-y-auto custom-scrollbar w-full">
         <div className="w-full max-w-4xl mx-auto px-6 py-6 flex flex-col min-h-full">
-          {/* Title - clean, readable and normal weight (never auto-bold) */}
-          <div className="flex flex-col mb-4">
-            <span className={`text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider mb-1 opacity-70 ${
-              isOrganic ? palette.subText : 'text-slate-400'
-            }`}>
-              {lang === 'id' ? 'Judul Catatan (Opsional)' : 'Note Title (Optional)'}
-            </span>
-            <input
-              type="text"
-              value={title}
-              onChange={handleTitleChange}
-              className={`w-full text-xl sm:text-2xl font-normal bg-transparent border-none outline-none tracking-tight transition-colors ${
-                isOrganic ? `${palette.titleText.replace('font-black', '').replace('font-bold', '')} placeholder:opacity-40` : 'text-slate-100 placeholder-slate-500'
-              }`}
-              placeholder={t('titlePlaceholder') || (lang === 'id' ? "Tulis judul catatan di sini..." : "Type note title here...")}
-            />
-          </div>
+          {/* Title - clean, readable and normal weight (never auto-bold, zero re-renders) */}
+          <NoteTitleInput
+            initialValue={note.title || ''}
+            isOrganic={isOrganic}
+            palette={palette}
+            label={lang === 'id' ? 'Judul Catatan (Opsional)' : 'Note Title (Optional)'}
+            placeholder={t('titlePlaceholder') || (lang === 'id' ? "Tulis judul catatan di sini..." : "Type note title here...")}
+            onChange={handleTitleChange}
+          />
 
           {/* Tata AI Permission Badge */}
           {sharedWithAI && (
@@ -1731,9 +1874,18 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
             />
             <input 
               type="file" 
+              ref={cameraInputRef} 
+              onChange={handleFileChange} 
+              onClick={(e) => { (e.target as HTMLInputElement).value = ''; }}
+              accept="image/*" 
+              capture="environment"
+              className="hidden" 
+            />
+            <input 
+              type="file" 
               ref={docAttachRef} 
               onChange={handleDocAttachChange} 
-              accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar" 
+              accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar,.mp4,.webm,.mov,.m4v,video/*" 
               multiple
               className="hidden" 
             />
@@ -1964,7 +2116,7 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
               <span className={`text-[9px] font-bold uppercase tracking-widest block mb-1 ${palette.subText}`}>
                 {lang === 'id' ? 'Judul Catatan' : 'Note Title'}
               </span>
-              <span className={`text-xs font-bold block mb-2 ${palette.titleText}`}>{title || (lang === 'id' ? 'Catatan Tanpa Judul' : 'Untitled Note')}</span>
+              <span className={`text-xs font-bold block mb-2 ${palette.titleText}`}>{titleRef.current || (lang === 'id' ? 'Catatan Tanpa Judul' : 'Untitled Note')}</span>
               
               <span className={`text-[9px] font-bold uppercase tracking-widest block mb-1 ${palette.subText}`}>
                 {lang === 'id' ? 'Konten Terenkripsi Lokal' : 'Local Plaintext Content'}
@@ -2049,54 +2201,78 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
               </button>
             </div>
 
-            {/* Just 2 simple, clear, large choices */}
-            <div className="grid grid-cols-2 gap-3 pt-1">
+            {/* 3 Clear, intuitive photo choices */}
+            <div className="grid grid-cols-3 gap-2 pt-1">
+              {/* 1. Native OS Camera (Works 100% on phones & desktop without permission friction) */}
+              <button
+                type="button"
+                onClick={() => {
+                  handleNativeCamera();
+                  setShowAttachmentMenu(false);
+                }}
+                className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all text-center group cursor-pointer active:scale-95 shadow-sm ${palette.streakCard} ${palette.streakBorder} hover:opacity-90`}
+              >
+                {is3D ? (
+                  <Icon3DCamera size={28} />
+                ) : (
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform bg-emerald-500/10 text-emerald-400 border border-emerald-500/20`}>
+                    <Camera size={20} />
+                  </div>
+                )}
+                <div className="space-y-0.5">
+                  <span className={`block text-[11px] font-bold ${palette.titleText}`}>
+                    {lang === 'id' ? 'Kamera HP' : 'Phone Cam'}
+                  </span>
+                  <span className="block text-[9px] text-emerald-400 font-semibold">
+                    {lang === 'id' ? 'Bawaan OS' : 'Native OS'}
+                  </span>
+                </div>
+              </button>
+
+              {/* 2. Tata Live Viewfinder */}
               <button
                 type="button"
                 onClick={() => {
                   setShowAttachmentMenu(false);
                   setShowCameraModal(true);
                 }}
-                className={`p-4 rounded-xl border flex flex-col items-center justify-center gap-2.5 transition-all text-center group cursor-pointer active:scale-95 shadow-sm ${palette.streakCard} ${palette.streakBorder} hover:opacity-90`}
+                className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all text-center group cursor-pointer active:scale-95 shadow-sm ${palette.streakCard} ${palette.streakBorder} hover:opacity-90`}
               >
-                {is3D ? (
-                  <Icon3DCamera size={34} />
-                ) : (
-                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center group-hover:scale-105 transition-transform ${palette.streakCard} ${palette.brandText}`}>
-                    <Camera size={24} />
-                  </div>
-                )}
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform ${palette.streakCard} ${palette.brandText}`}>
+                  <Camera size={20} />
+                </div>
                 <div className="space-y-0.5">
-                  <span className={`block text-xs font-bold ${palette.titleText}`}>
-                    {lang === 'id' ? 'Buka Kamera' : 'Camera'}
+                  <span className={`block text-[11px] font-bold ${palette.titleText}`}>
+                    {lang === 'id' ? 'Kamera Live' : 'Live Camera'}
                   </span>
-                  <span className={`block text-[10px] ${palette.subText}`}>
-                    {lang === 'id' ? 'Ambil foto baru' : 'Take photo now'}
+                  <span className={`block text-[9px] ${palette.subText}`}>
+                    {lang === 'id' ? 'Viewfinder' : 'In-App'}
                   </span>
                 </div>
               </button>
 
+              {/* 3. Photo Gallery */}
               <button
                 type="button"
                 onClick={() => {
                   handleImage();
                   setShowAttachmentMenu(false);
                 }}
-                className={`p-4 rounded-xl border flex flex-col items-center justify-center gap-2.5 transition-all text-center group cursor-pointer active:scale-95 shadow-sm ${palette.streakCard} ${palette.streakBorder} hover:opacity-90`}
+                className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all text-center group cursor-pointer active:scale-95 shadow-sm ${palette.streakCard} ${palette.streakBorder} hover:opacity-90`}
               >
                 {is3D ? (
-                  <Icon3DImage size={34} />
+                  <Icon3DImage size={28} />
                 ) : (
-                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center group-hover:scale-105 transition-transform ${palette.streakCard} text-emerald-500`}>
-                    <ImageIcon size={24} />
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform bg-indigo-500/10 text-indigo-400 border border-indigo-500/20`}>
+                    <ImageIcon size={20} />
                   </div>
                 )}
                 <div className="space-y-0.5">
-                  <span className={`block text-xs font-bold ${palette.titleText}`}>
-                    {lang === 'id' ? 'Galeri Foto' : 'Photo Gallery'}
+                  <span className={`block text-[11px] font-bold ${palette.titleText}`}>
+                    {lang === 'id' ? 'Galeri Foto' : 'Gallery'}
                   </span>
-                  <span className={`block text-[10px] font-medium ${palette.brandText}`}>
-                    {lang === 'id' ? 'Bisa banyak foto' : 'Multiple photos'}
+                  <span className={`block text-[9px] ${palette.brandText} font-medium`}>
+                    {lang === 'id' ? 'Multi Foto' : 'Multi-select'}
                   </span>
                 </div>
               </button>
