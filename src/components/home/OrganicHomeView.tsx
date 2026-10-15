@@ -1,34 +1,23 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  Sparkles, 
-  Wallet, 
-  Bell, 
-  Search, 
-  Shuffle, 
-  X, 
-  Zap, 
-  Flame, 
-  ArrowRight,
-  RefreshCw,
-  Plus,
-  Target,
-  FileText,
-  Lock,
-  Calendar as CalendarIcon,
-  CheckCircle2,
-  TrendingUp,
-  Tag,
-  Clock,
-  Pin,
-  Compass,
-  ArrowUpRight,
-  CheckSquare,
-  Repeat,
-  Bot
-} from 'lucide-react';
 import { useAppStore } from '../../store';
 import { Note, Task } from '../../types';
+
+const extractFirstImageUrl = (content?: string): string | null => {
+  if (!content) return null;
+  const match = content.match(/<img[^>]+src=["']([^"']+)["']/i);
+  return match ? match[1] : null;
+};
+
+const getCleanTextPreview = (content?: string): string => {
+  if (!content) return '';
+  return content
+    .replace(/<br\s*\/?>/gi, ' ')
+    .replace(/<[^>]*>?/gm, '')
+    .replace(/&nbsp;?/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+};
 import { 
   OrganicPottedPlant, 
   OrganicBloomingRose, 
@@ -54,7 +43,20 @@ import {
   Icon3DTarget,
   Icon3DNavNotes,
   Icon3DGift,
-  Icon3DClock
+  Icon3DClock,
+  Icon3DRefresh,
+  Icon3DClose,
+  Icon3DChevronRight,
+  Icon3DForward,
+  Icon3DCalendar,
+  Icon3DShuffle,
+  Icon3DPin,
+  Icon3DCheckSquare,
+  Icon3DFileText,
+  Icon3DCamera,
+  Icon3DGoldLock,
+  Icon3DSparkles,
+  Icon3DSproutLogo
 } from './Organic3DIcons';
 import NotificationModal from '../NotificationModal';
 import { buildAllNotifications, NotificationItem } from '../../utils/notifications';
@@ -280,6 +282,17 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
     return notes.filter(n => !n.isArchived && n.pinned);
   }, [notes]);
 
+  const recentNotes = useMemo(() => {
+    const nonArchived = notes.filter(n => !n.isArchived);
+    return [...nonArchived].sort((a, b) => {
+      if (a.pinned && !b.pinned) return -1;
+      if (!a.pinned && b.pinned) return 1;
+      const timeA = a.updatedAt || (a.date ? new Date(a.date).getTime() : 0) || 0;
+      const timeB = b.updatedAt || (b.date ? new Date(b.date).getTime() : 0) || 0;
+      return timeB - timeA;
+    });
+  }, [notes]);
+
   const { completedCount, totalCount, progressPercent, frontStreak, isTodayConfirmed } = useMemo(() => {
     const scope = todayTasks.length > 0 ? todayTasks : activeTasks;
     const compReg = scope.filter(t => t.completed).length;
@@ -458,14 +471,11 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
             title={lang === 'id' ? 'Klik untuk Segarkan Data' : 'Click to Refresh'}
           >
             <div className={`w-9 h-9 rounded-2xl flex items-center justify-center shadow-xs ${palette.brandBg} transition-all group-hover:scale-105 active:scale-90`}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="w-4.5 h-4.5 text-current">
-                <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
-                <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 12" />
-              </svg>
+              <Icon3DSproutLogo size={24} />
             </div>
             <div className="flex items-center gap-1.5">
               <span className={`font-black text-xl tracking-tight ${palette.brandText}`}>TATA</span>
-              <RefreshCw size={12} className={`opacity-60 transition-transform ${isRefreshing ? 'animate-spin text-amber-600' : 'group-hover:rotate-180'}`} />
+              <Icon3DRefresh size={13} spinning={isRefreshing} className={`opacity-75 transition-transform ${isRefreshing ? 'animate-spin' : 'group-hover:rotate-180 duration-300'}`} />
               <AnimatePresence>
                 {refreshToast && (
                   <motion.span
@@ -556,7 +566,7 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
               className="p-1 rounded-full opacity-70 hover:opacity-100 transition-opacity cursor-pointer touch-manipulation active:scale-90"
               title={lang === 'id' ? 'Hapus Pencarian' : 'Clear search'}
             >
-              <X size={16} />
+              <Icon3DClose size={14} />
             </button>
           ) : (
             <span className={`ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full ${palette.searchBadge}`}>
@@ -631,7 +641,7 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
                 </span>
                 <span className="text-[10px] font-bold opacity-75 flex items-center gap-1 group-hover:opacity-100">
                   <span>Enter ↵</span>
-                  <ArrowUpRight size={13} />
+                  <Icon3DForward size={14} />
                 </span>
               </div>
               <h3 className={`text-base font-black leading-tight mb-1 flex items-center gap-2 ${palette.searchResultTitle}`}>
@@ -649,7 +659,7 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
           {filteredSearchResults.length > 0 ? (
             <div className="space-y-2">
               {filteredSearchResults.map((item, idx) => {
-                const ItemIcon = item.icon || FileText;
+                const ItemIcon = item.icon || Icon3DFileText;
                 return (
                   <div
                     key={`${item.id}-${idx}`}
@@ -681,7 +691,7 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
                       )}
                     </div>
 
-                    <ArrowRight size={14} className="opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all shrink-0 mt-3" />
+                    <Icon3DChevronRight size={15} className="opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all shrink-0 mt-3" />
                   </div>
                 );
               })}
@@ -897,8 +907,8 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
                     {disciplineTask.title}
                   </h4>
                   {disciplineTask.disciplineData?.targetDate && (
-                    <p className={`text-[11px] font-medium mt-1 flex items-center gap-1 ${palette.disciplineSub}`}>
-                      <CalendarIcon size={12} className="opacity-70" />
+                    <p className={`text-[11px] font-medium mt-1 flex items-center gap-1.5 ${palette.disciplineSub}`}>
+                      <Icon3DCalendar size={13} className="shrink-0" />
                       <span>Target: {disciplineTask.disciplineData.targetDate}</span>
                     </p>
                   )}
@@ -942,7 +952,7 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
                       title={lang === 'id' ? 'Ganti kutipan' : 'New Quote'}
                       className={`w-7 h-7 rounded-xl flex items-center justify-center transition-colors cursor-pointer touch-manipulation active:scale-90 ${palette.quoteBtn}`}
                     >
-                      <Shuffle size={12} />
+                      <Icon3DShuffle size={14} />
                     </button>
                   )}
                   <button 
@@ -954,7 +964,7 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
                     aria-label="Tutup kutipan"
                     className={`w-7 h-7 rounded-xl flex items-center justify-center transition-colors cursor-pointer touch-manipulation active:scale-90 ${palette.quoteBtn}`}
                   >
-                    <X size={13} />
+                    <Icon3DClose size={13} />
                   </button>
                 </div>
               </div>
@@ -983,7 +993,7 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
                 className={`text-[11px] font-semibold hover:underline flex items-center gap-1 cursor-pointer touch-manipulation select-none ${palette.moodLink}`}
               >
                 <span>{lang === 'id' ? 'Kalender Mood' : 'Mood Calendar'}</span>
-                <ArrowRight size={12} />
+                <Icon3DChevronRight size={13} />
               </button>
             </div>
 
@@ -1037,7 +1047,7 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
             <div className="flex items-center justify-between gap-2.5 mb-3.5 px-1">
               <div className="flex items-center gap-2">
                 <div className={`w-7 h-7 rounded-xl flex items-center justify-center shadow-xs ${palette.brandBg}`}>
-                  <Pin size={15} className="text-current" />
+                  <Icon3DPin size={16} />
                 </div>
                 <h2 className={`text-sm font-extrabold uppercase tracking-wider ${palette.priorityTitle}`}>
                   {lang === 'id' ? 'Tugas Prioritas' : 'Priority Tasks'}
@@ -1057,7 +1067,7 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
                 className={`text-xs font-bold hover:underline flex items-center gap-1 cursor-pointer touch-manipulation select-none ${palette.moodLink}`}
               >
                 <span>{lang === 'id' ? 'Semua' : 'All'}</span>
-                <ArrowRight size={12} />
+                <Icon3DChevronRight size={13} />
               </button>
             </div>
 
@@ -1065,7 +1075,7 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
             {pinnedTasks.length === 0 && pinnedNotes.length === 0 ? (
                 <div className={`rounded-2xl p-5 text-center border shadow-xs ${palette.priorityEmptyCard}`}>
                   <div className={`w-9 h-9 rounded-xl flex items-center justify-center mx-auto mb-2 shadow-inner ${palette.priorityEmptyIconBg}`}>
-                    <Pin size={16} className="opacity-80" />
+                    <Icon3DPin size={22} className="opacity-90" />
                   </div>
                   <h4 className={`font-bold text-xs sm:text-sm mb-1 ${palette.priorityEmptyText}`}>
                     {lang === 'id' ? 'Belum Ada Tugas Prioritas' : 'No Priority Tasks Yet'}
@@ -1081,9 +1091,10 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
                         triggerHaptic('light');
                         onNavigate('tasks', { openNewTask: true });
                       }}
-                      className={`px-3.5 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer touch-manipulation select-none ${palette.priorityEmptyBtn}`}
+                      className={`px-3.5 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer touch-manipulation select-none flex items-center gap-1.5 ${palette.priorityEmptyBtn}`}
                     >
-                      {lang === 'id' ? '+ Buat Tugas' : '+ New Task'}
+                      <Icon3DFabPlus size={14} />
+                      <span>{lang === 'id' ? 'Buat Tugas' : 'New Task'}</span>
                     </button>
                   </div>
                 </div>
@@ -1094,7 +1105,7 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
                     <div className="space-y-2">
                       <div className="flex items-center justify-between px-1">
                         <div className="flex items-center gap-1.5">
-                          <CheckSquare size={13} className="text-emerald-500" />
+                          <Icon3DCheckSquare size={16} />
                           <h3 className={`text-xs font-bold uppercase tracking-wider ${palette.priorityTitle}`}>
                             {lang === 'id' ? 'Tugas Prioritas' : 'Priority Tasks'}
                           </h3>
@@ -1142,8 +1153,8 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
                                     <span className="font-mono">• {task.time}</span>
                                   )}
                                   {task.alarmTime && (
-                                    <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-600 dark:text-amber-400 font-semibold text-[9px]">
-                                      <Bell size={10} />
+                                    <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-600 dark:text-amber-400 font-semibold text-[9px]">
+                                      <Icon3DBell size={11} />
                                       {task.alarmTime}
                                     </span>
                                   )}
@@ -1167,7 +1178,7 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
                                 className="w-7 h-7 rounded-xl flex items-center justify-center opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5 active:scale-90 transition-all cursor-pointer touch-manipulation"
                                 title={lang === 'id' ? 'Lepas Sematan' : 'Unpin'}
                               >
-                                <X size={14} />
+                                <Icon3DClose size={13} />
                               </button>
                             </div>
                           </div>
@@ -1181,7 +1192,7 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
                     <div className="space-y-2.5">
                       <div className="flex items-center justify-between px-1">
                         <div className="flex items-center gap-2">
-                          <FileText size={14} className="text-amber-500" />
+                          <Icon3DFileText size={16} />
                           <h3 className={`text-xs font-bold uppercase tracking-wider ${palette.priorityTitle}`}>
                             {lang === 'id' ? 'Catatan Prioritas' : 'Priority Notes'}
                           </h3>
@@ -1192,79 +1203,101 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                        {pinnedNotes.map((note) => (
-                          <div
-                            key={note.id}
-                            onClick={() => {
-                              triggerHaptic('light');
-                              onOpenNote(note);
-                            }}
-                            className={`p-4 rounded-2xl border transition-all cursor-pointer shadow-xs flex flex-col justify-between group touch-manipulation ${palette.noteCard} ${palette.noteCardBorder} ${palette.noteCardHoverBorder} hover:shadow-md`}
-                          >
-                            <div>
-                              <div className="flex items-center justify-between gap-1 mb-2">
-                                <div className="flex items-center gap-1 overflow-x-hidden">
-                                  <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-md uppercase flex items-center gap-1 shrink-0 ${palette.noteTagBadge}`}>
-                                    <Pin size={10} className="fill-current" />
-                                    <span>{lang === 'id' ? 'Prioritas' : 'Pinned'}</span>
-                                  </span>
-                                  {note.tags && note.tags.length > 0 && (
-                                    <span className="text-[9px] font-bold opacity-75 bg-black/5 dark:bg-white/5 px-1.5 py-0.5 rounded-md uppercase truncate max-w-[90px]">
-                                      {note.tags[0].replace('#', '')}
+                        {pinnedNotes.map((note) => {
+                          const firstImage = note.thumbnailUrl || extractFirstImageUrl(note.content);
+                          const cleanText = getCleanTextPreview(note.content);
+                          const displayTitle = note.title || (firstImage ? (lang === 'id' ? 'Catatan Foto' : 'Photo Note') : (lang === 'id' ? 'Catatan Tanpa Judul' : 'Untitled Note'));
+
+                          return (
+                            <div
+                              key={note.id}
+                              onClick={() => {
+                                triggerHaptic('light');
+                                onOpenNote(note);
+                              }}
+                              className={`p-3.5 sm:p-4 rounded-2xl border transition-all cursor-pointer shadow-xs flex flex-col justify-between group touch-manipulation ${palette.noteCard} ${palette.noteCardBorder} ${palette.noteCardHoverBorder} hover:shadow-md`}
+                            >
+                              <div>
+                                {firstImage && (
+                                  <div className="relative w-full h-28 sm:h-32 mb-2.5 rounded-xl overflow-hidden bg-black/10 dark:bg-white/5 border border-black/5 dark:border-white/10">
+                                    <img
+                                      src={firstImage}
+                                      alt="Preview"
+                                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                      loading="lazy"
+                                    />
+                                    <div className="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-xs text-white text-[9px] font-bold flex items-center gap-1">
+                                      <Icon3DCamera size={11} />
+                                      <span>{lang === 'id' ? 'Foto' : 'Photo'}</span>
+                                    </div>
+                                  </div>
+                                )}
+
+                                <div className="flex items-center justify-between gap-1 mb-2">
+                                  <div className="flex items-center gap-1 overflow-x-hidden">
+                                    <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-md uppercase flex items-center gap-1 shrink-0 ${palette.noteTagBadge}`}>
+                                      <Icon3DPin size={11} />
+                                      <span>{lang === 'id' ? 'Prioritas' : 'Pinned'}</span>
                                     </span>
-                                  )}
+                                    {note.tags && note.tags.length > 0 && (
+                                      <span className="text-[9px] font-bold opacity-75 bg-black/5 dark:bg-white/5 px-1.5 py-0.5 rounded-md uppercase truncate max-w-[90px]">
+                                        {note.tags[0].replace('#', '')}
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    {note.sharedWithAI && (
+                                      <span className="px-1.5 py-0.5 bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 text-[9px] font-bold rounded flex items-center gap-0.5" title={lang === 'id' ? 'Telah masuk Tata AI' : 'Shared with Tata AI'}>
+                                        <Icon3DTataAI size={11} />
+                                        <span>AI</span>
+                                      </span>
+                                    )}
+                                    <button
+                                      type="button"
+                                      onClick={(e) => handleTogglePinNote(note, e)}
+                                      className="w-7 h-7 min-w-[28px] min-h-[28px] sm:w-8 sm:h-8 rounded-lg flex items-center justify-center opacity-70 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5 active:scale-90 transition-all cursor-pointer touch-manipulation"
+                                      title={lang === 'id' ? 'Lepas dari Prioritas Utama' : 'Unpin note'}
+                                    >
+                                      <Icon3DClose size={13} />
+                                    </button>
+                                  </div>
                                 </div>
 
-                                <div className="flex items-center gap-1 shrink-0">
-                                  {note.sharedWithAI && (
-                                    <span className="px-1.5 py-0.5 bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 text-[9px] font-bold rounded flex items-center gap-0.5" title={lang === 'id' ? 'Telah masuk Tata AI' : 'Shared with Tata AI'}>
-                                      <Bot size={10} />
-                                      <span>AI</span>
-                                    </span>
-                                  )}
-                                  <button
-                                    type="button"
-                                    onClick={(e) => handleTogglePinNote(note, e)}
-                                    className="w-7 h-7 min-w-[28px] min-h-[28px] sm:w-8 sm:h-8 rounded-lg flex items-center justify-center opacity-70 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5 active:scale-90 transition-all cursor-pointer touch-manipulation"
-                                    title={lang === 'id' ? 'Lepas dari Prioritas Utama' : 'Unpin note'}
-                                  >
-                                    <X size={14} />
-                                  </button>
-                                </div>
+                                <h4 className={`text-xs sm:text-sm font-bold transition-colors line-clamp-1 leading-snug mb-1 ${palette.noteCardText}`}>
+                                  {displayTitle}
+                                </h4>
+
+                                {note.isLocked ? (
+                                  <p className="text-[11px] text-amber-500 font-medium flex items-center gap-1 my-1">
+                                    <Icon3DGoldLock size={13} />
+                                    <span>{lang === 'id' ? 'Terkunci PIN' : 'Locked with PIN'}</span>
+                                  </p>
+                                ) : (
+                                  <p className={`text-[11px] line-clamp-2 leading-relaxed ${palette.noteCardSub}`}>
+                                    {cleanText || (firstImage ? (lang === 'id' ? '📸 [Berisi Foto]' : '📸 [Contains Photo]') : '...')}
+                                  </p>
+                                )}
                               </div>
 
-                              <h4 className={`text-xs sm:text-sm font-bold transition-colors line-clamp-1 leading-snug mb-1 ${palette.noteCardText}`}>
-                                {note.title || (lang === 'id' ? 'Catatan Tanpa Judul' : 'Untitled Note')}
-                              </h4>
-
-                              {note.isLocked ? (
-                                <p className="text-[11px] text-amber-500 font-medium flex items-center gap-1 my-1">
-                                  <Lock size={11} />
-                                  <span>{lang === 'id' ? 'Terkunci PIN' : 'Locked with PIN'}</span>
-                                </p>
-                              ) : (
-                                <p className={`text-[11px] line-clamp-2 leading-relaxed ${palette.noteCardSub}`}>
-                                  {note.content ? note.content.replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]*>?/gm, '').replace(/&nbsp;?/gi, ' ').trim() : '...'}
-                                </p>
-                              )}
+                              <div className="flex items-center justify-between pt-2.5 mt-2 border-t border-black/5 dark:border-white/5 text-[10px] font-mono opacity-60">
+                                <span>{note.date}</span>
+                                {note.reminder && (
+                                  <span className="flex items-center gap-1 text-rose-500 font-sans font-bold">
+                                    <Icon3DBell size={11} />
+                                    <span>{note.reminder}</span>
+                                  </span>
+                                )}
+                              </div>
                             </div>
-
-                            <div className="flex items-center justify-between pt-2.5 mt-2 border-t border-black/5 dark:border-white/5 text-[10px] font-mono opacity-60">
-                              <span>{note.date}</span>
-                              {note.reminder && (
-                                <span className="flex items-center gap-1 text-rose-500 font-sans font-bold">
-                                  <Bell size={10} />
-                                  <span>{note.reminder}</span>
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   )}
                 </div>
               )}
+            </div>
 
             {/* Elegant Garden / Aesthetic Footer */}
             <div className="pt-6 pb-8 flex flex-col items-center justify-center text-center">
@@ -1296,11 +1329,11 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
                 >
                   <OrganicCrystalOrchid className="w-22 h-30 drop-shadow-[0_8px_20px_rgba(2,132,199,0.3)] group-hover:scale-105 transition-transform duration-300" />
                   <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#13234A]/80 border border-[#1E3A8A] shadow-2xs text-cyan-300">
-                    <Sparkles size={12} className="text-cyan-400" />
+                    <Icon3DSparkles size={14} className="shrink-0" />
                     <p className="text-xs font-semibold">
                       {lang === 'id' ? 'Kristal ketenangan dan fokus berenergi' : 'Crystal clarity and energized focus'}
                     </p>
-                    <Sparkles size={12} className="text-cyan-400" />
+                    <Icon3DSparkles size={14} className="shrink-0" />
                   </div>
                 </motion.div>
               ) : palette.id === 'cute' ? (
@@ -1310,11 +1343,11 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
                 >
                   <OrganicGoldenBonsai className="w-22 h-30 drop-shadow-md group-hover:scale-105 transition-transform duration-300" />
                   <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100/70 dark:bg-amber-950/40 border border-amber-300/60 shadow-2xs text-amber-900 dark:text-amber-200">
-                    <Sparkles size={12} className="text-amber-500" />
+                    <Icon3DSparkles size={14} className="shrink-0" />
                     <p className="text-xs font-semibold">
                       {lang === 'id' ? 'Bonsai emas pembawa keberuntungan dan tekad' : 'Golden bonsai of prosperity & steadfast spirit'}
                     </p>
-                    <Sparkles size={12} className="text-amber-500" />
+                    <Icon3DSparkles size={14} className="shrink-0" />
                   </div>
                 </motion.div>
               ) : palette.id === 'light' || palette.id === 'simple' ? (
@@ -1330,7 +1363,7 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
               ) : (
                 <div className={`p-3.5 rounded-2xl border flex items-center gap-3 max-w-sm w-full mx-auto ${palette.cardHero} ${palette.cardHeroBorder}`}>
                   <div className={`w-8 h-8 rounded-xl border flex items-center justify-center shrink-0 ${palette.actionBtn} ${palette.actionBtnBorder}`}>
-                    <Sparkles size={16} className="text-amber-400" />
+                    <Icon3DSparkles size={18} />
                   </div>
                   <div className="text-left">
                     <p className={`text-xs font-bold ${palette.titleText}`}>
@@ -1345,7 +1378,6 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
             </div>
           </div>
         </div>
-      </div>
       )}
 
       {/* 10. INTERACTIVE FLOATING ACTION BUTTON WITH OUTSIDE TAP DISMISS */}
@@ -1374,7 +1406,7 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
                 }}
                 className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl transition-colors cursor-pointer touch-manipulation ${palette.fabMenuItemHover} ${palette.fabMenuItemText}`}
               >
-                <FileText size={15} className={palette.id === 'pink' ? "text-rose-500" : "text-amber-500"} />
+                <Icon3DFileText size={18} />
                 <span>{lang === 'id' ? 'Catatan Baru' : 'New Note'}</span>
                 {palette.id === 'pink' && <OrganicFlowerBlossom className="w-3.5 h-3.5 ml-auto opacity-70" />}
               </button>
@@ -1387,7 +1419,7 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
                 }}
                 className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl transition-colors cursor-pointer touch-manipulation ${palette.fabMenuItemHover} ${palette.fabMenuItemText}`}
               >
-                <CheckCircle2 size={15} className="text-emerald-500" />
+                <Icon3DTaskChecked size={18} />
                 <span>{lang === 'id' ? 'Tugas Baru' : 'New Task'}</span>
                 {palette.id === 'pink' && <OrganicFlowerBlossom className="w-3.5 h-3.5 ml-auto opacity-70" />}
               </button>
@@ -1400,7 +1432,7 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
                 }}
                 className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl transition-colors cursor-pointer touch-manipulation ${palette.fabMenuItemHover} ${palette.fabMenuItemText}`}
               >
-                <Wallet size={15} className="text-indigo-500" />
+                <Icon3DWallet size={18} />
                 <span>{lang === 'id' ? 'Catat Transaksi' : 'New Transaction'}</span>
               </button>
             </motion.div>

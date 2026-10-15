@@ -243,6 +243,15 @@ export default function App() {
       if (extra) {
         openNote(extra);
         return;
+      } else if (!activeNote) {
+        openNote({
+          id: generateId(),
+          title: '',
+          content: '',
+          date: new Date().toISOString().split('T')[0],
+          tags: []
+        });
+        return;
       }
     }
 
@@ -1306,6 +1315,7 @@ export default function App() {
             )}
             {currentScreen === 'note-editor' && (
               <NoteEditorScreen 
+                key={activeNote?.id || 'new-note'}
                 appTheme={activeTheme}
                 note={activeNote || {
                   id: generateId(),

@@ -181,11 +181,16 @@ export default function CameraModal({
 
     try {
       ctx.drawImage(video, 0, 0, width, height);
-      const rawDataUrl = canvas.toDataURL('image/jpeg', 0.92);
+      const rawDataUrl = canvas.toDataURL('image/jpeg', 0.90);
 
-      // Compress image
-      const compressed = await compressImageBase64(rawDataUrl, 1600, 1600, 0.82);
-      setCapturedImage(compressed);
+      // Compress image safely with fallback
+      let finalImg = rawDataUrl;
+      try {
+        finalImg = await compressImageBase64(rawDataUrl, 1280, 1280, 0.80);
+      } catch (e) {
+        console.warn('Snap compression error, using raw:', e);
+      }
+      setCapturedImage(finalImg || rawDataUrl);
 
       // Stop video stream during review
       stopCameraStream();
@@ -210,7 +215,9 @@ export default function CameraModal({
       reader.onload = async (event) => {
         let dataUrl = event.target?.result as string;
         if (dataUrl) {
-          dataUrl = await compressImageBase64(dataUrl, 1600, 1600, 0.82);
+          try {
+            dataUrl = await compressImageBase64(dataUrl, 1280, 1280, 0.80);
+          } catch (_) {}
           setCapturedImage(dataUrl);
           stopCameraStream();
         }
@@ -225,7 +232,7 @@ export default function CameraModal({
             let dataUrl = event.target?.result as string;
             if (dataUrl) {
               try {
-                dataUrl = await compressImageBase64(dataUrl, 1600, 1600, 0.82);
+                dataUrl = await compressImageBase64(dataUrl, 1280, 1280, 0.80);
               } catch (err) {
                 console.error("Compression error:", err);
               }
@@ -252,11 +259,12 @@ export default function CameraModal({
     setCapturedImage(null);
   };
 
-  // Confirm and use captured photo
+  // Confirm and use captured photo - immediately pass to note editor and close modal
   const handleConfirmUse = () => {
     if (capturedImage) {
-      onCapture(capturedImage);
+      const img = capturedImage;
       stopCameraStream();
+      onCapture(img);
       onClose();
     }
   };
@@ -479,7 +487,7 @@ export default function CameraModal({
                     className="flex-[1.5] py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-2xl flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg shadow-emerald-600/25 active:scale-95"
                   >
                     <Check size={18} />
-                    <span>{lang === 'id' ? 'Gunakan & Simpan Foto' : 'Use & Save Photo'}</span>
+                    <span>{lang === 'id' ? 'Sudah / Simpan ke Catatan' : 'Done / Save to Note'}</span>
                   </button>
                 </div>
 

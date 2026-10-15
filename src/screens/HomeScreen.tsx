@@ -31,6 +31,12 @@ const getMoodIcon = (mood: string, className: string = "w-5 h-5") => {
   }
 };
 
+const extractFirstImageUrl = (content?: string): string | null => {
+  if (!content) return null;
+  const match = content.match(/<img[^>]+src=["']([^"']+)["']/i);
+  return match ? match[1] : null;
+};
+
 const MOTIVATION_QUOTES = [
   {
     quoteId: 'Sakitnya disiplin dan belajar hari ini jauh lebih baik daripada sakitnya menyesal di hari esok.',
@@ -71,7 +77,7 @@ const MOTIVATION_QUOTES = [
 
 export default function HomeScreen({ appTheme, setAppTheme, onOpenNote, onNavigate }: HomeProps) {
   const store = useAppStore();
-  const { notes, tasks, moods, setMood, user, toggleTask, deleteTask, deleteNote, streak, lang, updateTask, checkInDaily, isLiteMode, appVersion, handleRefreshApp, isRefreshing, transactions, savingsBalance, savingsTarget, debts, tataAccount, isAccountPremium } = store;
+  const { notes, tasks, moods, setMood, user, toggleTask, deleteTask, deleteNote, updateNote, streak, lang, updateTask, checkInDaily, isLiteMode, appVersion, handleRefreshApp, isRefreshing, transactions, savingsBalance, savingsTarget, debts, tataAccount, isAccountPremium } = store;
   const [searchQuery, setSearchQuery] = useState('');
   
   // Strictly compute mode flags to prevent any mode mixing
@@ -1285,56 +1291,90 @@ export default function HomeScreen({ appTheme, setAppTheme, onOpenNote, onNaviga
             {pinnedNotes.length > 0 && (
               <div className="flex flex-col gap-3 mt-1">
                  <h4 className={`text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 ml-1 ${palette.subText}`}><FileText className="w-3 h-3" /> {t('priorityNotes')}</h4>
-                {pinnedNotes.map((note) => (
-                  <div 
-                    key={note.id} 
-                    onClick={() => onOpenNote(note)}
-                    role="button"
-                    className={`w-full text-left flex flex-col items-start gap-4 p-4 rounded-2xl transition-all cursor-pointer group border ${palette.noteCard} ${palette.noteCardBorder} ${palette.noteCardHoverBorder}`}
-                  >
-                    <div className="flex-1 overflow-hidden w-full min-w-0 flex flex-col">
-                       <div className="flex justify-between items-start mb-2">
-                          <div className="flex gap-1 overflow-x-hidden min-w-0" onClick={(e) => e.stopPropagation()}>
-                            {(note.tags || []).slice(0,2).map(tag => (
-                              <span key={tag} onClick={(e) => {
-                                 e.stopPropagation();
-                                 setSearchQuery(tag);
-                                 onNavigate('search');
-                              }} className="px-2 py-1 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white transition-colors text-[9px] font-bold rounded uppercase tracking-wider cursor-pointer truncate max-w-full">{tag.replace('#', '')}</span>
-                            ))}
+                {pinnedNotes.map((note) => {
+                  const firstImage = note.thumbnailUrl || extractFirstImageUrl(note.content);
+                  const cleanText = note.content ? note.content.replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]*>?/gm, '').replace(/&nbsp;?/gi, ' ').replace(/&bnsp;?/gi, ' ').replace(/\s+/g, ' ').trim() : '';
+                  const displayTitle = note.title || (firstImage ? (lang === 'id' ? 'Catatan Foto' : 'Photo Note') : (lang === 'id' ? 'Catatan Tanpa Judul' : 'Untitled Note'));
+
+                  return (
+                    <div 
+                      key={note.id} 
+                      onClick={() => onOpenNote(note)}
+                      role="button"
+                      className={`w-full text-left flex flex-col items-start gap-3 p-4 rounded-2xl transition-all cursor-pointer group border ${palette.noteCard} ${palette.noteCardBorder} ${palette.noteCardHoverBorder}`}
+                    >
+                      {firstImage && (
+                        <div className="relative w-full h-32 rounded-xl overflow-hidden bg-black/10 dark:bg-white/5 border border-black/5 dark:border-white/10">
+                          <img
+                            src={firstImage}
+                            alt="Photo Preview"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            loading="lazy"
+                          />
+                          <div className="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-xs text-white text-[9px] font-bold flex items-center gap-1">
+                            <Camera size={10} />
+                            <span>{lang === 'id' ? 'Foto' : 'Photo'}</span>
                           </div>
-                          <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
-                             {note.sharedWithAI && (
-                               <span className="px-1.5 py-0.5 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[9px] font-bold rounded flex items-center gap-1 animate-pulse" title={lang === 'id' ? 'Telah masuk Tata AI' : 'Shared with Tata AI'}>
-                                 <Bot size={10} />
-                                 <span>AI</span>
-                               </span>
-                             )}
-                             <span className={`text-[10px] font-mono ${palette.subText}`}>{note.date}</span>
-                           </div>
-                       </div>
-                       <h4 className={`font-bold leading-tight mb-1 truncate w-full flex items-center gap-1.5 ${palette.noteCardText}`}>
-                           {note.sharedWithAI && <Bot className="w-3.5 h-3.5 text-indigo-400 shrink-0" />}
-                           {note.isLocked && <Lock className="w-3.5 h-3.5 text-amber-400 shrink-0" />}
-                           <span>{note.title || 'Untitled Note'}</span>
-                        </h4>
-                       {note.isLocked ? (
-                         <p className="text-xs text-amber-400/90 font-semibold flex items-center gap-1 my-1">
-                           <Lock size={12} />
-                           <span>{lang === 'id' ? 'Catatan Terkunci PIN' : 'Locked with PIN'}</span>
-                         </p>
-                       ) : (
-                         <p className={`text-xs line-clamp-2 break-words ${palette.noteCardSub}`}>{note.content ? note.content.replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]*>?/gm, '').replace(/&nbsp;?/gi, ' ').replace(/&bnsp;?/gi, ' ').replace(/\s+/g, ' ').trim() : '...'}</p>
-                       )}
-                       {note.reminder && (
-                         <div className="flex items-center gap-1.5 mt-2.5 px-2 py-0.5 bg-indigo-500/10 border border-indigo-500/10 rounded-md w-fit text-indigo-400 text-[10px] font-bold">
-                           <Bell className="w-3 h-3 text-indigo-400 animate-pulse" />
-                           <span>{formatReminderDate(note.reminder, lang)}</span>
+                        </div>
+                      )}
+
+                      <div className="flex-1 overflow-hidden w-full min-w-0 flex flex-col">
+                         <div className="flex justify-between items-start mb-2">
+                            <div className="flex gap-1 overflow-x-hidden min-w-0" onClick={(e) => e.stopPropagation()}>
+                              {(note.tags || []).slice(0,2).map(tag => (
+                                <span key={tag} onClick={(e) => {
+                                   e.stopPropagation();
+                                   setSearchQuery(tag);
+                                   onNavigate('search');
+                                }} className="px-2 py-1 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white transition-colors text-[9px] font-bold rounded uppercase tracking-wider cursor-pointer truncate max-w-full">{tag.replace('#', '')}</span>
+                              ))}
+                            </div>
+                            <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
+                               {note.sharedWithAI && (
+                                 <span className="px-1.5 py-0.5 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[9px] font-bold rounded flex items-center gap-1 animate-pulse" title={lang === 'id' ? 'Telah masuk Tata AI' : 'Shared with Tata AI'}>
+                                   <Bot size={10} />
+                                   <span>AI</span>
+                                 </span>
+                               )}
+                               <span className={`text-[10px] font-mono ${palette.subText}`}>{note.date}</span>
+                               <button 
+                                 type="button"
+                                 onClick={(e) => { 
+                                   e.stopPropagation(); 
+                                   updateNote({ ...note, pinned: false }); 
+                                 }} 
+                                 className={`p-1.5 -mr-1 rounded-lg ${palette.subText} hover:text-amber-400 transition-colors flex items-center justify-center cursor-pointer`}
+                                 title={lang === 'id' ? 'Lepas dari Prioritas Utama' : 'Remove from Top Priority'}
+                               >
+                                 <X className="w-4 h-4" />
+                               </button>
+                             </div>
                          </div>
-                       )}
+                         <h4 className={`font-bold leading-tight mb-1 truncate w-full flex items-center gap-1.5 ${palette.noteCardText}`}>
+                             {note.sharedWithAI && <Bot className="w-3.5 h-3.5 text-indigo-400 shrink-0" />}
+                             {note.isLocked && <Lock className="w-3.5 h-3.5 text-amber-400 shrink-0" />}
+                             <span>{displayTitle}</span>
+                          </h4>
+                         {note.isLocked ? (
+                           <p className="text-xs text-amber-400/90 font-semibold flex items-center gap-1 my-1">
+                             <Lock size={12} />
+                             <span>{lang === 'id' ? 'Catatan Terkunci PIN' : 'Locked with PIN'}</span>
+                           </p>
+                         ) : (
+                           <p className={`text-xs line-clamp-2 break-words ${palette.noteCardSub}`}>
+                             {cleanText || (firstImage ? (lang === 'id' ? '📸 [Berisi Foto]' : '📸 [Contains Photo]') : '...')}
+                           </p>
+                         )}
+                         {note.reminder && (
+                           <div className="flex items-center gap-1.5 mt-2.5 px-2 py-0.5 bg-indigo-500/10 border border-indigo-500/10 rounded-md w-fit text-indigo-400 text-[10px] font-bold">
+                             <Bell className="w-3 h-3 text-indigo-400 animate-pulse" />
+                             <span>{formatReminderDate(note.reminder, lang)}</span>
+                           </div>
+                         )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

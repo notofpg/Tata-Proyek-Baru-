@@ -140,6 +140,7 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
   useEffect(() => {
     notesRef.current = notes;
   }, [notes]);
+  const currentNoteIdRef = useRef(note.id);
 
   const isLite = appTheme === 'lite' || appVersion === 'lite' || isLiteMode;
   const isOrganic = !isLite && (appVersion === 'organic' || appVersion === 'pro_max' || appTheme === 'organic' || appTheme === 'pro_max');
@@ -258,17 +259,6 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
         src: doc.getAttribute('href') || '',
         filename: doc.getAttribute('download') || 'Dokumen',
         size: doc.textContent?.split('•')[1]?.trim() || ''
-      });
-    });
-
-    const vids = Array.from(div.querySelectorAll('video'));
-    vids.forEach((vid, idx) => {
-      items.push({
-        id: `vid-${idx}-${vid.src.slice(0, 20)}`,
-        type: 'file',
-        src: vid.src,
-        filename: lang === 'id' ? `Video Catatan ${idx + 1}` : `Note Video ${idx + 1}`,
-        size: 'Video'
       });
     });
 
@@ -653,7 +643,8 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
   };
 
   const saveNote = (silent: boolean = false) => {
-    const existing = notesRef.current.find((n) => n.id === note.id);
+    const noteId = currentNoteIdRef.current;
+    const existing = notesRef.current.find((n) => n.id === noteId);
     const currTitle = titleRef.current || '';
     const currContent = (editorRef.current ? editorRef.current.innerHTML : contentRef.current) || '';
     const currTags = tagsRef.current || [];
@@ -681,18 +672,30 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
 
     if (!silent) setIsSaving(true);
     
-    const hasMedia = currContent.includes('<img') || currContent.includes('<video') || currContent.includes('<a') || currContent.includes('src=');
+    const hasMedia = currContent.includes('<img') || currContent.includes('<a') || currContent.includes('src=');
     const cleanText = currContent.replace(/<br\s*\/?>/gi, '').replace(/<div>\s*<\/div>/gi, '').replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, '').trim();
 
     if (currTitle.trim() || cleanText || hasMedia || currTags.length > 0 || currReminder || currSharedWithAI || currIsLocked) {
+      const imgMatch = currContent.match(/<img[^>]+src=["']([^"']+)["']/i);
+      const rawThumb = imgMatch ? imgMatch[1] : undefined;
+      // If the thumb is a base64 image, do not duplicate it into thumbnailUrl since extractFirstImageUrl already reads it from content
+      const effectiveThumb = rawThumb && rawThumb.startsWith('data:image/') ? undefined : (rawThumb || existing?.thumbnailUrl);
+
+      const updatedNote: Note = existing
+        ? { ...existing, id: noteId, title: currTitle, content: currContent, tags: currTags, reminder: currReminder, sharedWithAI: currSharedWithAI, isLocked: currIsLocked, updatedAt: Date.now(), thumbnailUrl: effectiveThumb }
+        : { ...note, id: noteId, title: currTitle, content: currContent, tags: currTags, reminder: currReminder, sharedWithAI: currSharedWithAI, isLocked: currIsLocked, updatedAt: Date.now(), thumbnailUrl: effectiveThumb };
+
       if (existing) {
-        updateNote({ ...existing, title: currTitle, content: currContent, tags: currTags, reminder: currReminder, sharedWithAI: currSharedWithAI, isLocked: currIsLocked });
+        updateNote(updatedNote);
+        notesRef.current = notesRef.current.map((n) => (n.id === noteId ? updatedNote : n));
       } else {
-        addNote({ ...note, title: currTitle, content: currContent, tags: currTags, reminder: currReminder, sharedWithAI: currSharedWithAI, isLocked: currIsLocked });
+        addNote(updatedNote);
+        notesRef.current = [updatedNote, ...notesRef.current.filter((n) => n.id !== noteId)];
       }
     } else {
       if (existing) {
-        deleteNote(note.id);
+        deleteNote(noteId);
+        notesRef.current = notesRef.current.filter((n) => n.id !== noteId);
       }
     }
     
@@ -752,7 +755,8 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
     if (statsTimeoutRef.current) {
       clearTimeout(statsTimeoutRef.current);
     }
-    // Always flush save so images, audio, video and text are persisted
+    const noteId = currentNoteIdRef.current;
+    // Always flush save so images, documents and text are persisted
     saveNote(false);
     
     // Also remove if perfectly empty (and no reminder set)
@@ -762,12 +766,12 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
     const currReminder = reminderRef.current;
     const currSharedWithAI = sharedWithAIRef.current;
     
-    const hasMedia = currContent.includes('<img') || currContent.includes('<video') || currContent.includes('<a') || currContent.includes('src=');
+    const hasMedia = currContent.includes('<img') || currContent.includes('<a') || currContent.includes('src=');
     const cleanText = currContent.replace(/<br\s*\/?>/gi, '').replace(/<div>\s*<\/div>/gi, '').replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, '').trim();
 
     if (!currTitle && !cleanText && !hasMedia && currTags.length === 0 && !currReminder && !currSharedWithAI) {
-      const existing = notesRef.current.find((n) => n.id === note.id);
-      if (existing) deleteNote(note.id);
+      const existing = notesRef.current.find((n) => n.id === noteId);
+      if (existing) deleteNote(noteId);
     }
     onBack();
   };
@@ -785,25 +789,54 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
 
   const insertHtmlToEditor = (htmlToInsert: string) => {
     if (!editorRef.current) return;
-    
-    // Attempt to restore user cursor location
-    restoreSelection();
+    // Create temporary wrapper and parse incoming HTML
+    const temp = document.createElement('div');
+    temp.innerHTML = htmlToInsert;
 
-    let success = false;
+    // Apply strict protective attributes to all images
+    temp.querySelectorAll('img').forEach((img) => {
+      img.setAttribute('contenteditable', 'false');
+      img.setAttribute('draggable', 'false');
+      img.style.userSelect = 'none';
+      img.style.maxWidth = '100%';
+      img.style.borderRadius = '8px';
+      img.style.display = 'block';
+      img.style.margin = '12px 0';
+    });
+
+    const nodes = Array.from(temp.childNodes);
+    if (nodes.length === 0) return;
+
+    let insertedAtCaret = false;
     try {
+      restoreSelection();
       const sel = window.getSelection();
       if (sel && sel.rangeCount > 0 && editorRef.current.contains(sel.getRangeAt(0).commonAncestorContainer)) {
-        success = document.execCommand("insertHTML", false, htmlToInsert);
+        const range = sel.getRangeAt(0);
+        range.deleteContents();
+        const frag = document.createDocumentFragment();
+        nodes.forEach((n) => frag.appendChild(n));
+        range.insertNode(frag);
+        range.collapse(false);
+        sel.removeAllRanges();
+        sel.addRange(range);
+        savedRangeRef.current = range.cloneRange();
+        insertedAtCaret = true;
       }
-    } catch (e) {
-      success = false;
+    } catch (_) {
+      insertedAtCaret = false;
     }
 
-    if (!success) {
-      editorRef.current.innerHTML += htmlToInsert;
+    // Fallback: If not inserted at caret, append directly to editor
+    if (!insertedAtCaret && editorRef.current) {
+      const fallbackDiv = document.createElement('div');
+      fallbackDiv.innerHTML = htmlToInsert;
+      Array.from(fallbackDiv.childNodes).forEach((n) => {
+        editorRef.current?.appendChild(n);
+      });
     }
 
-    // Ensure all images are non-editable, non-draggable, and styled properly
+    // Re-verify styling and attributes on all images in the editor
     editorRef.current.querySelectorAll('img').forEach((img) => {
       img.setAttribute('contenteditable', 'false');
       img.setAttribute('draggable', 'false');
@@ -1082,11 +1115,11 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
 
   const handleDeleteAttachment = (href: string) => {
     if (!editorRef.current) return;
-    const links = editorRef.current.querySelectorAll('a[download], video');
+    const links = editorRef.current.querySelectorAll('a[download]');
     let deleted = false;
     for (let i = 0; i < links.length; i++) {
       const el = links[i];
-      if (el.getAttribute('href') === href || (el as HTMLVideoElement).src === href || el.closest('div')?.innerHTML.includes(href)) {
+      if (el.getAttribute('href') === href || el.closest('div')?.innerHTML.includes(href)) {
         const wrapper = el.closest('div[contenteditable="false"]') || el;
         const prev = wrapper.previousSibling;
         const next = wrapper.nextSibling;
@@ -1161,13 +1194,19 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
 
   const handleCameraCapture = (dataUrlOrUrls: string | string[]) => {
     const urls = Array.isArray(dataUrlOrUrls) ? dataUrlOrUrls : [dataUrlOrUrls];
-    const html = urls
+    const validUrls = urls.filter((u) => u && typeof u === 'string' && (u.startsWith('data:image/') || u.startsWith('blob:') || u.startsWith('http')));
+    if (validUrls.length === 0) return;
+
+    const html = validUrls
       .map(
         (url) =>
           `<br><img src="${url}" alt="photo" contenteditable="false" draggable="false" style="max-width: 100%; border-radius: 8px; user-select: none; display: block; margin: 12px 0;" /><br>`
       )
       .join('');
     insertHtmlToEditor(html);
+
+    setToastMessage(lang === 'id' ? 'Foto berhasil disimpan ke catatan' : 'Photo saved to note');
+    setTimeout(() => setToastMessage(null), 2500);
   };
 
   const handleOpenScannerWithImage = (capturedDataUrl?: string) => {
@@ -1276,12 +1315,25 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
     e.target.value = '';
 
     files.forEach((file) => {
-      // Safeguard against massive video/file crash: allow up to 25MB for IndexedDB safety
-      if (file.size > 25 * 1024 * 1024) {
+      const fileExt = file.name.split('.').pop()?.toUpperCase() || 'FILE';
+      const isVideo = file.type.startsWith('video/') || ['MP4', 'WEBM', 'MOV', 'M4V', 'MKV', 'AVI', '3GP'].includes(fileExt);
+
+      if (isVideo) {
         setToastMessage(
           lang === 'id' 
-            ? `File "${file.name}" melebihi 25MB. Untuk menjaga performa browser lokal tetap ringan, gunakan file/video di bawah 25MB.` 
-            : `File "${file.name}" exceeds 25MB limit for offline storage.`
+            ? 'Penyimpanan video dinonaktifkan. Gunakan lampiran foto atau file dokumen (PDF/Word/Excel).' 
+            : 'Video saving is disabled. Please use photos or documents.'
+        );
+        setTimeout(() => setToastMessage(null), 3500);
+        return;
+      }
+
+      // Safeguard against massive file crash
+      if (file.size > 10 * 1024 * 1024) {
+        setToastMessage(
+          lang === 'id' 
+            ? `File "${file.name}" melebihi 10MB. Untuk menjaga performa penyimpanan offline tetap cepat & aman, gunakan dokumen di bawah 10MB.` 
+            : `File "${file.name}" exceeds 10MB. Please use document under 10MB for optimal performance.`
         );
         setTimeout(() => setToastMessage(null), 4000);
         return;
@@ -1290,45 +1342,27 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
       const reader = new FileReader();
       reader.onload = (event) => {
         const dataUrl = event.target?.result as string;
-        const fileExt = file.name.split('.').pop()?.toUpperCase() || 'FILE';
-        const isVideo = file.type.startsWith('video/') || ['MP4', 'WEBM', 'MOV', 'M4V'].includes(fileExt);
-
-        let html = '';
-        if (isVideo) {
-          html = `
-            <br>
-            <div style="margin: 14px 0; max-width: 100%; border-radius: 12px; overflow: hidden; background: #090d16; border: 1px solid #1e293b;" contenteditable="false">
-              <video src="${dataUrl}" controls playsinline style="width: 100%; max-height: 380px; display: block; border-radius: 10px;" preload="metadata"></video>
-              <div style="padding: 8px 12px; font-size: 11px; color: #94a3b8; display: flex; justify-content: space-between; align-items: center; background: #0f172a; border-top: 1px solid #1e293b;">
-                <span style="font-weight: 600; color: #f1f5f9;">🎥 ${file.name}</span>
-                <span>${(file.size / (1024 * 1024)).toFixed(1)} MB</span>
-              </div>
+        const html = `
+          <br><br>
+          <a href="${dataUrl}" download="${file.name}" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background-color: #1e293b; border: 1px solid #334155; border-radius: 12px; text-decoration: none; color: #f8fafc; max-width: 300px; margin: 4px 0;" contenteditable="false">
+            <div style="width: 40px; height: 40px; border-radius: 8px; background-color: #312e81; color: #818cf8; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; flex-shrink: 0;">
+              ${fileExt.substring(0, 4)}
             </div>
-            <br>
-          `;
-        } else {
-          html = `
-            <br><br>
-            <a href="${dataUrl}" download="${file.name}" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background-color: #1e293b; border: 1px solid #334155; border-radius: 12px; text-decoration: none; color: #f8fafc; max-width: 300px; margin: 4px 0;" contenteditable="false">
-              <div style="width: 40px; height: 40px; border-radius: 8px; background-color: #312e81; color: #818cf8; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; flex-shrink: 0;">
-                ${fileExt.substring(0, 4)}
-              </div>
-              <div style="flex: 1; min-width: 0;">
-                <div style="font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${file.name}</div>
-                <div style="font-size: 12px; color: #94a3b8;">${(file.size / 1024).toFixed(1)} KB • Klik untuk unduh</div>
-              </div>
-            </a>
-            <br><br>
-          `;
-        }
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${file.name}</div>
+              <div style="font-size: 12px; color: #94a3b8;">${(file.size / 1024).toFixed(1)} KB • Klik untuk unduh</div>
+            </div>
+          </a>
+          <br><br>
+        `;
         insertHtmlToEditor(html);
       };
       reader.readAsDataURL(file);
     });
 
     const msg = lang === 'id'
-      ? (files.length > 1 ? `${files.length} file dilampirkan` : 'File dilampirkan ke catatan')
-      : (files.length > 1 ? `${files.length} files attached` : 'File attached');
+      ? (files.length > 1 ? `${files.length} dokumen dilampirkan` : 'Dokumen dilampirkan ke catatan')
+      : (files.length > 1 ? `${files.length} documents attached` : 'Document attached');
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 2500);
   };
@@ -1885,7 +1919,7 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
               type="file" 
               ref={docAttachRef} 
               onChange={handleDocAttachChange} 
-              accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar,.mp4,.webm,.mov,.m4v,video/*" 
+              accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar" 
               multiple
               className="hidden" 
             />

@@ -2311,6 +2311,61 @@ export const Icon3DBackspace = React.memo(function Icon3DBackspace({ size = 24, 
   );
 });
 
+// 95. TATA ORGANIC SPROUT LOGO (3D Tactile Organic Sprout Emblem)
+export const Icon3DSproutLogo = React.memo(function Icon3DSproutLogo({ size = 24, className = '' }: Icon3DProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
+      <defs>
+        <linearGradient id="sproutLeafGrad1" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#BBF7D0" />
+          <stop offset="50%" stopColor="#4ADE80" />
+          <stop offset="100%" stopColor="#16A34A" />
+        </linearGradient>
+        <linearGradient id="sproutLeafGrad2" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#FEF08A" />
+          <stop offset="60%" stopColor="#86EFAC" />
+          <stop offset="100%" stopColor="#22C55E" />
+        </linearGradient>
+        <linearGradient id="sproutStemGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#4ADE80" />
+          <stop offset="100%" stopColor="#14532D" />
+        </linearGradient>
+      </defs>
+      <ellipse cx="24" cy="42" rx="14" ry="3" fill="#14532D" fillOpacity="0.2" />
+      <path d="M24 38 C24 30, 22 22, 25 15" stroke="url(#sproutStemGrad)" strokeWidth="3.5" strokeLinecap="round" />
+      <path d="M25 21 C33 19, 39 12, 37 7 C31 8, 25 14, 25 21 Z" fill="url(#sproutLeafGrad1)" />
+      <path d="M26 18 C31 16, 35 12, 35 9" stroke="#DCFCE7" strokeWidth="1.2" strokeLinecap="round" opacity="0.8" />
+      <path d="M23 25 C15 24, 9 18, 11 13 C17 13, 23 19, 23 25 Z" fill="url(#sproutLeafGrad2)" />
+      <path d="M21 23 C17 21, 13 18, 13 15" stroke="#FFFFFF" strokeWidth="1.2" strokeLinecap="round" opacity="0.8" />
+      <circle cx="28" cy="11" r="1.5" fill="#FFFFFF" opacity="0.9" />
+    </svg>
+  );
+});
+
+// 96. TACTILE 3D SPARKLES (Glossy 4-point golden/cyan stars)
+export const Icon3DSparkles = React.memo(function Icon3DSparkles({ size = 20, className = '' }: Icon3DProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
+      <defs>
+        <radialGradient id="sparkleGrad1" cx="35%" cy="30%" r="70%">
+          <stop offset="0%" stopColor="#FFFBEB" />
+          <stop offset="40%" stopColor="#FBBF24" />
+          <stop offset="100%" stopColor="#D97706" />
+        </radialGradient>
+        <radialGradient id="sparkleGrad2" cx="35%" cy="30%" r="70%">
+          <stop offset="0%" stopColor="#E0F2FE" />
+          <stop offset="50%" stopColor="#38BDF8" />
+          <stop offset="100%" stopColor="#0284C7" />
+        </radialGradient>
+      </defs>
+      <path d="M24 6 C24 16, 26 22, 38 24 C26 26, 24 32, 24 42 C24 32, 22 26, 10 24 C22 22, 24 16, 24 6 Z" fill="url(#sparkleGrad1)" />
+      <circle cx="24" cy="24" r="3" fill="#FFFFFF" opacity="0.9" />
+      <path d="M37 8 C37 12, 38 14, 43 15 C38 16, 37 18, 37 22 C37 18, 36 16, 31 15 C36 14, 37 12, 37 8 Z" fill="url(#sparkleGrad2)" />
+      <circle cx="12" cy="35" r="2" fill="#FDE68A" />
+    </svg>
+  );
+});
+
 // Aliases for compatibility
 export const Icon3DDelete = Icon3DBackspace;
 export const Icon3DPiggy = Icon3DPiggyBank;
@@ -2319,7 +2374,6 @@ export const Icon3DTaskCheck = Icon3DTaskChecked;
 export const Icon3DPlus = Icon3DFabPlus;
 export const Icon3DChartPie = Icon3DChart;
 export const Icon3DCalendar = Icon3DNavCalendar;
-export const Icon3DSparkles = Icon3DTataAI;
 export const Icon3DX = Icon3DClose;
 export const Icon3DPencil = Icon3DEdit;
 export const Icon3DUndo = Icon3DRotateCcw;

@@ -114,12 +114,25 @@ export const DisciplineGallery: React.FC<DisciplineGalleryProps> = ({
   // Upload handler
   const handleFilesUpload = async (files: FileList | File[], targetCategory: 'before' | 'after') => {
     if (!files || files.length === 0) return;
+    
+    const fileList = Array.from(files);
+    const hasVideo = fileList.some(f => f.type.startsWith('video/'));
+    if (hasVideo) {
+      showToast(lang === 'id' ? 'Penyimpanan video dinonaktifkan. Silakan unggah foto.' : 'Video saving is disabled. Please upload photos.');
+    }
+
+    const imageFiles = fileList.filter(f => f.type.startsWith('image/'));
+    if (imageFiles.length === 0) {
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
     setIsProcessing(true);
     
     try {
       const newItems: DisciplineMediaItem[] = [];
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
+      for (let i = 0; i < imageFiles.length; i++) {
+        const file = imageFiles[i];
         const mediaItem = await processAndSaveDisciplineMedia(file, targetCategory);
         newItems.push(mediaItem);
       }
@@ -132,7 +145,7 @@ export const DisciplineGallery: React.FC<DisciplineGalleryProps> = ({
           disciplineData: {
             ...d,
             beforeMedia: updatedBefore,
-            beforePhotoUrl: updatedBefore[0]?.url || d.beforePhotoUrl
+            beforePhotoUrl: updatedBefore[0]?.thumbnailUrl || updatedBefore[0]?.url || d.beforePhotoUrl
           }
         });
         setActiveTab('before');
@@ -144,16 +157,16 @@ export const DisciplineGallery: React.FC<DisciplineGalleryProps> = ({
           disciplineData: {
             ...d,
             afterMedia: updatedAfter,
-            afterPhotoUrl: updatedAfter[0]?.url || d.afterPhotoUrl
+            afterPhotoUrl: updatedAfter[0]?.thumbnailUrl || updatedAfter[0]?.url || d.afterPhotoUrl
           }
         });
         setActiveTab('after');
       }
 
-      showToast(lang === 'id' ? '✓ Foto berhasil ditambahkan' : '✓ Photo added successfully');
+      showToast(lang === 'id' ? '✓ Foto berhasil disimpan' : '✓ Photo saved successfully');
     } catch (error) {
       console.error('Error processing media upload:', error);
-      alert(lang === 'id' ? 'Gagal menyimpan foto ke galeri.' : 'Failed to save photo.');
+      showToast(lang === 'id' ? 'Gagal menyimpan foto ke galeri.' : 'Failed to save photo.');
     } finally {
       setIsProcessing(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -239,7 +252,7 @@ export const DisciplineGallery: React.FC<DisciplineGalleryProps> = ({
         ref={fileInputRef}
         type="file"
         multiple
-        accept="image/*,video/*"
+        accept="image/*"
         className="hidden"
         onChange={(e) => {
           if (e.target.files && e.target.files.length > 0) {
@@ -615,8 +628,6 @@ interface SimpleMediaCardProps {
 }
 
 const SimpleMediaCard: React.FC<SimpleMediaCardProps> = ({ item, lang, palette, onClick, onDelete, onDownload }) => {
-  const isVideo = item.type === 'video';
-
   return (
     <div
       onClick={onClick}
@@ -628,15 +639,6 @@ const SimpleMediaCard: React.FC<SimpleMediaCardProps> = ({ item, lang, palette, 
         alt={item.caption || 'Photo'}
         className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
       />
-
-      {/* Video Badge */}
-      {isVideo && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none">
-          <div className="w-9 h-9 rounded-full bg-indigo-600/90 text-white flex items-center justify-center shadow">
-            <Play size={16} className="ml-0.5" />
-          </div>
-        </div>
-      )}
 
       {/* Hover Actions */}
       <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

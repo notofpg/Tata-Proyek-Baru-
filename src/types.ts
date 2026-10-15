@@ -64,6 +64,7 @@ export interface Note {
   id: string;
   title: string;
   date: string; // ISO or formatted string for dummy
+  updatedAt?: number;
   tags: string[];
   thumbnailUrl?: string;
   content: string;

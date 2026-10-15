@@ -1,15 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   X, ChevronLeft, ChevronRight, Download, Trash2, Edit3, Check, 
-  Play, Pause, Volume2, VolumeX, Maximize, Film, Image as ImageIcon,
-  Calendar, HardDrive, Clock, CheckCircle2, AlertTriangle
+  Image as ImageIcon, Calendar, HardDrive, CheckCircle2, ZoomIn, ZoomOut
 } from 'lucide-react';
 import { DisciplineMediaItem } from '../types';
 import { 
   resolveDisciplineMediaUrl, 
   downloadDisciplineMedia, 
-  formatBytes, 
-  formatDuration 
+  formatBytes 
 } from '../utils/disciplineMedia';
 
 interface DisciplineMediaLightboxProps {
@@ -37,15 +35,7 @@ export const DisciplineMediaLightbox: React.FC<DisciplineMediaLightboxProps> = (
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
-  
-  // Video player controls state
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [showControls, setShowControls] = useState(true);
-  const controlsTimeoutRef = useRef<any>(null);
+  const [isZoomed, setIsZoomed] = useState(false);
 
   const currentItem = items[currentIndex] || items[0];
 
@@ -54,8 +44,8 @@ export const DisciplineMediaLightbox: React.FC<DisciplineMediaLightboxProps> = (
     setLoading(true);
     setCaptionInput(currentItem.caption || '');
     setIsEditingCaption(false);
-    setIsPlaying(false);
     setShowDeleteConfirm(false);
+    setIsZoomed(false);
 
     let isMounted = true;
     resolveDisciplineMediaUrl(currentItem.url).then((url) => {
@@ -109,7 +99,7 @@ export const DisciplineMediaLightbox: React.FC<DisciplineMediaLightboxProps> = (
     e.stopPropagation();
     if (!currentItem) return;
     setIsDownloading(true);
-    const filename = currentItem.name || `discipline_${currentItem.category || 'media'}_${Date.now()}.${currentItem.type === 'video' ? 'mp4' : 'jpg'}`;
+    const filename = currentItem.name || `discipline_${currentItem.category || 'photo'}_${Date.now()}.jpg`;
     const success = await downloadDisciplineMedia(currentItem.url, filename);
     setIsDownloading(false);
     if (success) {
@@ -138,47 +128,6 @@ export const DisciplineMediaLightbox: React.FC<DisciplineMediaLightboxProps> = (
     }
   };
 
-  const togglePlay = () => {
-    if (!videoRef.current) return;
-    if (videoRef.current.paused) {
-      videoRef.current.play();
-      setIsPlaying(true);
-    } else {
-      videoRef.current.pause();
-      setIsPlaying(false);
-    }
-  };
-
-  const toggleMute = () => {
-    if (!videoRef.current) return;
-    videoRef.current.muted = !videoRef.current.muted;
-    setIsMuted(videoRef.current.muted);
-  };
-
-  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseFloat(e.target.value);
-    if (videoRef.current) {
-      videoRef.current.currentTime = val;
-      setCurrentTime(val);
-    }
-  };
-
-  const handleFullscreenVideo = () => {
-    if (videoRef.current) {
-      if (videoRef.current.requestFullscreen) {
-        videoRef.current.requestFullscreen();
-      }
-    }
-  };
-
-  const resetControlsTimer = () => {
-    setShowControls(true);
-    if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
-    controlsTimeoutRef.current = setTimeout(() => {
-      if (isPlaying) setShowControls(false);
-    }, 2800);
-  };
-
   if (!currentItem) return null;
 
   const categoryLabel = currentItem.category === 'after'
@@ -201,7 +150,6 @@ export const DisciplineMediaLightbox: React.FC<DisciplineMediaLightboxProps> = (
     <div 
       className="fixed inset-0 bg-slate-950/95 backdrop-blur-2xl z-[220] flex flex-col justify-between p-3 sm:p-5 select-none animate-in fade-in duration-200"
       onClick={onClose}
-      onMouseMove={resetControlsTimer}
     >
       {/* Top Bar */}
       <div 
@@ -214,7 +162,7 @@ export const DisciplineMediaLightbox: React.FC<DisciplineMediaLightboxProps> = (
               ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
               : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
           }`}>
-            {currentItem.type === 'video' ? <Film size={13} /> : <ImageIcon size={13} />}
+            <ImageIcon size={13} />
             <span>{categoryLabel}</span>
           </span>
 
@@ -224,6 +172,18 @@ export const DisciplineMediaLightbox: React.FC<DisciplineMediaLightboxProps> = (
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Zoom Toggle */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsZoomed(!isZoomed);
+            }}
+            className="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all active:scale-95 cursor-pointer"
+            title={isZoomed ? (lang === 'id' ? 'Kecilkan' : 'Zoom out') : (lang === 'id' ? 'Perbesar' : 'Zoom in')}
+          >
+            {isZoomed ? <ZoomOut size={16} /> : <ZoomIn size={16} />}
+          </button>
+
           {/* Download Button */}
           <button
             onClick={handleDownload}
@@ -233,7 +193,7 @@ export const DisciplineMediaLightbox: React.FC<DisciplineMediaLightboxProps> = (
                 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
                 : 'bg-slate-800/80 hover:bg-slate-700 text-slate-200 border-slate-700'
             }`}
-            title={lang === 'id' ? 'Unduh Berkas' : 'Download File'}
+            title={lang === 'id' ? 'Unduh Foto' : 'Download Photo'}
           >
             {downloadSuccess ? (
               <>
@@ -255,7 +215,7 @@ export const DisciplineMediaLightbox: React.FC<DisciplineMediaLightboxProps> = (
               setShowDeleteConfirm(true);
             }}
             className="p-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 transition-all active:scale-95 cursor-pointer flex items-center gap-1.5 text-xs font-bold"
-            title={lang === 'id' ? 'Hapus Media' : 'Delete Media'}
+            title={lang === 'id' ? 'Hapus Foto' : 'Delete Photo'}
           >
             <Trash2 size={16} />
             <span className="hidden sm:inline text-[11px]">{lang === 'id' ? 'Hapus' : 'Delete'}</span>
@@ -272,9 +232,9 @@ export const DisciplineMediaLightbox: React.FC<DisciplineMediaLightboxProps> = (
         </div>
       </div>
 
-      {/* Main Center Media Area */}
+      {/* Main Center Photo Area */}
       <div 
-        className="relative flex-1 flex items-center justify-center my-2 max-h-[68vh] sm:max-h-[72vh] w-full"
+        className="relative flex-1 flex items-center justify-center my-2 max-h-[68vh] sm:max-h-[72vh] w-full overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
         {/* Navigation buttons */}
@@ -308,79 +268,14 @@ export const DisciplineMediaLightbox: React.FC<DisciplineMediaLightboxProps> = (
         {loading ? (
           <div className="flex flex-col items-center justify-center gap-3 text-slate-400">
             <div className="w-10 h-10 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-            <span className="text-xs font-semibold">{lang === 'id' ? 'Memuat media kualitas tinggi...' : 'Loading high-res media...'}</span>
-          </div>
-        ) : currentItem.type === 'video' ? (
-          <div className="relative max-w-full max-h-full flex items-center justify-center group overflow-hidden rounded-2xl bg-black/60 shadow-2xl">
-            <video
-              ref={videoRef}
-              src={resolvedUrl || currentItem.url}
-              className="max-w-full max-h-[66vh] rounded-2xl object-contain cursor-pointer"
-              playsInline
-              onClick={togglePlay}
-              onTimeUpdate={() => {
-                if (videoRef.current) {
-                  setCurrentTime(videoRef.current.currentTime);
-                }
-              }}
-              onLoadedMetadata={() => {
-                if (videoRef.current) {
-                  setDuration(videoRef.current.duration);
-                }
-              }}
-              onEnded={() => setIsPlaying(false)}
-            />
-
-            {/* Custom Video Controls Bar */}
-            <div className={`absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/90 via-black/50 to-transparent transition-opacity duration-300 flex flex-col gap-2 rounded-b-2xl ${
-              showControls || !isPlaying ? 'opacity-100' : 'opacity-0 pointer-events-none'
-            }`}>
-              {/* Progress Slider */}
-              <input
-                type="range"
-                min="0"
-                max={duration || 100}
-                step="0.1"
-                value={currentTime}
-                onChange={handleSeek}
-                className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500 hover:accent-indigo-400"
-              />
-
-              <div className="flex items-center justify-between text-xs text-slate-200">
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={togglePlay}
-                    className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
-                  >
-                    {isPlaying ? <Pause size={16} /> : <Play size={16} />}
-                  </button>
-
-                  <button
-                    onClick={toggleMute}
-                    className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
-                  >
-                    {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
-                  </button>
-
-                  <span className="font-mono text-[11px] text-slate-300">
-                    {formatDuration(currentTime)} / {formatDuration(duration || currentItem.duration)}
-                  </span>
-                </div>
-
-                <button
-                  onClick={handleFullscreenVideo}
-                  className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
-                  title="Fullscreen"
-                >
-                  <Maximize size={15} />
-                </button>
-              </div>
-            </div>
+            <span className="text-xs font-semibold">{lang === 'id' ? 'Memuat foto kualitas tinggi...' : 'Loading high-res photo...'}</span>
           </div>
         ) : (
-          <div className="relative max-w-full max-h-full flex items-center justify-center">
+          <div className={`relative max-w-full max-h-full flex items-center justify-center transition-transform duration-300 ${isZoomed ? 'scale-150 cursor-zoom-out' : 'cursor-zoom-in'}`}
+               onClick={() => setIsZoomed(!isZoomed)}
+          >
             <img
-              src={resolvedUrl || currentItem.url || currentItem.thumbnailUrl}
+              src={resolvedUrl || currentItem.thumbnailUrl || currentItem.url}
               alt={currentItem.caption || 'Discipline Photo'}
               className="max-w-full max-h-[66vh] object-contain rounded-2xl shadow-2xl border border-slate-800/80"
               referrerPolicy="no-referrer"
@@ -429,7 +324,7 @@ export const DisciplineMediaLightbox: React.FC<DisciplineMediaLightboxProps> = (
                     type="text"
                     value={captionInput}
                     onChange={(e) => setCaptionInput(e.target.value)}
-                    placeholder={lang === 'id' ? 'Tulis catatan / keterangan media...' : 'Write media note or caption...'}
+                    placeholder={lang === 'id' ? 'Tulis catatan / keterangan foto...' : 'Write photo note or caption...'}
                     className="flex-1 bg-slate-950 border border-indigo-500/50 rounded-xl px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                     autoFocus
                     onKeyDown={(e) => {
@@ -448,12 +343,12 @@ export const DisciplineMediaLightbox: React.FC<DisciplineMediaLightboxProps> = (
               ) : (
                 <div 
                   onClick={() => setIsEditingCaption(true)}
-                  className="flex items-center gap-2 group cursor-pointer"
+                  className="flex items-center gap-2 cursor-pointer group"
                 >
-                  <p className="text-xs sm:text-sm font-semibold text-slate-200 truncate">
+                  <p className="text-xs sm:text-sm text-slate-200 truncate group-hover:text-indigo-300 transition-colors">
                     {currentItem.caption || (
-                      <span className="text-slate-500 italic font-normal">
-                        {lang === 'id' ? '+ Tambah keterangan / catatan foto...' : '+ Add caption / note...'}
+                      <span className="text-slate-500 italic">
+                        {lang === 'id' ? '+ Tambah keterangan foto...' : '+ Add photo note...'}
                       </span>
                     )}
                   </p>
@@ -462,70 +357,60 @@ export const DisciplineMediaLightbox: React.FC<DisciplineMediaLightboxProps> = (
               )}
             </div>
 
-            {/* Metadata badges */}
-            <div className="flex items-center gap-3 text-[11px] text-slate-400 shrink-0 flex-wrap">
+            {/* Metadata (Date & Size) */}
+            <div className="flex items-center gap-3 text-[11px] font-medium text-slate-400 shrink-0">
               {formattedDate && (
-                <span className="flex items-center gap-1">
+                <div className="flex items-center gap-1">
                   <Calendar size={12} className="text-slate-500" />
-                  {formattedDate}
-                </span>
+                  <span>{formattedDate}</span>
+                </div>
               )}
-
-              {currentItem.size && (
-                <span className="flex items-center gap-1">
+              {currentItem.size && currentItem.size > 0 && (
+                <div className="flex items-center gap-1">
                   <HardDrive size={12} className="text-slate-500" />
-                  {formatBytes(currentItem.size)}
-                </span>
-              )}
-
-              {currentItem.type === 'video' && currentItem.duration && (
-                <span className="flex items-center gap-1 text-indigo-400">
-                  <Clock size={12} />
-                  {formatDuration(currentItem.duration)}
-                </span>
+                  <span>{formatBytes(currentItem.size)}</span>
+                </div>
               )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Custom Delete Confirmation Modal inside Lightbox */}
+      {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div 
-          className="fixed inset-0 z-[260] bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/85 backdrop-blur-md z-[260] flex items-center justify-center p-4"
           onClick={() => setShowDeleteConfirm(false)}
         >
           <div 
-            className="bg-slate-900 border border-rose-500/30 rounded-3xl p-5 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-150 flex flex-col gap-4 text-center"
+            className="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-xs w-full shadow-2xl flex flex-col items-center text-center space-y-4"
             onClick={e => e.stopPropagation()}
           >
-            <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center mx-auto">
-              <AlertTriangle size={24} />
+            <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center">
+              <Trash2 size={24} />
             </div>
 
-            <div>
+            <div className="space-y-1">
               <h4 className="text-sm font-bold text-slate-100">
-                {lang === 'id' ? 'Hapus Media Ini?' : 'Delete This Media?'}
+                {lang === 'id' ? 'Hapus Foto Ini?' : 'Delete This Photo?'}
               </h4>
-              <p className="text-xs text-slate-400 mt-1">
-                {lang === 'id' 
-                  ? 'Foto / video ini akan dihapus secara permanen dari penyimpanan lokal perangkat Anda.' 
-                  : 'This photo/video will be permanently removed from your device storage.'}
+              <p className="text-xs text-slate-400 leading-relaxed">
+                {lang === 'id' ? 'Foto akan dihapus permanen dari penyimpanan perangkat Anda.' : 'Photo will be permanently removed from your device.'}
               </p>
             </div>
 
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2 w-full pt-1">
               <button
                 type="button"
                 onClick={() => setShowDeleteConfirm(false)}
-                className="flex-1 py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-750 text-slate-300 font-bold text-xs transition-colors cursor-pointer"
+                className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-colors cursor-pointer"
               >
                 {lang === 'id' ? 'Batal' : 'Cancel'}
               </button>
               <button
                 type="button"
                 onClick={handleConfirmDelete}
-                className="flex-1 py-2.5 px-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs transition-colors cursor-pointer shadow-lg shadow-rose-900/30"
+                className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-lg shadow-rose-600/30 transition-all cursor-pointer active:scale-95"
               >
                 {lang === 'id' ? 'Ya, Hapus' : 'Yes, Delete'}
               </button>

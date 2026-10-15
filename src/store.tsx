@@ -396,14 +396,13 @@ export function normalizeBackupData(raw: any): any {
 
 const safeSetItem = (key: string, value: string) => {
   try {
-    // If value is too large for synchronous localStorage (> 500KB), let IndexedDB handle it exclusively
-    if (value.length > 500000) {
-      return;
-    }
     localStorage.setItem(key, value);
   } catch (e: any) {
     if (e?.name === 'QuotaExceededError' || e?.code === 22 || e?.number === -2147024882) {
       console.warn(`[Tata Storage] localStorage quota reached for "${key}". Data is preserved safely in IndexedDB.`);
+      try {
+        localStorage.removeItem(key);
+      } catch (_) {}
     } else {
       console.warn(`[Tata Storage] Failed to save "${key}" to localStorage:`, e);
     }
@@ -2105,14 +2104,37 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const addNote = (note: Note) => {
     playTapSound();
     setNotes(prev => {
-      if (prev.some(n => n.id === note.id)) return prev.map(n => n.id === note.id ? note : n);
-      return [note, ...prev];
+      const next = prev.some(n => n.id === note.id) ? prev.map(n => n.id === note.id ? note : n) : [note, ...prev];
+      try {
+        const str = JSON.stringify(next);
+        safeSetItem('tata_notes', str);
+        setLargeItem('tata_notes', str).catch(() => {});
+      } catch (_) {}
+      return next;
     });
   };
-  const updateNote = (note: Note) => setNotes(prev => prev.map(n => n.id === note.id ? note : n));
+  const updateNote = (note: Note) => {
+    setNotes(prev => {
+      const next = prev.map(n => n.id === note.id ? note : n);
+      try {
+        const str = JSON.stringify(next);
+        safeSetItem('tata_notes', str);
+        setLargeItem('tata_notes', str).catch(() => {});
+      } catch (_) {}
+      return next;
+    });
+  };
   const deleteNote = (id: string) => {
     playDeleteSound();
-    setNotes(prev => prev.filter(n => n.id !== id));
+    setNotes(prev => {
+      const next = prev.filter(n => n.id !== id);
+      try {
+        const str = JSON.stringify(next);
+        safeSetItem('tata_notes', str);
+        setLargeItem('tata_notes', str).catch(() => {});
+      } catch (_) {}
+      return next;
+    });
   };
 
   const addTask = (task: Task) => {

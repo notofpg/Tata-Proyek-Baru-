@@ -20,40 +20,46 @@ export function formatBytes(bytes?: number): string {
 }
 
 /**
- * Format video duration into MM:SS
+ * Legacy stub for duration formatter (kept for type compatibility)
  */
 export function formatDuration(seconds?: number): string {
-  if (!seconds || isNaN(seconds)) return '00:00';
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  return '00:00';
 }
 
 /**
- * Create a crisp, high-resolution thumbnail from an image file / dataUrl
+ * Compress an image File or Blob into an optimized JPEG DataURL (1280x1280 max, 0.82 quality)
+ * Prevents memory and quota issues while preserving crystal-clear detail
  */
-export function createImageThumbnail(file: File | Blob, maxWidth = 800, maxHeight = 800, quality = 0.85): Promise<string> {
+export function compressImageFileToDataUrl(
+  file: File | Blob,
+  maxWidth = 1280,
+  maxHeight = 1280,
+  quality = 0.82
+): Promise<string> {
   return new Promise((resolve) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       const img = new Image();
       img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
+        let width = img.naturalWidth || img.width;
+        let height = img.naturalHeight || img.height;
 
-        if (width > height) {
-          if (width > maxWidth) {
+        if (!width || !height) {
+          resolve(e.target?.result as string || '');
+          return;
+        }
+
+        if (width > maxWidth || height > maxHeight) {
+          if (width / height > maxWidth / maxHeight) {
             height = Math.round((height * maxWidth) / width);
             width = maxWidth;
-          }
-        } else {
-          if (height > maxHeight) {
+          } else {
             width = Math.round((width * maxHeight) / height);
             height = maxHeight;
           }
         }
 
+        const canvas = document.createElement('canvas');
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext('2d');
@@ -64,12 +70,12 @@ export function createImageThumbnail(file: File | Blob, maxWidth = 800, maxHeigh
             resolve(dataUrl);
             return;
           } catch (err) {
-            // fallback
+            console.warn('Canvas toDataURL failed:', err);
           }
         }
-        resolve(e.target?.result as string);
+        resolve(e.target?.result as string || '');
       };
-      img.onerror = () => resolve(e.target?.result as string);
+      img.onerror = () => resolve(e.target?.result as string || '');
       img.src = e.target?.result as string;
     };
     reader.onerror = () => resolve('');
@@ -78,112 +84,57 @@ export function createImageThumbnail(file: File | Blob, maxWidth = 800, maxHeigh
 }
 
 /**
- * Extract snapshot frame and duration from a video file
+ * Create a lightweight thumbnail (400x400 max, 0.75 quality, ~20-30KB)
+ * for lightning-fast gallery grid rendering
  */
-export function createVideoThumbnailAndDuration(file: File): Promise<{ thumbnailUrl: string; duration: number }> {
-  return new Promise((resolve) => {
-    const video = document.createElement('video');
-    const objectUrl = URL.createObjectURL(file);
-    video.preload = 'metadata';
-    video.src = objectUrl;
-    video.muted = true;
-    video.playsInline = true;
-
-    const timeout = setTimeout(() => {
-      URL.revokeObjectURL(objectUrl);
-      resolve({ thumbnailUrl: '', duration: 0 });
-    }, 8000);
-
-    video.onloadedmetadata = () => {
-      const duration = video.duration || 0;
-      // Seek to 0.5s or 10% of duration to get a good frame
-      video.currentTime = Math.min(Math.max(0.5, duration * 0.1), 5);
-    };
-
-    video.onseeked = () => {
-      clearTimeout(timeout);
-      try {
-        const canvas = document.createElement('canvas');
-        const maxWidth = 720;
-        let width = video.videoWidth || 720;
-        let height = video.videoHeight || 480;
-
-        if (width > maxWidth) {
-          height = Math.round((height * maxWidth) / width);
-          width = maxWidth;
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(video, 0, 0, width, height);
-          const thumbnailUrl = canvas.toDataURL('image/jpeg', 0.85);
-          URL.revokeObjectURL(objectUrl);
-          resolve({ thumbnailUrl, duration: video.duration || 0 });
-          return;
-        }
-      } catch (err) {
-        console.warn('Video thumbnail capture failed:', err);
-      }
-      URL.revokeObjectURL(objectUrl);
-      resolve({ thumbnailUrl: '', duration: video.duration || 0 });
-    };
-
-    video.onerror = () => {
-      clearTimeout(timeout);
-      URL.revokeObjectURL(objectUrl);
-      resolve({ thumbnailUrl: '', duration: video.duration || 0 });
-    };
-  });
+export function createImageThumbnail(
+  file: File | Blob,
+  maxWidth = 400,
+  maxHeight = 400,
+  quality = 0.75
+): Promise<string> {
+  return compressImageFileToDataUrl(file, maxWidth, maxHeight, quality);
 }
 
 /**
- * Process and save an uploaded file (Image or Video) to IndexedDB
+ * Process and save an uploaded photo safely into IndexedDB with instant thumbnail caching
+ * Video upload is strictly disabled.
  */
 export async function processAndSaveDisciplineMedia(
   file: File,
   category: 'before' | 'after' | 'milestone_1m' | 'milestone_6m' | 'milestone_1y' | 'custom' = 'before',
   caption?: string
 ): Promise<DisciplineMediaItem> {
-  const id = generateMediaId();
-  const isVideo = file.type.startsWith('video/');
-  const type: 'image' | 'video' = isVideo ? 'video' : 'image';
-  const dbKey = `tata_disc_media_${id}`;
-
-  let thumbnailUrl = '';
-  let duration = 0;
-
-  if (isVideo) {
-    const videoData = await createVideoThumbnailAndDuration(file);
-    thumbnailUrl = videoData.thumbnailUrl;
-    duration = videoData.duration;
-  } else {
-    thumbnailUrl = await createImageThumbnail(file);
+  if (file.type.startsWith('video/')) {
+    throw new Error('Penyimpanan video telah dinonaktifkan. Silakan gunakan foto.');
   }
 
-  // Convert full file to base64 data URL
-  const fileDataUrl = await new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = (e) => reject(e);
-    reader.readAsDataURL(file);
-  });
+  const id = generateMediaId();
+  const dbKey = `tata_disc_media_${id}`;
 
-  // Save heavy payload safely to IndexedDB
-  await setLargeItem(dbKey, fileDataUrl);
+  // 1. Compress main photo safely to max 1280px (crisp, optimal offline storage size ~150-250KB)
+  const compressedDataUrl = await compressImageFileToDataUrl(file, 1280, 1280, 0.82);
+  
+  // 2. Generate fast thumbnail for instantaneous grid display
+  const thumbnailUrl = await createImageThumbnail(file, 380, 380, 0.70);
+
+  // 3. Save compressed image into IndexedDB large storage
+  try {
+    await setLargeItem(dbKey, compressedDataUrl);
+  } catch (err) {
+    console.error('Failed to write to IndexedDB:', err);
+  }
 
   const mediaItem: DisciplineMediaItem = {
     id,
     name: file.name,
-    type,
+    type: 'image',
     url: `indexeddb:${dbKey}`,
-    thumbnailUrl: thumbnailUrl || undefined,
+    thumbnailUrl: thumbnailUrl || compressedDataUrl,
     createdAt: new Date().toISOString(),
     caption: caption || '',
     category,
-    duration: isVideo ? duration : undefined,
-    size: file.size
+    size: Math.round(compressedDataUrl.length * 0.75)
   };
 
   return mediaItem;
