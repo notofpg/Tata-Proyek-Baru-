@@ -2366,6 +2366,82 @@ export const Icon3DSparkles = React.memo(function Icon3DSparkles({ size = 20, cl
   );
 });
 
+// 96. MATAHARI / SUN (3D Radiant Solar Orb)
+export const Icon3DSun = React.memo(function Icon3DSun({ size = 24, className = '' }: Icon3DProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
+      <defs>
+        <radialGradient id="sunSphereGrad" cx="35%" cy="35%" r="65%">
+          <stop offset="0%" stopColor="#FFFBEB" />
+          <stop offset="35%" stopColor="#FCD34D" />
+          <stop offset="75%" stopColor="#F59E0B" />
+          <stop offset="100%" stopColor="#D97706" />
+        </radialGradient>
+        <linearGradient id="sunRayGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#FDE68A" />
+          <stop offset="100%" stopColor="#F59E0B" />
+        </linearGradient>
+        <filter id="sunGlow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor="#F59E0B" floodOpacity="0.4" />
+        </filter>
+      </defs>
+      {/* 8 Sun Rays */}
+      <g stroke="url(#sunRayGrad)" strokeWidth="3.5" strokeLinecap="round" opacity="0.9">
+        <line x1="24" y1="4" x2="24" y2="9" />
+        <line x1="24" y1="39" x2="24" y2="44" />
+        <line x1="4" y1="24" x2="9" y2="24" />
+        <line x1="39" y1="24" x2="44" y2="24" />
+        <line x1="9.8" y1="9.8" x2="13.5" y2="13.5" />
+        <line x1="34.5" y1="34.5" x2="38.2" y2="38.2" />
+        <line x1="9.8" y1="38.2" x2="13.5" y2="34.5" />
+        <line x1="34.5" y1="13.5" x2="38.2" y2="9.8" />
+      </g>
+      {/* Central 3D Sphere */}
+      <circle cx="24" cy="24" r="13" fill="url(#sunSphereGrad)" filter="url(#sunGlow)" />
+      {/* 3D Highlight curve */}
+      <ellipse cx="20" cy="19" rx="5" ry="3" fill="#FFFFFF" fillOpacity="0.6" transform="rotate(-25 20 19)" />
+    </svg>
+  );
+});
+
+// 97. AWAN HUJAN / CLOUD RAIN (3D Fluffy Cloud with Rain Drops)
+export const Icon3DCloudRain = React.memo(function Icon3DCloudRain({ size = 24, className = '' }: Icon3DProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className={`shrink-0 ${className}`}>
+      <defs>
+        <linearGradient id="cloudBodyGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#F1F5F9" />
+          <stop offset="60%" stopColor="#CBD5E1" />
+          <stop offset="100%" stopColor="#94A3B8" />
+        </linearGradient>
+        <linearGradient id="rainDropGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#60A5FA" />
+          <stop offset="100%" stopColor="#2563EB" />
+        </linearGradient>
+        <filter id="cloudShadow" x="-10%" y="-10%" width="120%" height="120%">
+          <feDropShadow dx="0" dy="2.5" stdDeviation="2" floodColor="#0F172A" floodOpacity="0.25" />
+        </filter>
+      </defs>
+      {/* 3D Cloud Shape */}
+      <path
+        d="M17 32 H33 C37.4 32 41 28.4 41 24 C41 20 38 16.7 34.2 16.1 C33.4 10.4 28.5 6 22.5 6 C16.2 6 11 10.8 10.6 17 C6.8 17.6 4 20.9 4 25 C4 28.9 7.1 32 11 32 H17 Z"
+        fill="url(#cloudBodyGrad)"
+        filter="url(#cloudShadow)"
+      />
+      {/* Gloss Highlight on top of cloud */}
+      <path
+        d="M22.5 8 C27.5 8 31.6 11.6 32.5 16.5 C31.8 15.5 30 14.5 27 14.5 C22 14.5 17 17 14 20 C14.5 13 18 8 22.5 8 Z"
+        fill="#FFFFFF"
+        fillOpacity="0.65"
+      />
+      {/* 3 Rain Drops */}
+      <path d="M15 35 L12 42" stroke="url(#rainDropGrad)" strokeWidth="3" strokeLinecap="round" />
+      <path d="M24 35 L21 43" stroke="url(#rainDropGrad)" strokeWidth="3" strokeLinecap="round" />
+      <path d="M33 35 L30 42" stroke="url(#rainDropGrad)" strokeWidth="3" strokeLinecap="round" />
+    </svg>
+  );
+});
+
 // Aliases for compatibility
 export const Icon3DDelete = Icon3DBackspace;
 export const Icon3DPiggy = Icon3DPiggyBank;
@@ -2379,6 +2455,7 @@ export const Icon3DPencil = Icon3DEdit;
 export const Icon3DUndo = Icon3DRotateCcw;
 export const Icon3DReset = Icon3DRotateCcw;
 export const Icon3DForward = Icon3DChevronRight;
+
 
 
 

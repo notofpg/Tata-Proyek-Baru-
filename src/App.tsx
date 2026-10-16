@@ -78,7 +78,7 @@ export default function App() {
     transactions, moods, user, streak, debts, pinRecoveryQuestion, pinRecoveryAnswer, pinHistory,
     savingsTarget, savingsTargetTitle, savingsBalance, archivedTags,
     autoBackupFrequency, autoBackupFilenamePrefix, lastAutoBackupTimestamp, setLastAutoBackupTimestamp,
-    autoBackupPin: storeAutoBackupPin, autoBackupPinHistory, createFullBackup
+    autoBackupPin: storeAutoBackupPin, autoBackupPinHistory, createFullBackup, tataAccount
   } = useAppStore();
   const t = useTranslation(lang);
   const [currentScreen, _setCurrentScreen] = useState<ScreenItem>('home');
@@ -866,7 +866,7 @@ export default function App() {
   // Jika PIN ada tp belum diunlock, kita tampilkan layar kunci
   const isLocked = !!appPin && !isUnlocked;
 
-  const isOrganic = !isLiteMode && appVersion !== 'lite' && (appVersion === 'organic' || appVersion === 'pro_max' || appTheme === 'organic');
+  const isOrganic = !isLiteMode && appVersion !== 'lite' && (appVersion === 'organic' || appVersion === 'pro_max' || appTheme === 'organic' || tataAccount?.premiumType === 'pro_max');
 
   const activeTheme = isLiteMode && appTheme === 'wallpaper' 
     ? 'dark' 

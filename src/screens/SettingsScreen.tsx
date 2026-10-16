@@ -89,6 +89,8 @@ export default function SettingsScreen({
   const [showGoogleTrialModal, setShowGoogleTrialModal] = useState<boolean>(false);
   const [showLicenseModal, setShowLicenseModal] = useState<boolean>(false);
   const [showPwaTroubleshoot, setShowPwaTroubleshoot] = useState<boolean>(false);
+  const [pwaInstallGuidePlatform, setPwaInstallGuidePlatform] = useState<'ios' | 'android' | null>(null);
+  const [showForceResetConfirm, setShowForceResetConfirm] = useState<boolean>(false);
   const [licenseModalTierTab, setLicenseModalTierTab] = useState<'pro_max' | 'pro'>('pro_max');
   const [promoCodeInput, setPromoCodeInput] = useState<string>('');
   const [isRedeemingPromo, setIsRedeemingPromo] = useState<boolean>(false);
@@ -1068,30 +1070,14 @@ export default function SettingsScreen({
       }
     } else {
       const isIos = typeof navigator !== 'undefined' && /iPhone|iPad|iPod/i.test(navigator.userAgent);
-      if (isIos) {
-        alert(
-          lang === 'id' 
-            ? 'Cara Memasang Tata di iOS (Safari):\n1. Ketuk tombol Bagikan (Share) di bagian bawah browser Safari.\n2. Gulir ke bawah dan pilih "Tambahkan ke Layar Utama" (Add to Home Screen).'
-            : 'How to Install Tata on iOS (Safari):\n1. Tap the Share button at the bottom of Safari.\n2. Scroll down and select "Add to Home Screen".'
-        );
-      } else {
-        alert(
-          lang === 'id'
-            ? 'Cara Memasang Tata di Android/Desktop:\n1. Buka menu titik tiga (⋮) di pojok kanan atas browser Anda.\n2. Pilih "Tambahkan ke Layar Utama" atau "Install Aplikasi".'
-            : 'How to Install Tata on Android/Desktop:\n1. Open browser menu (⋮) at top-right.\n2. Select "Add to Home Screen" or "Install App".'
-        );
-      }
+      setPwaInstallGuidePlatform(isIos ? 'ios' : 'android');
     }
   };
 
-  // Setel ulang registrasi PWA & periksa pembaruan
-  const handleForceResetPwa = async () => {
-    const confirmReset = window.confirm(
-      lang === 'id'
-        ? 'Segarkan Cache & Periksa Pembaruan:\nIni akan membersihkan cache browser dan memeriksa pembaruan Tata terbaru dari server.\n\nCatatan, tugas, dan data lokal Anda 100% aman. Lanjutkan?'
-        : 'Refresh Cache & Check Updates:\nThis will refresh browser cache and fetch latest Tata updates from server.\n\nYour notes, tasks, and local data remain 100% safe. Continue?'
-    );
-    if (!confirmReset) return;
+  // Setel ulang registrasi PWA & periksa pembaruan secara aman
+  const executeForceResetPwa = async () => {
+    setShowForceResetConfirm(false);
+    setShowPwaTroubleshoot(false);
 
     try {
       // 1. Clear runtime caches (preserve alarms if any)
@@ -1129,7 +1115,7 @@ export default function SettingsScreen({
         }
       }, 1000);
     } catch (e: any) {
-      alert('Error during reset: ' + e.message);
+      showNotificationToast(lang === 'id' ? 'Gagal menyetel ulang: ' + (e?.message || 'Error') : 'Error during reset: ' + (e?.message || 'Error'));
     }
   };
 
@@ -6033,11 +6019,11 @@ export default function SettingsScreen({
                     : 'Clears old registration and cache so the browser can trigger the install option again.'}
                 </p>
                 <button
-                  onClick={async () => {
-                    await handleForceResetPwa();
-                    setShowPwaTroubleshoot(false);
+                  type="button"
+                  onClick={() => {
+                    setShowForceResetConfirm(true);
                   }}
-                  className="w-full py-2.5 px-4 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl shadow-md transition-all active:scale-[0.98] text-xs flex items-center justify-center gap-1.5"
+                  className="w-full py-2.5 px-4 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl shadow-md transition-all active:scale-[0.98] text-xs flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <RefreshCw size={14} className="animate-spin-slow" />
                   {lang === 'id' ? 'Setel Ulang Registrasi PWA (Aman)' : 'Reset PWA Registration (Safe)'}
@@ -6074,10 +6060,168 @@ export default function SettingsScreen({
 
             <button
               onClick={() => setShowPwaTroubleshoot(false)}
-              className="w-full py-3 bg-slate-800 hover:bg-slate-750 rounded-2xl transition-colors text-xs font-bold text-slate-200 border border-slate-750"
+              className="w-full py-3 bg-slate-800 hover:bg-slate-750 rounded-2xl transition-colors text-xs font-bold text-slate-200 border border-slate-750 cursor-pointer"
             >
               {lang === 'id' ? 'Tutup' : 'Close'}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: PWA MANUAL INSTALL INSTRUCTIONS (Replaces browser alert) */}
+      {pwaInstallGuidePlatform && (
+        <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 z-[220] animate-in fade-in duration-200">
+          <div className={`${modalThemeClass} border rounded-3xl p-5 sm:p-6 w-full max-w-sm shadow-2xl space-y-4 text-left relative`}>
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center gap-2.5">
+                {isOrganic ? (
+                  <Icon3DSmartphone size={24} />
+                ) : (
+                  <div className="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center shrink-0">
+                    <Smartphone size={18} />
+                  </div>
+                )}
+                <div>
+                  <h3 className={`text-sm sm:text-base font-bold ${primaryTextThemeClass}`}>
+                    {pwaInstallGuidePlatform === 'ios'
+                      ? (lang === 'id' ? 'Pasang di iOS (Safari)' : 'Install on iOS (Safari)')
+                      : (lang === 'id' ? 'Pasang di Android / PC' : 'Install on Android / PC')}
+                  </h3>
+                  <p className="text-[11px] text-slate-400">
+                    {lang === 'id' ? 'Ikuti langkah mudah berikut' : 'Follow these simple steps'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPwaInstallGuidePlatform(null)}
+                className="w-7 h-7 rounded-full bg-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center text-xs transition-colors cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs leading-relaxed">
+              {pwaInstallGuidePlatform === 'ios' ? (
+                <>
+                  <div className={`p-3 rounded-2xl ${innerCardThemeClass} flex items-start gap-3`}>
+                    <span className="w-5 h-5 rounded-full bg-indigo-500 text-white font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">
+                      1
+                    </span>
+                    <p className="text-slate-300">
+                      {lang === 'id' 
+                        ? 'Ketuk tombol Bagikan (Share) berbentuk kotak panah di bagian bawah Safari.' 
+                        : 'Tap the Share button (square with arrow) at the bottom bar in Safari.'}
+                    </p>
+                  </div>
+                  <div className={`p-3 rounded-2xl ${innerCardThemeClass} flex items-start gap-3`}>
+                    <span className="w-5 h-5 rounded-full bg-indigo-500 text-white font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">
+                      2
+                    </span>
+                    <p className="text-slate-300">
+                      {lang === 'id' 
+                        ? 'Gulir ke bawah pada menu opsi dan pilih "Tambahkan ke Layar Utama" (Add to Home Screen).' 
+                        : 'Scroll down the share sheet and select "Add to Home Screen".'}
+                    </p>
+                  </div>
+                  <div className={`p-3 rounded-2xl ${innerCardThemeClass} flex items-start gap-3`}>
+                    <span className="w-5 h-5 rounded-full bg-indigo-500 text-white font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">
+                      3
+                    </span>
+                    <p className="text-slate-300">
+                      {lang === 'id' 
+                        ? 'Ketuk "Tambah" di pojok kanan atas. Ikon Tata akan langsung muncul di layar utama Anda.' 
+                        : 'Tap "Add" at the top-right corner. Tata app icon will appear on your home screen.'}
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className={`p-3 rounded-2xl ${innerCardThemeClass} flex items-start gap-3`}>
+                    <span className="w-5 h-5 rounded-full bg-indigo-500 text-white font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">
+                      1
+                    </span>
+                    <p className="text-slate-300">
+                      {lang === 'id' 
+                        ? 'Buka menu peramban (ikon titik tiga ⋮ di pojok kanan atas Chrome / Browser Anda).' 
+                        : 'Open the browser menu (three dots ⋮ icon at the top-right in Chrome).'}
+                    </p>
+                  </div>
+                  <div className={`p-3 rounded-2xl ${innerCardThemeClass} flex items-start gap-3`}>
+                    <span className="w-5 h-5 rounded-full bg-indigo-500 text-white font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">
+                      2
+                    </span>
+                    <p className="text-slate-300">
+                      {lang === 'id' 
+                        ? 'Pilih opsi "Tambahkan ke Layar Utama" atau "Install Aplikasi Tata".' 
+                        : 'Select "Add to Home Screen" or "Install Tata App".'}
+                    </p>
+                  </div>
+                  <div className={`p-3 rounded-2xl ${innerCardThemeClass} flex items-start gap-3`}>
+                    <span className="w-5 h-5 rounded-full bg-indigo-500 text-white font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">
+                      3
+                    </span>
+                    <p className="text-slate-300">
+                      {lang === 'id' 
+                        ? 'Konfirmasi instalasi. Tata akan berjalan mandiri layaknya aplikasi native tanpa frame browser!' 
+                        : 'Confirm install. Tata will run standalone just like a native app!'}
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setPwaInstallGuidePlatform(null)}
+              className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all cursor-pointer shadow-sm active:scale-98"
+            >
+              {lang === 'id' ? 'Saya Mengerti' : 'I Understand'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: FORCE RESET PWA CONFIRMATION (Replaces window.confirm) */}
+      {showForceResetConfirm && (
+        <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 z-[225] animate-in fade-in duration-200">
+          <div className={`${modalThemeClass} border rounded-3xl p-5 sm:p-6 w-full max-w-sm shadow-2xl space-y-4 text-left relative`}>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center shrink-0">
+                <RefreshCw size={20} />
+              </div>
+              <div>
+                <h3 className={`text-sm sm:text-base font-bold ${primaryTextThemeClass}`}>
+                  {lang === 'id' ? 'Segarkan Cache & Periksa Pembaruan' : 'Refresh Cache & Check Updates'}
+                </h3>
+                <p className="text-[11px] text-slate-400">
+                  {lang === 'id' ? 'Data catatan & tugas Anda 100% aman' : 'Your local notes & tasks are 100% safe'}
+                </p>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-300 leading-relaxed">
+              {lang === 'id'
+                ? 'Tindakan ini akan membersihkan cache browser dan memeriksa pembaruan Tata terbaru dari server tanpa menghapus catatan, tugas, atau data pribadi Anda. Lanjutkan?'
+                : 'This will refresh browser cache and fetch the latest Tata update from server without wiping your notes, tasks, or personal records. Continue?'}
+            </p>
+
+            <div className="flex gap-2.5 pt-1">
+              <button
+                type="button"
+                onClick={() => setShowForceResetConfirm(false)}
+                className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-bold text-slate-300 transition-colors cursor-pointer"
+              >
+                {lang === 'id' ? 'Batal' : 'Cancel'}
+              </button>
+              <button
+                type="button"
+                onClick={executeForceResetPwa}
+                className="flex-1 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-md active:scale-98"
+              >
+                {lang === 'id' ? 'Ya, Segarkan' : 'Yes, Refresh'}
+              </button>
+            </div>
           </div>
         </div>
       )}

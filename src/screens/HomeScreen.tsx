@@ -82,7 +82,7 @@ export default function HomeScreen({ appTheme, setAppTheme, onOpenNote, onNaviga
   
   // Strictly compute mode flags to prevent any mode mixing
   const isLite = appVersion === 'lite' || isLiteMode;
-  const isProMax = (appVersion === 'organic' || appVersion === 'pro_max') && !isLite;
+  const isProMax = !isLite && (appVersion === 'organic' || appVersion === 'pro_max' || appTheme === 'organic' || (appTheme as string) === 'pro_max' || tataAccount?.premiumType === 'pro_max');
 
   const palette = useMemo(() => {
     const storedTheme = typeof window !== 'undefined' ? localStorage.getItem('tata_theme') : null;
@@ -406,7 +406,7 @@ export default function HomeScreen({ appTheme, setAppTheme, onOpenNote, onNaviga
       activeTasksList: actTasks,
       recentNotesList: rNotes
     };
-  }, [tasks, notes, transactions, streak]);
+  }, [tasks, notes, transactions, streak, isProMax]);
 
   if (isProMax) {
     return (

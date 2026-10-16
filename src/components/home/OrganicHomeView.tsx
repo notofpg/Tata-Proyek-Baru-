@@ -56,8 +56,35 @@ import {
   Icon3DCamera,
   Icon3DGoldLock,
   Icon3DSparkles,
-  Icon3DSproutLogo
+  Icon3DSproutLogo,
+  Icon3DMoodHappy,
+  Icon3DGamepad,
+  Icon3DArchive,
+  Icon3DCreditCard
 } from './Organic3DIcons';
+
+const get3DSearchResultIcon = (item: SearchResultItem) => {
+  if (item.providerId === 'notes') return <Icon3DFileText size={20} />;
+  if (item.providerId === 'tasks') return <Icon3DTaskChecked size={20} />;
+  if (item.providerId === 'finance') return <Icon3DWallet size={20} />;
+  if (item.providerId === 'mood') return <Icon3DMoodHappy size={22} />;
+  const id = (item.id || '').toLowerCase();
+  if (id.includes('note') || id.includes('tulis') || id.includes('catat')) return <Icon3DFileText size={20} />;
+  if (id.includes('task') || id.includes('tugas')) return <Icon3DTaskChecked size={20} />;
+  if (id.includes('scan') || id.includes('camera') || id.includes('doc')) return <Icon3DCamera size={20} />;
+  if (id.includes('calendar') || id.includes('kalender') || id.includes('agenda')) return <Icon3DCalendar size={20} />;
+  if (id.includes('ai') || id.includes('bot') || id.includes('companion')) return <Icon3DTataAI size={20} />;
+  if (id.includes('game')) return <Icon3DGamepad size={20} />;
+  if (id.includes('lock') || id.includes('pin') || id.includes('privasi')) return <Icon3DGoldLock size={20} />;
+  if (id.includes('backup') || id.includes('cadang') || id.includes('database')) return <Icon3DArchive size={20} />;
+  if (id.includes('streak') || id.includes('flame')) return <Icon3DFlame size={20} />;
+  if (id.includes('notif') || id.includes('bell') || id.includes('ingat')) return <Icon3DBell size={20} />;
+  if (id.includes('wallet') || id.includes('uang') || id.includes('kas') || id.includes('transaksi') || id.includes('finance')) return <Icon3DWallet size={20} />;
+  if (id.includes('target') || id.includes('disiplin')) return <Icon3DTarget size={20} />;
+  if (id.includes('kartu') || id.includes('pay') || id.includes('bayar')) return <Icon3DCreditCard size={20} />;
+  return <Icon3DSparkles size={20} />;
+};
+
 import NotificationModal from '../NotificationModal';
 import { buildAllNotifications, NotificationItem } from '../../utils/notifications';
 import { executeUniversalSearch, SearchResultItem } from '../../services/searchEngine';
@@ -636,9 +663,14 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
               className={`p-4 rounded-3xl border shadow-md cursor-pointer transition-all group relative overflow-hidden ${palette.searchResultCard} ${palette.searchResultCardBorder} ${palette.searchResultCardHover}`}
             >
               <div className="flex items-center justify-between mb-2">
-                <span className={`text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 rounded-full ${palette.searchResultBadge}`}>
-                  {lang === 'id' ? 'Hasil Paling Cocok' : 'Top Match'}
-                </span>
+                <div className="flex items-center gap-2">
+                  <div className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0`}>
+                    {get3DSearchResultIcon(filteredSearchResults[0])}
+                  </div>
+                  <span className={`text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 rounded-full ${palette.searchResultBadge}`}>
+                    {lang === 'id' ? 'Hasil Paling Cocok' : 'Top Match'}
+                  </span>
+                </div>
                 <span className="text-[10px] font-bold opacity-75 flex items-center gap-1 group-hover:opacity-100">
                   <span>Enter ↵</span>
                   <Icon3DForward size={14} />
@@ -659,7 +691,6 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
           {filteredSearchResults.length > 0 ? (
             <div className="space-y-2">
               {filteredSearchResults.map((item, idx) => {
-                const ItemIcon = item.icon || Icon3DFileText;
                 return (
                   <div
                     key={`${item.id}-${idx}`}
@@ -667,7 +698,7 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
                     className={`p-3.5 rounded-2xl border transition-all cursor-pointer shadow-xs flex items-start gap-3 group ${palette.searchResultCard} ${palette.searchResultCardBorder} ${palette.searchResultCardHover}`}
                   >
                     <div className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform ${palette.searchResultIconBg}`}>
-                      <ItemIcon size={18} />
+                      {get3DSearchResultIcon(item)}
                     </div>
 
                     <div className="flex-1 min-w-0">

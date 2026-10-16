@@ -5,6 +5,22 @@ import {
   Check, CheckCheck, Trash2, ChevronRight, AlertCircle, Clock,
   CreditCard, Wallet, Smile, ShieldCheck, AlertTriangle
 } from 'lucide-react';
+import {
+  Icon3DBell,
+  Icon3DClose,
+  Icon3DSparkles,
+  Icon3DCheckSquare,
+  Icon3DFileText,
+  Icon3DFlame,
+  Icon3DTaskChecked,
+  Icon3DChevronRight,
+  Icon3DWarning,
+  Icon3DClock,
+  Icon3DCreditCard,
+  Icon3DWallet,
+  Icon3DMoodHappy,
+  Icon3DShield,
+} from './home/Organic3DIcons';
 import { useAppStore } from '../store';
 import { useTranslation } from '../translations';
 import { 
@@ -142,55 +158,55 @@ export default function NotificationModal({
       switch (item.type) {
         case 'payment':
           return {
-            icon: <CreditCard className="w-4 h-4 text-[#C95924]" />,
+            icon: <Icon3DCreditCard size={18} className="shrink-0" />,
             bg: 'bg-[#FBE9DC] border-[#F4CDAF] text-[#B34E27]',
             label: lang === 'id' ? 'Pembayaran' : 'Payment'
           };
         case 'finance':
           return {
-            icon: <Wallet className="w-4 h-4 text-[#4A6741]" />,
+            icon: <Icon3DWallet size={18} className="shrink-0" />,
             bg: 'bg-[#D2DEC7] border-[#BFCDB3] text-[#2F5225]',
             label: lang === 'id' ? 'Keuangan' : 'Finance'
           };
         case 'update':
           return {
-            icon: <Sparkles className="w-4 h-4 text-[#8C4A1E]" />,
+            icon: <Icon3DSparkles size={18} className="shrink-0" />,
             bg: 'bg-[#EAD4BF] border-[#DFC8B0] text-[#863D22]',
             label: lang === 'id' ? 'Pembaruan' : 'Update'
           };
         case 'note':
           return {
-            icon: <FileText className="w-4 h-4 text-[#9E5A22]" />,
+            icon: <Icon3DFileText size={18} className="shrink-0" />,
             bg: 'bg-[#FAF4EB] border-[#E8DDCA] text-[#7D6B58]',
             label: lang === 'id' ? 'Catatan' : 'Note'
           };
         case 'task':
           return {
-            icon: <CheckSquare className="w-4 h-4 text-[#4A6741]" />,
+            icon: <Icon3DCheckSquare size={18} className="shrink-0" />,
             bg: 'bg-[#D2DEC7] border-[#BFCDB3] text-[#2F5225]',
             label: lang === 'id' ? 'Tugas' : 'Task'
           };
         case 'streak':
           return {
-            icon: <Flame className="w-4 h-4 text-[#E06D34]" />,
+            icon: <Icon3DFlame size={18} className="shrink-0" />,
             bg: 'bg-[#FBE9DC] border-[#F4CDAF] text-[#B34E27]',
             label: lang === 'id' ? 'Streak' : 'Streak'
           };
         case 'mood':
           return {
-            icon: <Smile className="w-4 h-4 text-[#9E5A22]" />,
+            icon: <Icon3DMoodHappy size={18} className="shrink-0" />,
             bg: 'bg-[#FAF4EB] border-[#E8DDCA] text-[#7D6B58]',
             label: lang === 'id' ? 'Suasana Hati' : 'Mood'
           };
         case 'system':
           return {
-            icon: <ShieldCheck className="w-4 h-4 text-[#4A6741]" />,
+            icon: <Icon3DShield size={18} className="shrink-0" />,
             bg: 'bg-[#D2DEC7] border-[#BFCDB3] text-[#2F5225]',
             label: lang === 'id' ? 'Sistem' : 'System'
           };
         default:
           return {
-            icon: <Bell className="w-4 h-4 text-[#8C7662]" />,
+            icon: <Icon3DBell size={18} className="shrink-0" />,
             bg: 'bg-[#EFE7D7] border-[#E2D4BE] text-[#6E5945]',
             label: lang === 'id' ? 'Pemberitahuan' : 'Info'
           };
@@ -602,7 +618,7 @@ export default function NotificationModal({
           <div className={`p-5 border-b flex items-center justify-between relative z-10 shrink-0 ${ms.header}`}>
             <div className="flex items-center gap-3">
               <div className={`w-10 h-10 rounded-2xl border flex items-center justify-center relative shrink-0 ${ms.iconBox}`}>
-                <Bell className="w-5 h-5" />
+                {isOrganic ? <Icon3DBell size={24} /> : <Bell className="w-5 h-5" />}
                 {notifications.length > 0 && (
                   <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-rose-500 ring-2 ring-current animate-pulse" />
                 )}
@@ -632,7 +648,7 @@ export default function NotificationModal({
               className={`p-2 rounded-xl transition-all cursor-pointer shrink-0 border active:scale-95 touch-manipulation ${ms.closeBtn}`}
               title={t('close') || 'Tutup'}
             >
-              <X className="w-4 h-4" />
+              {isOrganic ? <Icon3DClose size={18} /> : <X className="w-4 h-4" />}
             </button>
           </div>
 
@@ -665,10 +681,10 @@ export default function NotificationModal({
 
               <button
                 onClick={handleMarkAllRead}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold transition-all cursor-pointer shrink-0 border active:scale-95 touch-manipulation select-none ${ms.readAllBtn}`}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-bold transition-all cursor-pointer shrink-0 border active:scale-95 touch-manipulation select-none ${ms.readAllBtn}`}
                 title={lang === 'id' ? 'Tandai Semua Dibaca' : 'Mark All Read'}
               >
-                <CheckCheck className="w-3.5 h-3.5" />
+                {isOrganic ? <Icon3DTaskChecked size={14} className="shrink-0" /> : <CheckCheck className="w-3.5 h-3.5" />}
                 <span>{lang === 'id' ? 'Tandai Dibaca' : 'Mark Read'}</span>
               </button>
             </div>
@@ -692,21 +708,21 @@ export default function NotificationModal({
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center gap-2 min-w-0 flex-wrap">
-                        <span className={`flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[11px] font-bold shrink-0 ${badge.bg}`}>
+                        <span className={`flex items-center gap-1.5 px-2 py-0.5 rounded-lg border text-[11px] font-bold shrink-0 ${badge.bg}`}>
                           {badge.icon}
                           <span>{badge.label}</span>
                         </span>
 
                         {isHighPriority && (
                           <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-rose-500/15 border border-rose-500/30 text-rose-500 text-[10px] font-extrabold uppercase tracking-wider shrink-0 animate-pulse">
-                            <AlertCircle className="w-3 h-3" />
+                            {isOrganic ? <Icon3DWarning size={13} className="shrink-0" /> : <AlertCircle className="w-3 h-3" />}
                             {lang === 'id' ? 'Penting' : 'Urgent'}
                           </span>
                         )}
 
                         {item.timeFormatted && (
                           <span className="flex items-center gap-1 text-[11px] font-semibold shrink-0 opacity-75">
-                            <Clock className="w-3 h-3" />
+                            {isOrganic ? <Icon3DClock size={12} className="shrink-0" /> : <Clock className="w-3 h-3" />}
                             {item.timeFormatted}
                           </span>
                         )}
@@ -718,7 +734,7 @@ export default function NotificationModal({
                         className="p-1 rounded-lg border border-transparent hover:border-current opacity-60 hover:opacity-100 transition-all cursor-pointer shrink-0"
                         title={lang === 'id' ? 'Tandai Dibaca' : 'Mark Read'}
                       >
-                        <Check className="w-4 h-4" />
+                        {isOrganic ? <Icon3DTaskChecked size={16} className="shrink-0" /> : <Check className="w-4 h-4" />}
                       </button>
                     </div>
 
@@ -734,7 +750,7 @@ export default function NotificationModal({
                     <div className={`flex items-center justify-between text-[11px] font-bold pt-1 border-t mt-1 ${ms.itemFooter}`}>
                       <span className="flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
                         {lang === 'id' ? 'Ketuk untuk membuka rincian' : 'Tap to open details'}
-                        <ChevronRight className="w-3 h-3" />
+                        {isOrganic ? <Icon3DChevronRight size={13} className="shrink-0" /> : <ChevronRight className="w-3 h-3" />}
                       </span>
                       <span className={`${ms.itemBrand} font-normal`}>Tata</span>
                     </div>
@@ -744,7 +760,7 @@ export default function NotificationModal({
             ) : (
               <div className="py-12 px-4 flex flex-col items-center justify-center text-center">
                 <div className={`w-16 h-16 rounded-3xl border flex items-center justify-center mb-4 shadow-inner ${ms.emptyBox}`}>
-                  <Bell className="w-8 h-8 opacity-60" />
+                  {isOrganic ? <Icon3DBell size={42} /> : <Bell className="w-8 h-8 opacity-60" />}
                 </div>
                 <h4 className={`text-base font-extrabold mb-1 ${ms.emptyTitle}`}>
                   {filterType !== 'all'

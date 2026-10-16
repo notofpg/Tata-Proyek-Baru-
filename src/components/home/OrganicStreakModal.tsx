@@ -1,24 +1,23 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  Sparkles, 
-  Flame, 
-  Sun, 
-  CloudRain, 
-  Play, 
-  Pause, 
-  RotateCcw, 
-  Sliders, 
-  X, 
-  ChevronRight, 
-  CheckCircle2,
-  Calendar,
-  Compass
-} from 'lucide-react';
 import { triggerHaptic, playConfirmSound } from '../../utils/sound';
 import { OrganicThemePalette } from './organicThemePalettes';
 import OrganicStreakCanvas from './OrganicStreakCanvas';
-import { Icon3DFlame } from './Organic3DIcons';
+import { 
+  Icon3DFlame, 
+  Icon3DClose, 
+  Icon3DCompass, 
+  Icon3DSliders, 
+  Icon3DSun, 
+  Icon3DCloudRain, 
+  Icon3DCalendar, 
+  Icon3DPlay, 
+  Icon3DPause, 
+  Icon3DRotateCcw, 
+  Icon3DChevronRight, 
+  Icon3DTaskChecked,
+  Icon3DSparkles
+} from './Organic3DIcons';
 
 interface OrganicStreakModalProps {
   isOpen: boolean;
@@ -315,7 +314,7 @@ export default function OrganicStreakModal({
                 className="w-7 h-7 rounded-full flex items-center justify-center opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer active:scale-90 touch-manipulation"
                 aria-label="Close"
               >
-                <X size={16} />
+                <Icon3DClose size={16} />
               </button>
             </div>
 
@@ -399,12 +398,12 @@ export default function OrganicStreakModal({
               >
                 {isNegativeCondition ? (
                   <>
-                    <CloudRain size={12} className="text-rose-300" />
+                    <Icon3DCloudRain size={14} className="shrink-0" />
                     <span>{lang === 'id' ? 'Tertunda (Padam 💨)' : 'Pending (Dying 💨)'}</span>
                   </>
                 ) : (
                   <>
-                    <Sun size={12} className="text-amber-300" />
+                    <Icon3DSun size={14} className="shrink-0" />
                     <span>{lang === 'id' ? 'Cerah & Menyala 🔥' : 'Sunny & Blazing 🔥'}</span>
                   </>
                 )}
@@ -440,7 +439,7 @@ export default function OrganicStreakModal({
                     : 'opacity-65 hover:opacity-100'
                 }`}
               >
-                <Compass size={13} />
+                <Icon3DCompass size={14} className="shrink-0" />
                 <span>{lang === 'id' ? 'Status Nyata' : 'Your Journey'}</span>
               </button>
 
@@ -456,7 +455,7 @@ export default function OrganicStreakModal({
                     : 'opacity-65 hover:opacity-100'
                 }`}
               >
-                <Sliders size={13} />
+                <Icon3DSliders size={14} className="shrink-0" />
                 <span>{lang === 'id' ? 'Mesin Waktu (365H)' : 'Time Machine'}</span>
               </button>
             </div>
@@ -485,9 +484,9 @@ export default function OrganicStreakModal({
                       : (isCoolTheme ? 'bg-emerald-950/40 text-emerald-200' : 'bg-emerald-50 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200')
                   }`}>
                     {isNegativeCondition ? (
-                      <CloudRain size={14} className="shrink-0 text-blue-500" />
+                      <Icon3DCloudRain size={16} className="shrink-0" />
                     ) : (
-                      <Sun size={14} className="shrink-0 text-amber-500" />
+                      <Icon3DSun size={16} className="shrink-0" />
                     )}
                     <span className="text-[11px] leading-tight">
                       {currentMeta.weatherAdvice}
@@ -594,8 +593,8 @@ export default function OrganicStreakModal({
                     : 'bg-[#F7F2E9] border-[#EADFCF]'
                 }`}>
                   <div className="flex items-center justify-between text-xs font-bold mb-2">
-                    <span className="opacity-75 flex items-center gap-1">
-                      <Calendar size={13} />
+                    <span className="opacity-75 flex items-center gap-1.5">
+                      <Icon3DCalendar size={14} className="shrink-0" />
                       {lang === 'id' ? 'Hari ke-' : 'Day '}{simDay}
                     </span>
 
@@ -609,7 +608,7 @@ export default function OrganicStreakModal({
                         className="p-1 rounded-md bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 transition-colors cursor-pointer"
                         title={isPlayingTimelapse ? 'Pause' : 'Play Timelapse'}
                       >
-                        {isPlayingTimelapse ? <Pause size={13} /> : <Play size={13} />}
+                        {isPlayingTimelapse ? <Icon3DPause size={13} className="shrink-0" /> : <Icon3DPlay size={13} className="shrink-0" />}
                       </button>
 
                       {/* Reset to actual journey day */}
@@ -622,7 +621,7 @@ export default function OrganicStreakModal({
                         className="p-1 rounded-md bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 transition-colors cursor-pointer"
                         title={lang === 'id' ? `Kembali ke Hari ke-${activeJourneyDay}` : `Reset to Day ${activeJourneyDay}`}
                       >
-                        <RotateCcw size={13} />
+                        <Icon3DRotateCcw size={13} className="shrink-0" />
                       </button>
                     </div>
                   </div>
@@ -678,7 +677,7 @@ export default function OrganicStreakModal({
                           : 'opacity-60 hover:opacity-100'
                       }`}
                     >
-                      <Sun size={11} />
+                      <Icon3DSun size={13} className="shrink-0" />
                       <span>{lang === 'id' ? 'Selesai (Menyala 🔥)' : 'Done (Blazing 🔥)'}</span>
                     </button>
 
@@ -693,7 +692,7 @@ export default function OrganicStreakModal({
                           : 'opacity-60 hover:opacity-100'
                       }`}
                     >
-                      <CloudRain size={11} />
+                      <Icon3DCloudRain size={13} className="shrink-0" />
                       <span>{lang === 'id' ? 'Tertunda (Padam / Asap 💨)' : 'Pending (Smoke 💨)'}</span>
                     </button>
                   </div>
@@ -720,7 +719,7 @@ export default function OrganicStreakModal({
                   <span>
                     {lang === 'id' ? 'Nyalakan Kembali Apimu (Tuntaskan Tugas 🔥)' : 'Reignite Your Flame (Complete Tasks 🔥)'}
                   </span>
-                  <ChevronRight size={14} />
+                  <Icon3DChevronRight size={14} className="shrink-0" />
                 </button>
               ) : (
                 <button
@@ -737,7 +736,7 @@ export default function OrganicStreakModal({
                       : 'bg-orange-500 hover:bg-orange-400 text-white shadow-orange-500/25'
                   }`}
                 >
-                  <CheckCircle2 size={15} />
+                  <Icon3DTaskChecked size={16} className="shrink-0" />
                   <span>
                     {displayDay >= 100
                       ? (lang === 'id' ? 'Matahari Bersinar Abadi! ✨' : 'The Eternal Sun Shines! ✨')
