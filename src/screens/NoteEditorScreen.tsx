@@ -592,29 +592,43 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
 
   const handleGiveToAI = () => {
     const fullContent = (editorRef.current ? editorRef.current.innerHTML : contentRef.current) || '';
+    contentRef.current = fullContent;
     setSharedWithAI(true);
     sharedWithAIRef.current = true;
     
+    const currTitle = (titleRef.current || '').trim();
     setTempNoteContext({
-      title: titleRef.current || (lang === 'id' ? 'Catatan Tanpa Judul' : 'Untitled Note'),
+      title: currTitle || (lang === 'id' ? 'Catatan Tanpa Judul' : 'Untitled Note'),
       content: fullContent,
       thumbnailUrl: note.thumbnailUrl
     });
     setAutoSendNoteToAI(true);
     
-    const existing = notesRef.current.find((n) => n.id === note.id);
-    const currTitle = titleRef.current || '';
-    const currContent = (editorRef.current ? editorRef.current.innerHTML : contentRef.current) || '';
+    const noteId = currentNoteIdRef.current;
+    const existing = notesRef.current.find((n) => n.id === noteId);
     const currTags = tagsRef.current || [];
     const currReminder = reminderRef.current;
-    
+
+    const imgMatch = fullContent.match(/<img[^>]+src=["']([^"']+)["']/i);
+    const rawThumb = imgMatch ? imgMatch[1] : undefined;
+    const effectiveThumb = rawThumb && rawThumb.startsWith('data:image/') ? undefined : (rawThumb || existing?.thumbnailUrl);
+
+    const savedNote: Note = existing
+      ? { ...existing, id: noteId, title: currTitle, content: fullContent, tags: currTags, reminder: currReminder, sharedWithAI: true, isLocked: isLockedRef.current, updatedAt: Date.now(), thumbnailUrl: effectiveThumb }
+      : { ...note, id: noteId, title: currTitle, content: fullContent, tags: currTags, reminder: currReminder, sharedWithAI: true, isLocked: isLockedRef.current, updatedAt: Date.now(), thumbnailUrl: effectiveThumb };
+
     if (existing) {
-      updateNote({ ...existing, title: currTitle, content: currContent, tags: currTags, reminder: currReminder, sharedWithAI: true, isLocked: isLockedRef.current });
+      updateNote(savedNote);
+      notesRef.current = notesRef.current.map((n) => (n.id === noteId ? savedNote : n));
     } else {
-      addNote({ ...note, title: currTitle, content: currContent, tags: currTags, reminder: currReminder, sharedWithAI: true, isLocked: isLockedRef.current });
+      addNote(savedNote);
+      notesRef.current = [savedNote, ...notesRef.current.filter((n) => n.id !== noteId)];
     }
     
+    hasUnsavedChangesRef.current = false;
+    setHasUnsavedChanges(false);
     setShowGiveToAIModal(false);
+
     if (onNavigate) {
       onNavigate('ai-companion');
     }
@@ -627,16 +641,19 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
     // Also clear from temp context if currently selected
     setTempNoteContext(null);
     
-    const existing = notesRef.current.find((n) => n.id === note.id);
-    const currTitle = titleRef.current || '';
+    const noteId = currentNoteIdRef.current;
+    const existing = notesRef.current.find((n) => n.id === noteId);
+    const currTitle = (titleRef.current || '').trim();
     const currContent = (editorRef.current ? editorRef.current.innerHTML : contentRef.current) || '';
     const currTags = tagsRef.current || [];
     const currReminder = reminderRef.current;
     
     if (existing) {
       updateNote({ ...existing, title: currTitle, content: currContent, tags: currTags, reminder: currReminder, sharedWithAI: false, isLocked: isLockedRef.current });
+      notesRef.current = notesRef.current.map((n) => (n.id === noteId ? { ...existing, title: currTitle, content: currContent, tags: currTags, reminder: currReminder, sharedWithAI: false, isLocked: isLockedRef.current } : n));
     } else {
-      addNote({ ...note, title: currTitle, content: currContent, tags: currTags, reminder: currReminder, sharedWithAI: false, isLocked: isLockedRef.current });
+      addNote({ ...note, id: noteId, title: currTitle, content: currContent, tags: currTags, reminder: currReminder, sharedWithAI: false, isLocked: isLockedRef.current });
+      notesRef.current = [{ ...note, id: noteId, title: currTitle, content: currContent, tags: currTags, reminder: currReminder, sharedWithAI: false, isLocked: isLockedRef.current }, ...notesRef.current.filter((n) => n.id !== noteId)];
     }
     
     setShowGiveToAIModal(false);
@@ -645,8 +662,11 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
   const saveNote = (silent: boolean = false) => {
     const noteId = currentNoteIdRef.current;
     const existing = notesRef.current.find((n) => n.id === noteId);
-    const currTitle = titleRef.current || '';
+    const currTitle = (titleRef.current || '').trim();
     const currContent = (editorRef.current ? editorRef.current.innerHTML : contentRef.current) || '';
+    if (editorRef.current) {
+      contentRef.current = currContent;
+    }
     const currTags = tagsRef.current || [];
     const currReminder = reminderRef.current;
     const currSharedWithAI = sharedWithAIRef.current;
@@ -655,8 +675,8 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
     // Check if nothing changed to prevent redundant store updates & UI lag
     if (
       existing &&
-      existing.title === currTitle &&
-      existing.content === currContent &&
+      (existing.title || '').trim() === currTitle &&
+      (existing.content || '') === currContent &&
       JSON.stringify(existing.tags || []) === JSON.stringify(currTags || []) &&
       existing.reminder === currReminder &&
       existing.sharedWithAI === currSharedWithAI &&
@@ -672,10 +692,12 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
 
     if (!silent) setIsSaving(true);
     
+    const rawDomText = editorRef.current ? (editorRef.current.innerText || editorRef.current.textContent || '') : '';
     const hasMedia = currContent.includes('<img') || currContent.includes('<a') || currContent.includes('src=');
     const cleanText = currContent.replace(/<br\s*\/?>/gi, '').replace(/<div>\s*<\/div>/gi, '').replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, '').trim();
+    const hasMeaningfulContent = Boolean(currTitle || rawDomText.trim() || cleanText || hasMedia || currTags.length > 0 || currReminder || currSharedWithAI || currIsLocked);
 
-    if (currTitle.trim() || cleanText || hasMedia || currTags.length > 0 || currReminder || currSharedWithAI || currIsLocked) {
+    if (hasMeaningfulContent) {
       const imgMatch = currContent.match(/<img[^>]+src=["']([^"']+)["']/i);
       const rawThumb = imgMatch ? imgMatch[1] : undefined;
       // If the thumb is a base64 image, do not duplicate it into thumbnailUrl since extractFirstImageUrl already reads it from content
@@ -713,14 +735,37 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
     }
     typingTimeoutRef.current = setTimeout(() => {
       saveNote(true);
-    }, 1000);
+    }, 600);
   };
 
-  // Safe flush on unmount or navigation change
+  // Safe flush on unmount, page hide, or navigation change
   useEffect(() => {
+    const handleFlushSync = () => {
+      if (editorRef.current) {
+        contentRef.current = editorRef.current.innerHTML;
+      }
+      saveNote(true);
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        handleFlushSync();
+      }
+    };
+
+    window.addEventListener('pagehide', handleFlushSync);
+    window.addEventListener('beforeunload', handleFlushSync);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     return () => {
+      window.removeEventListener('pagehide', handleFlushSync);
+      window.removeEventListener('beforeunload', handleFlushSync);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
       if (statsTimeoutRef.current) clearTimeout(statsTimeoutRef.current);
+      if (editorRef.current) {
+        contentRef.current = editorRef.current.innerHTML;
+      }
       saveNote(true);
     };
   }, []);
@@ -743,7 +788,7 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
       const words = cleanText ? cleanText.split(' ').filter(Boolean).length : 0;
       const chars = cleanText.length;
       setStats({ words, chars });
-    }, 400);
+    }, 300);
 
     triggerAutosave();
   };
@@ -755,24 +800,10 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
     if (statsTimeoutRef.current) {
       clearTimeout(statsTimeoutRef.current);
     }
-    const noteId = currentNoteIdRef.current;
-    // Always flush save so images, documents and text are persisted
-    saveNote(false);
-    
-    // Also remove if perfectly empty (and no reminder set)
-    const currTitle = (titleRef.current || '').trim();
-    const currContent = (editorRef.current ? editorRef.current.innerHTML : contentRef.current) || '';
-    const currTags = tagsRef.current || [];
-    const currReminder = reminderRef.current;
-    const currSharedWithAI = sharedWithAIRef.current;
-    
-    const hasMedia = currContent.includes('<img') || currContent.includes('<a') || currContent.includes('src=');
-    const cleanText = currContent.replace(/<br\s*\/?>/gi, '').replace(/<div>\s*<\/div>/gi, '').replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, '').trim();
-
-    if (!currTitle && !cleanText && !hasMedia && currTags.length === 0 && !currReminder && !currSharedWithAI) {
-      const existing = notesRef.current.find((n) => n.id === noteId);
-      if (existing) deleteNote(noteId);
+    if (editorRef.current) {
+      contentRef.current = editorRef.current.innerHTML;
     }
+    saveNote(false);
     onBack();
   };
 
@@ -1845,6 +1876,16 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
               onKeyDown={handleEditorKeyDown}
               onBeforeInput={handleEditorBeforeInput}
               onInput={handleInput}
+              onPaste={() => {
+                setTimeout(() => {
+                  if (editorRef.current) {
+                    contentRef.current = editorRef.current.innerHTML;
+                    hasUnsavedChangesRef.current = true;
+                    triggerAutosave();
+                    syncMediaList();
+                  }
+                }, 30);
+              }}
               onClick={handleEditorClick}
               onBlur={(e) => { handleInput(e); saveSelection(); syncMediaList(); }}
               onFocus={() => { saveSelection(); checkActiveFormatsDebounced(); }}

@@ -399,7 +399,22 @@ const safeSetItem = (key: string, value: string) => {
     localStorage.setItem(key, value);
   } catch (e: any) {
     if (e?.name === 'QuotaExceededError' || e?.code === 22 || e?.number === -2147024882) {
-      console.warn(`[Tata Storage] localStorage quota reached for "${key}". Data is preserved safely in IndexedDB.`);
+      console.warn(`[Tata Storage] localStorage quota reached for "${key}". Preserving lightweight version in localStorage and full version in IndexedDB.`);
+      if (key === 'tata_notes') {
+        try {
+          const parsed = JSON.parse(value);
+          if (Array.isArray(parsed)) {
+            // Strip heavy base64 data URLs from localStorage copy so metadata, text, titles and dates are 100% preserved
+            const lightweightNotes = parsed.map((n: any) => ({
+              ...n,
+              content: typeof n.content === 'string' ? n.content.replace(/src="data:image\/[^"]+"/g, 'src=""') : '',
+              thumbnailUrl: n.thumbnailUrl && String(n.thumbnailUrl).startsWith('data:') ? undefined : n.thumbnailUrl
+            }));
+            localStorage.setItem(key, JSON.stringify(lightweightNotes));
+            return;
+          }
+        } catch (_) {}
+      }
       try {
         localStorage.removeItem(key);
       } catch (_) {}
@@ -1971,28 +1986,32 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     safeSetItem('tata_user', JSON.stringify(lightweightUser));
   }, [user]);
 
-  const isNotesMountedRef = useRef(false);
+  const notesInitStrRef = useRef<string | null>(null);
   const notesSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   useEffect(() => { 
     if (!isStorageHydrated()) return;
-    if (!isNotesMountedRef.current) {
-      isNotesMountedRef.current = true;
+    const str = JSON.stringify(notes);
+    if (notesInitStrRef.current === null) {
+      notesInitStrRef.current = str;
       return;
     }
+    if (notesInitStrRef.current === str) {
+      return;
+    }
+    notesInitStrRef.current = str;
+
     if (notesSaveTimerRef.current) clearTimeout(notesSaveTimerRef.current);
     notesSaveTimerRef.current = setTimeout(() => {
       try {
-        const str = JSON.stringify(notes);
         safeSetItem('tata_notes', str); 
         setLargeItem('tata_notes', str).catch(e => console.error(e));
       } catch (e) {
         console.warn("Storage write error (notes):", e);
       }
-    }, 80);
+    }, 60);
 
     const flushNotesSave = () => {
       try {
-        const str = JSON.stringify(notes);
         safeSetItem('tata_notes', str);
         setLargeItem('tata_notes', str).catch(() => {});
       } catch (e) {}

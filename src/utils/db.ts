@@ -54,9 +54,15 @@ function getDB(): Promise<IDBDatabase> {
 }
 
 export async function setLargeItem(key: string, value: string): Promise<void> {
+  // Always update memoryCache immediately so synchronous calls (getLargeItemSync) return the freshest data
+  memoryCache[key] = value;
+  if (value && value !== '[]' && value !== '{}') {
+    existingDataKeys.add(key);
+  }
+
   // Aturan 2 & 3: Auto-save dan penulisan data besar DILARANG sebelum hydration selesai
   if (!isStorageHydratedGlobally) {
-    console.warn(`[Tata Storage] Menolak penulisan "${key}" karena storage belum di-hidrasi.`);
+    console.warn(`[Tata Storage] Menolak penulisan "${key}" ke IndexedDB karena storage belum di-hidrasi, namun cache memori telah diperbarui.`);
     return;
   }
 
@@ -64,11 +70,6 @@ export async function setLargeItem(key: string, value: string): Promise<void> {
   if ((value === '[]' || value === '{}' || !value) && existingDataKeys.has(key) && !isStorageHydratedGlobally) {
     console.warn(`[Tata Storage] Mencegah penulisan data kosong pada "${key}" untuk melindungi data asli.`);
     return;
-  }
-
-  memoryCache[key] = value;
-  if (value && value !== '[]' && value !== '{}') {
-    existingDataKeys.add(key);
   }
 
   const db = await getDB();

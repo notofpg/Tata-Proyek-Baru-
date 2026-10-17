@@ -4849,7 +4849,9 @@ export default function SettingsScreen({
                             </span>
                           </div>
                           {connectionStatus === 'error' && connectionError && (
-                            <p className="text-[11px] text-slate-400 mt-1 bg-slate-950/50 p-2 rounded border border-slate-800">{connectionError}</p>
+                            <p className="text-[11px] text-slate-400 mt-1 bg-slate-950/50 p-2 rounded border border-slate-800 break-words leading-relaxed">
+                              {typeof connectionError === 'string' ? connectionError : JSON.stringify(connectionError)}
+                            </p>
                           )}
                         </div>
                       )}
@@ -4857,8 +4859,10 @@ export default function SettingsScreen({
                       {/* Actions */}
                       <div className="flex flex-wrap gap-2.5 pt-1">
                         <button
+                          type="button"
                           onClick={async () => {
-                            if (!testApiKey.trim()) {
+                            const cleanKey = testApiKey.trim().replace(/^["']|["']$/g, '');
+                            if (!cleanKey) {
                               setConnectionStatus('error');
                               setConnectionError(lang === 'id' ? 'Masukkan API Key terlebih dahulu!' : 'Please enter an API Key first!');
                               return;
@@ -4867,16 +4871,21 @@ export default function SettingsScreen({
                             setConnectionStatus('testing');
                             setConnectionError(null);
 
+                            const controller = new AbortController();
+                            const timeoutId = setTimeout(() => controller.abort(), 15000);
+
                             try {
                               const requestUrl = `/api/ai/test-key`;
                               const response = await fetch(requestUrl, {
                                 method: 'POST',
+                                signal: controller.signal,
                                 headers: {
                                   'Content-Type': 'application/json',
+                                  'x-custom-api-key': cleanKey,
                                   ...(tataAccount?.sessionToken ? { 'Authorization': `Bearer ${tataAccount.sessionToken}` } : {})
                                 },
                                 body: JSON.stringify({
-                                  apiKey: testApiKey.trim(),
+                                  apiKey: cleanKey,
                                   lang
                                 })
                               });
@@ -4894,18 +4903,37 @@ export default function SettingsScreen({
                                   errorData = JSON.parse(responseBodyText);
                                 } catch (_) {}
 
-                                let errMsg = errorData?.error || `API Error (${response.status})`;
-                                if (response.status === 404 && !errorData?.error) {
+                                let errMsg = '';
+                                if (typeof errorData?.message === 'string' && errorData.message.trim()) {
+                                  errMsg = errorData.message.trim();
+                                } else if (typeof errorData?.error === 'string' && errorData.error.trim()) {
+                                  errMsg = errorData.error.trim();
+                                } else if (errorData?.error && typeof errorData.error.message === 'string') {
+                                  errMsg = errorData.error.message.trim();
+                                } else if (response.status === 404) {
                                   errMsg = lang === 'id'
-                                    ? `Error 404: Endpoint API atau Model tidak ditemukan.`
-                                    : `Error 404: API Endpoint or Model not found.`;
+                                    ? 'Error 404: Endpoint API atau Model tidak ditemukan.'
+                                    : 'Error 404: API Endpoint or Model not found.';
+                                } else {
+                                  errMsg = responseBodyText && responseBodyText.length < 150
+                                    ? responseBodyText
+                                    : `API Error (${response.status})`;
                                 }
+
                                 setConnectionStatus('error');
                                 setConnectionError(errMsg);
                               }
                             } catch (err: any) {
                               setConnectionStatus('error');
-                              setConnectionError(err.message || (lang === 'id' ? 'Gagal menghubungi API' : 'Failed to reach API'));
+                              if (err.name === 'AbortError') {
+                                setConnectionError(lang === 'id' 
+                                  ? 'Waktu pengujian habis (15 detik). Server atau penyedia AI tidak merespons.' 
+                                  : 'Test timed out (15s). The server or AI provider did not respond.');
+                              } else {
+                                setConnectionError(err.message || (lang === 'id' ? 'Gagal menghubungi server' : 'Failed to reach server'));
+                              }
+                            } finally {
+                              clearTimeout(timeoutId);
                             }
                           }}
                           disabled={connectionStatus === 'testing'}
@@ -4922,12 +4950,15 @@ export default function SettingsScreen({
                         </button>
 
                         <button
+                          type="button"
                           onClick={() => {
-                            if (!testApiKey.trim()) {
+                            const cleanKey = testApiKey.trim().replace(/^["']|["']$/g, '');
+                            if (!cleanKey) {
                               showNotificationToast(lang === 'id' ? 'Harap masukkan API Key terlebih dahulu!' : 'Please enter an API Key first!');
                               return;
                             }
-                            setGeminiApiKey(testApiKey.trim());
+                            setGeminiApiKey(cleanKey);
+                            setTestApiKey(cleanKey);
                             setConnectionStatus('connected');
                             showNotificationToast(lang === 'id' ? 'API Key berhasil disimpan secara lokal!' : 'API Key successfully saved locally!');
                           }}
