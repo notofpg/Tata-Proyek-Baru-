@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { playTapSound } from "./utils/sound";
 import { Home, CheckCircle2, Calendar as CalendarIcon, Settings, Lock, Layers, Bell, X, Wallet, WifiOff, FileText, Database, Download, AlertTriangle, Bot, Sparkles, Shuffle, RefreshCw, Gamepad2, KeyRound, Delete, ShieldCheck } from 'lucide-react';
@@ -218,11 +218,16 @@ export default function App() {
           title: '',
           content: '',
           date: new Date().toISOString().split('T')[0],
+          updatedAt: Date.now(),
           tags: []
         });
       }
     } else {
-      setActiveNote(noteOrId);
+      setActiveNote({
+        ...noteOrId,
+        date: noteOrId.date || new Date().toISOString().split('T')[0],
+        updatedAt: noteOrId.updatedAt || Date.now()
+      });
     }
     window.history.pushState({ screen: 'note-editor', section: null }, '');
     _setCurrentScreen('note-editor');
@@ -239,16 +244,21 @@ export default function App() {
       screen = 'home';
     }
 
+    if (extra?.fromNote) {
+      setActiveNote(extra.fromNote);
+    }
+
     if (screen === 'note-editor') {
-      if (extra) {
+      if (extra && !extra.fromNote && typeof extra === 'object' && !extra.openNewNote) {
         openNote(extra);
         return;
-      } else if (!activeNote) {
+      } else if (!activeNote || extra?.openNewNote || extra === 'new') {
         openNote({
           id: generateId(),
           title: '',
           content: '',
           date: new Date().toISOString().split('T')[0],
+          updatedAt: Date.now(),
           tags: []
         });
         return;
@@ -375,9 +385,11 @@ export default function App() {
       const stored = (localStorage.getItem('tata_theme') as 'dark' | 'light' | 'pink' | 'cool' | 'cute' | 'simple' | 'organic' | 'wallpaper') || 'dark';
       const currentVersion = localStorage.getItem('tata_app_version') || 'lite';
       if (currentVersion === 'lite' && (stored === 'organic' || stored === 'wallpaper')) {
+        try { localStorage.setItem('tata_theme', 'dark'); } catch (e) {}
         return 'dark';
       }
       if (currentVersion !== 'organic' && currentVersion !== 'pro_max' && stored === 'organic') {
+        try { localStorage.setItem('tata_theme', 'dark'); } catch (e) {}
         return 'dark';
       }
       if (currentVersion === 'organic' || currentVersion === 'pro_max') {
@@ -437,9 +449,28 @@ export default function App() {
     } catch (e) {}
   }, [appTheme]);
 
+  const prevAppVersionRef = useRef(appVersion);
   useEffect(() => {
-    if (appVersion !== 'organic' && appVersion !== 'pro_max' && appTheme === 'organic') {
-      setAppTheme('dark');
+    if (prevAppVersionRef.current !== appVersion) {
+      if (appVersion === 'organic' || appVersion === 'pro_max') {
+        setAppTheme('organic');
+        try {
+          localStorage.setItem('tata_theme', 'organic');
+        } catch (e) {}
+      } else if (appTheme === 'organic') {
+        setAppTheme('dark');
+        try {
+          localStorage.setItem('tata_theme', 'dark');
+        } catch (e) {}
+      }
+      prevAppVersionRef.current = appVersion;
+    } else {
+      if (appVersion !== 'organic' && appVersion !== 'pro_max' && appTheme === 'organic') {
+        setAppTheme('dark');
+        try {
+          localStorage.setItem('tata_theme', 'dark');
+        } catch (e) {}
+      }
     }
   }, [appVersion, appTheme]);
 
@@ -1322,10 +1353,14 @@ export default function App() {
                   title: '',
                   content: '',
                   date: new Date().toISOString().split('T')[0],
+                  updatedAt: Date.now(),
                   tags: []
                 }} 
                 onBack={closeNote} 
                 onNavigate={(screen, extra) => {
+                  if (extra?.fromNote) {
+                    setActiveNote(extra.fromNote);
+                  }
                   setCurrentScreen(screen as ScreenItem, (extra as any) || null);
                 }} 
               />
@@ -1365,7 +1400,17 @@ export default function App() {
             {currentScreen === 'tetris' && <TetrisScreen onBack={() => setCurrentScreen('games-hub')} />}
             {currentScreen === 'memory' && <MemoryGameScreen onBack={() => setCurrentScreen('games-hub')} />}
             {currentScreen === 'space-invaders' && <SpaceInvadersScreen onBack={() => setCurrentScreen('games-hub')} />}
-            {currentScreen === 'ai-companion' && <AICompanionScreen onBack={() => setCurrentScreen('home')} />}
+            {currentScreen === 'ai-companion' && (
+              <AICompanionScreen 
+                onBack={() => {
+                  if (activeNote) {
+                    _setCurrentScreen('note-editor');
+                  } else {
+                    setCurrentScreen('home');
+                  }
+                }} 
+              />
+            )}
             {currentScreen === 'account' && (
               <AccountScreen 
                 appTheme={activeTheme} 

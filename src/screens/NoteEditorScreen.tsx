@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback } from "react";
 import {
   ArrowLeft,
   Trash2,
@@ -76,10 +76,18 @@ const NoteTitleInput = React.memo<{
 }>(({ initialValue, isOrganic, palette, placeholder, label, onChange }) => {
   const [val, setVal] = useState(initialValue);
 
+  useEffect(() => {
+    setVal(initialValue);
+  }, [initialValue]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const nextVal = e.target.value;
     setVal(nextVal);
     onChange(nextVal);
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    onChange(e.target.value);
   };
 
   return (
@@ -93,6 +101,7 @@ const NoteTitleInput = React.memo<{
         type="text"
         value={val}
         onChange={handleChange}
+        onBlur={handleBlur}
         autoComplete="off"
         autoCorrect="off"
         spellCheck="false"
@@ -591,8 +600,10 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
   }, [lang]);
 
   const handleGiveToAI = () => {
-    const fullContent = (editorRef.current ? editorRef.current.innerHTML : contentRef.current) || '';
-    contentRef.current = fullContent;
+    if (editorRef.current) {
+      contentRef.current = editorRef.current.innerHTML;
+    }
+    const fullContent = contentRef.current || '';
     setSharedWithAI(true);
     sharedWithAIRef.current = true;
     
@@ -613,9 +624,20 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
     const rawThumb = imgMatch ? imgMatch[1] : undefined;
     const effectiveThumb = rawThumb && rawThumb.startsWith('data:image/') ? undefined : (rawThumb || existing?.thumbnailUrl);
 
-    const savedNote: Note = existing
-      ? { ...existing, id: noteId, title: currTitle, content: fullContent, tags: currTags, reminder: currReminder, sharedWithAI: true, isLocked: isLockedRef.current, updatedAt: Date.now(), thumbnailUrl: effectiveThumb }
-      : { ...note, id: noteId, title: currTitle, content: fullContent, tags: currTags, reminder: currReminder, sharedWithAI: true, isLocked: isLockedRef.current, updatedAt: Date.now(), thumbnailUrl: effectiveThumb };
+    const now = Date.now();
+    const savedNote: Note = {
+      ...(existing || note),
+      id: noteId,
+      title: currTitle,
+      content: fullContent,
+      tags: currTags,
+      reminder: currReminder,
+      sharedWithAI: true,
+      isLocked: isLockedRef.current,
+      updatedAt: now,
+      date: (existing || note).date || new Date().toISOString().split('T')[0],
+      thumbnailUrl: effectiveThumb
+    };
 
     if (existing) {
       updateNote(savedNote);
@@ -630,7 +652,7 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
     setShowGiveToAIModal(false);
 
     if (onNavigate) {
-      onNavigate('ai-companion');
+      onNavigate('ai-companion', { fromNote: savedNote });
     }
   };
 
@@ -648,12 +670,15 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
     const currTags = tagsRef.current || [];
     const currReminder = reminderRef.current;
     
+    const now = Date.now();
     if (existing) {
-      updateNote({ ...existing, title: currTitle, content: currContent, tags: currTags, reminder: currReminder, sharedWithAI: false, isLocked: isLockedRef.current });
-      notesRef.current = notesRef.current.map((n) => (n.id === noteId ? { ...existing, title: currTitle, content: currContent, tags: currTags, reminder: currReminder, sharedWithAI: false, isLocked: isLockedRef.current } : n));
+      const updated: Note = { ...existing, title: currTitle, content: currContent, tags: currTags, reminder: currReminder, sharedWithAI: false, isLocked: isLockedRef.current, updatedAt: now };
+      updateNote(updated);
+      notesRef.current = notesRef.current.map((n) => (n.id === noteId ? updated : n));
     } else {
-      addNote({ ...note, id: noteId, title: currTitle, content: currContent, tags: currTags, reminder: currReminder, sharedWithAI: false, isLocked: isLockedRef.current });
-      notesRef.current = [{ ...note, id: noteId, title: currTitle, content: currContent, tags: currTags, reminder: currReminder, sharedWithAI: false, isLocked: isLockedRef.current }, ...notesRef.current.filter((n) => n.id !== noteId)];
+      const added: Note = { ...note, id: noteId, title: currTitle, content: currContent, tags: currTags, reminder: currReminder, sharedWithAI: false, isLocked: isLockedRef.current, updatedAt: now };
+      addNote(added);
+      notesRef.current = [added, ...notesRef.current.filter((n) => n.id !== noteId)];
     }
     
     setShowGiveToAIModal(false);
@@ -697,15 +722,27 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
     const cleanText = currContent.replace(/<br\s*\/?>/gi, '').replace(/<div>\s*<\/div>/gi, '').replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, '').trim();
     const hasMeaningfulContent = Boolean(currTitle || rawDomText.trim() || cleanText || hasMedia || currTags.length > 0 || currReminder || currSharedWithAI || currIsLocked);
 
-    if (hasMeaningfulContent) {
+    // Save if has meaningful content or if note already exists (NEVER auto-delete an existing note in saveNote!)
+    if (hasMeaningfulContent || existing) {
       const imgMatch = currContent.match(/<img[^>]+src=["']([^"']+)["']/i);
       const rawThumb = imgMatch ? imgMatch[1] : undefined;
       // If the thumb is a base64 image, do not duplicate it into thumbnailUrl since extractFirstImageUrl already reads it from content
       const effectiveThumb = rawThumb && rawThumb.startsWith('data:image/') ? undefined : (rawThumb || existing?.thumbnailUrl);
 
-      const updatedNote: Note = existing
-        ? { ...existing, id: noteId, title: currTitle, content: currContent, tags: currTags, reminder: currReminder, sharedWithAI: currSharedWithAI, isLocked: currIsLocked, updatedAt: Date.now(), thumbnailUrl: effectiveThumb }
-        : { ...note, id: noteId, title: currTitle, content: currContent, tags: currTags, reminder: currReminder, sharedWithAI: currSharedWithAI, isLocked: currIsLocked, updatedAt: Date.now(), thumbnailUrl: effectiveThumb };
+      const now = Date.now();
+      const updatedNote: Note = {
+        ...(existing || note),
+        id: noteId,
+        title: currTitle,
+        content: currContent,
+        tags: currTags,
+        reminder: currReminder,
+        sharedWithAI: currSharedWithAI,
+        isLocked: currIsLocked,
+        updatedAt: now,
+        date: (existing || note).date || new Date().toISOString().split('T')[0],
+        thumbnailUrl: effectiveThumb
+      };
 
       if (existing) {
         updateNote(updatedNote);
@@ -713,11 +750,6 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
       } else {
         addNote(updatedNote);
         notesRef.current = [updatedNote, ...notesRef.current.filter((n) => n.id !== noteId)];
-      }
-    } else {
-      if (existing) {
-        deleteNote(noteId);
-        notesRef.current = notesRef.current.filter((n) => n.id !== noteId);
       }
     }
     
@@ -738,7 +770,19 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
     }, 600);
   };
 
-  // Safe flush on unmount, page hide, or navigation change
+  // Synchronous flush before DOM detachment on unmount (useLayoutEffect runs BEFORE DOM nodes are detached)
+  useLayoutEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      if (statsTimeoutRef.current) clearTimeout(statsTimeoutRef.current);
+      if (editorRef.current) {
+        contentRef.current = editorRef.current.innerHTML;
+      }
+      saveNote(true);
+    };
+  }, []);
+
+  // Safe flush on page hide, beforeunload, or visibility change
   useEffect(() => {
     const handleFlushSync = () => {
       if (editorRef.current) {
@@ -761,12 +805,6 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
       window.removeEventListener('pagehide', handleFlushSync);
       window.removeEventListener('beforeunload', handleFlushSync);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-      if (statsTimeoutRef.current) clearTimeout(statsTimeoutRef.current);
-      if (editorRef.current) {
-        contentRef.current = editorRef.current.innerHTML;
-      }
-      saveNote(true);
     };
   }, []);
 
@@ -1985,8 +2023,11 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
           {/* AI Access Toggle */}
           <div className="flex items-center gap-2">
             <button
-              onPointerDown={(e) => {
-                e.preventDefault();
+              onClick={() => {
+                if (editorRef.current) {
+                  contentRef.current = editorRef.current.innerHTML;
+                }
+                saveNote(true);
                 setShowGiveToAIModal(true);
               }}
               className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-xl text-xs font-semibold cursor-pointer transition-all ${

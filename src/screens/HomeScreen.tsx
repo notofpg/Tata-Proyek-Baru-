@@ -12,6 +12,7 @@ import { OrganicHomeView } from '../components/home/OrganicHomeView';
 import { getOrganicThemePalette } from '../components/home/organicThemePalettes';
 import { LiteStickerIcon } from '../components/LiteModeIcons';
 import AdBanner from '../components/AdBanner';
+import { generateId } from '../utils';
 
 interface HomeProps {
   appTheme: any;
@@ -248,7 +249,7 @@ export default function HomeScreen({ appTheme, setAppTheme, onOpenNote, onNaviga
 
   const handleCreateNote = () => {
     const newNote = {
-      id: crypto.randomUUID(),
+      id: generateId(),
       title: '',
       content: '',
       date: new Date().toISOString().split('T')[0],
@@ -1379,6 +1380,57 @@ export default function HomeScreen({ appTheme, setAppTheme, onOpenNote, onNaviga
             )}
           </div>
         </section>
+
+        {/* Recent Notes Section (Catatan Terbaru) */}
+        {recentNotesList.length > 0 && (
+          <section className={`mb-5 border p-5 rounded-3xl shadow-xs ${palette.cardHero} ${palette.cardHeroBorder}`}>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className={`text-base font-bold flex items-center gap-2 ${palette.titleText}`}>
+                <FileText className="w-4 h-4 text-indigo-400" />
+                {lang === 'id' ? 'Catatan Terbaru' : 'Recent Notes'}
+              </h3>
+              <button 
+                onClick={() => onNavigate('search')} 
+                className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full transition-colors ${palette.actionBtn} ${palette.actionBtnHover}`}
+              >
+                {lang === 'id' ? 'Semua Catatan' : 'All Notes'}
+              </button>
+            </div>
+            <div className="grid grid-cols-1 gap-2.5">
+              {recentNotesList.map((note) => {
+                const firstImage = note.thumbnailUrl || extractFirstImageUrl(note.content);
+                const cleanText = note.content ? note.content.replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]*>?/gm, '').replace(/&nbsp;?/gi, ' ').replace(/&bnsp;?/gi, ' ').replace(/\s+/g, ' ').trim() : '';
+                const displayTitle = note.title || (firstImage ? (lang === 'id' ? 'Catatan Foto' : 'Photo Note') : (lang === 'id' ? 'Catatan Tanpa Judul' : 'Untitled Note'));
+
+                return (
+                  <div 
+                    key={note.id} 
+                    onClick={() => onOpenNote(note)}
+                    role="button"
+                    className={`w-full text-left flex items-start justify-between gap-3 p-3.5 rounded-2xl transition-all cursor-pointer group border ${palette.noteCard} ${palette.noteCardBorder} ${palette.noteCardHoverBorder}`}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <h4 className={`text-xs sm:text-sm font-bold truncate leading-snug mb-1 ${palette.noteCardText}`}>
+                        {note.sharedWithAI && <Bot className="inline w-3 h-3 text-indigo-400 mr-1" />}
+                        {note.isLocked && <Lock className="inline w-3 h-3 text-amber-400 mr-1" />}
+                        <span>{displayTitle}</span>
+                      </h4>
+                      <p className={`text-[11px] line-clamp-1 ${palette.noteCardSub}`}>
+                        {cleanText || (firstImage ? (lang === 'id' ? '📸 [Berisi Foto]' : '📸 [Contains Photo]') : '...')}
+                      </p>
+                      <span className={`text-[10px] font-mono mt-1 block ${palette.subText}`}>{note.date}</span>
+                    </div>
+                    {firstImage && (
+                      <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-black/10 border border-black/5">
+                        <img src={firstImage} alt="Preview" className="w-full h-full object-cover" loading="lazy" />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
           </div>
         </div>
         )}

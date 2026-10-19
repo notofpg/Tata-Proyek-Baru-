@@ -7,13 +7,12 @@ import {
   Share2, Users, QrCode, Gift, Camera, Sliders, Layers, Crown, Clock,
   CheckSquare, Wallet, Smile, FileCode, PlusCircle, RotateCcw, FileJson, Settings, Zap
 } from 'lucide-react';
-import { useAppStore, normalizeBackupData } from '../store';
+import { useAppStore } from '../store';
 import { useTranslation } from '../translations';
 import { ScreenItem } from '../App';
-import { generateId, encryptData, decryptData, createPinHash, verifyPin } from '../utils';
+import { createPinHash, verifyPin } from '../utils';
 import { getLargeItem, getLargeItemSync, setLargeItem, deleteLargeItem } from '../utils/db';
 import { getSoundEnabled, setSoundEnabled, playTapSound, playCelebrationSound } from '../utils/sound';
-import { calculateJourneyDay, getTodayDateString } from '../utils/journey';
 import PrivacyPolicyModal from '../components/PrivacyPolicyModal';
 import UpdateNotesModal from '../components/UpdateNotesModal';
 import DeveloperMessageModal from '../components/DeveloperMessageModal';
@@ -55,7 +54,7 @@ export default function SettingsScreen({
     transactions, notes, tasks, user, updateUser, appPin, setAppPin, notePin, setNotePin, useScrambledPin, setUseScrambledPin,
     pinRecoveryQuestion, setPinRecoveryQuestion, pinRecoveryAnswer, setPinRecoveryAnswer, 
     pinHistory, recordPinChange,
-    setIsUnlocked, importData, importFullBackup, createFullBackup, clearAllData, lang, setLang, streak, 
+    setIsUnlocked, clearAllData, lang, setLang, streak, 
     journeyDay, journeyStartDate, setJourneyStartDate, 
     moods, savingsTarget, savingsTargetTitle, savingsBalance, savingsGoals = [], hasCompletedOnboarding, archivedTags, debts, initialDebt,
     isRefreshing, refreshStep, handleRefreshApp, isLiteMode, setIsLiteMode, appVersion, setAppVersion,
@@ -486,169 +485,8 @@ export default function SettingsScreen({
     showNotificationToast(lang === 'id' ? `Wallpaper "${preset.nameId}" diterapkan!` : `Wallpaper "${preset.nameEn}" applied!`);
   };
 
-  // Auto-backup configuration & enhanced modal states
+  // Backup modal state (file processing is delegated to BackupRestoreModal)
   const [backupModalMode, setBackupModalMode] = useState<'export' | 'import' | null>(null);
-  const [backupPassword, setBackupPassword] = useState('');
-  const [showBackupPassword, setShowBackupPassword] = useState(false);
-  const [backupFileContent, setBackupFileContent] = useState<string | null>(null);
-  const [backupFileName, setBackupFileName] = useState('');
-  const [backupFileSize, setBackupFileSize] = useState<number>(0);
-  const [backupErrorMessage, setBackupErrorMessage] = useState<string | null>(null);
-  const [isProcessingBackup, setIsProcessingBackup] = useState(false);
-  const [restoreStrategy, setRestoreStrategy] = useState<'replace' | 'merge'>('replace');
-  const [exportCustomFilename, setExportCustomFilename] = useState('');
-  const [isDragOverImport, setIsDragOverImport] = useState(false);
-  const [backupError, setBackupError] = useState(false);
-  const [importPreview, setImportPreview] = useState<{
-    isEncrypted: boolean;
-    isNoto: boolean;
-    passwordMatches?: boolean;
-    notesCount: number;
-    tasksCount: number;
-    discMediaCount: number;
-    txCount: number;
-    moodsCount: number;
-    debtsCount: number;
-    savingsGoalsCount: number;
-    hasUser: boolean;
-    hasWallpaper: boolean;
-    hasSettings: boolean;
-    streak?: number;
-    journeyDays?: number;
-    userProfileIncluded?: boolean;
-    version: string;
-  } | null>(null);
-
-  useEffect(() => {
-    if (backupModalMode !== 'import' || !backupFileContent) {
-      setImportPreview(null);
-      return;
-    }
-
-    let isMounted = true;
-    const timer = setTimeout(async () => {
-      try {
-        const parsed = JSON.parse(backupFileContent);
-        if (parsed.v && parsed.s && parsed.d) {
-          // Encrypted backup
-          if (backupPassword.trim()) {
-            try {
-              const decrypted = await decryptData(backupFileContent, backupPassword.trim());
-              if (!isMounted) return;
-              const data = JSON.parse(decrypted);
-              const normalized = normalizeBackupData(data);
-              const isNoto = Boolean(data.noto_notes || data.noto_tasks || data.noto_transactions || data.noto_theme || (data.appName && data.appName.toLowerCase().includes('noto')) || (data.version && parseFloat(data.version) < 4.0));
-              setBackupErrorMessage(null);
-              const strk = typeof normalized?.streak === 'number' ? normalized.streak : 0;
-              const jDays = normalized?.journeyStartDate ? calculateJourneyDay(normalized.journeyStartDate) : 1;
-              const profInc = normalized?.userProfileIncluded !== undefined ? normalized.userProfileIncluded : (Boolean(normalized?.user) || normalized?.streak !== undefined);
-              setImportPreview({
-                isEncrypted: true,
-                isNoto,
-                passwordMatches: true,
-                notesCount: normalized?.notes?.length || 0,
-                tasksCount: normalized?.tasks?.length || 0,
-                discMediaCount: normalized?.disciplineMediaMap ? Object.keys(normalized.disciplineMediaMap).length : 0,
-                txCount: normalized?.transactions?.length || 0,
-                moodsCount: normalized?.moods?.length || 0,
-                debtsCount: normalized?.debts?.length || 0,
-                savingsGoalsCount: normalized?.savingsGoals?.length || 0,
-                hasUser: Boolean(normalized?.user),
-                hasWallpaper: Boolean(normalized?.customWallpaper || normalized?.bannerWallpaper),
-                hasSettings: Boolean(normalized?.appPin || normalized?.appTheme || normalized?.lang),
-                streak: strk,
-                journeyDays: jDays,
-                userProfileIncluded: profInc,
-                version: data.version || (isNoto ? 'Noto Legacy' : '5.1')
-              });
-            } catch {
-              if (!isMounted) return;
-              setImportPreview({
-                isEncrypted: true,
-                isNoto: false,
-                passwordMatches: false,
-                notesCount: 0,
-                tasksCount: 0,
-                discMediaCount: 0,
-                txCount: 0,
-                moodsCount: 0,
-                debtsCount: 0,
-                savingsGoalsCount: 0,
-                hasUser: false,
-                hasWallpaper: false,
-                hasSettings: false,
-                version: 'Terenkripsi'
-              });
-            }
-          } else {
-            if (!isMounted) return;
-            setImportPreview({
-              isEncrypted: true,
-              isNoto: false,
-              passwordMatches: undefined,
-              notesCount: 0,
-              tasksCount: 0,
-              discMediaCount: 0,
-              txCount: 0,
-              moodsCount: 0,
-              debtsCount: 0,
-              savingsGoalsCount: 0,
-              hasUser: false,
-              hasWallpaper: false,
-              hasSettings: false,
-              version: 'Terenkripsi'
-            });
-          }
-        } else {
-          // Plaintext JSON
-          const normalized = normalizeBackupData(parsed);
-          const isNoto = Boolean(parsed.noto_notes || parsed.noto_tasks || parsed.noto_transactions || parsed.noto_theme || (parsed.appName && parsed.appName.toLowerCase().includes('noto')) || (parsed.version && parseFloat(parsed.version) < 4.0));
-          if (!isMounted) return;
-          setBackupErrorMessage(null);
-          const strk = typeof normalized?.streak === 'number' ? normalized.streak : 0;
-          const jDays = normalized?.journeyStartDate ? calculateJourneyDay(normalized.journeyStartDate) : 1;
-          const profInc = normalized?.userProfileIncluded !== undefined ? normalized.userProfileIncluded : (Boolean(normalized?.user) || normalized?.streak !== undefined);
-          setImportPreview({
-            isEncrypted: false,
-            isNoto,
-            passwordMatches: true,
-            notesCount: normalized?.notes?.length || 0,
-            tasksCount: normalized?.tasks?.length || 0,
-            discMediaCount: normalized?.disciplineMediaMap ? Object.keys(normalized.disciplineMediaMap).length : 0,
-            txCount: normalized?.transactions?.length || 0,
-            moodsCount: normalized?.moods?.length || 0,
-            debtsCount: normalized?.debts?.length || 0,
-            savingsGoalsCount: normalized?.savingsGoals?.length || 0,
-            hasUser: Boolean(normalized?.user),
-            hasWallpaper: Boolean(normalized?.customWallpaper || normalized?.bannerWallpaper),
-            hasSettings: Boolean(normalized?.appPin || normalized?.appTheme || normalized?.lang),
-            streak: strk,
-            journeyDays: jDays,
-            userProfileIncluded: profInc,
-            version: parsed.version || (isNoto ? 'Noto Legacy' : '5.1')
-          });
-        }
-      } catch {
-        if (!isMounted) return;
-        setBackupErrorMessage(lang === 'id' ? 'File bukan format JSON cadangan yang valid.' : 'File is not a valid backup JSON format.');
-        setImportPreview(null);
-      }
-    }, 200);
-
-    return () => {
-      isMounted = false;
-      clearTimeout(timer);
-    };
-  }, [backupModalMode, backupFileContent, backupPassword, lang]);
-
-  const [exportOptions, setExportOptions] = useState({
-    notes: true,
-    tasks: true,
-    transactions: true,
-    moods: true,
-    userProfile: true,
-    settings: true,
-  });
 
   const [pendingAutoBackupFreq, setPendingAutoBackupFreq] = useState<'off' | '3_days' | '1_week' | '1_month' | null>(null);
   const [showAutoBackupEnableVerify, setShowAutoBackupEnableVerify] = useState(false);
@@ -672,6 +510,10 @@ export default function SettingsScreen({
   const [showAutoBackupPinDisableModal, setShowAutoBackupPinDisableModal] = useState(false);
   const [autoBackupDisablePin, setAutoBackupDisablePin] = useState('');
   const [autoBackupDisableError, setAutoBackupDisableError] = useState(false);
+
+  const [showForgotAutoBackupPinModal, setShowForgotAutoBackupPinModal] = useState(false);
+  const [forgotAutoBackupAnswerInput, setForgotAutoBackupAnswerInput] = useState('');
+  const [forgotAutoBackupAnswerError, setForgotAutoBackupAnswerError] = useState(false);
 
   const [showPinHistoryDropdown, setShowPinHistoryDropdown] = useState(false);
   const [showAutoBackupPinHistoryDropdown, setShowAutoBackupPinHistoryDropdown] = useState(false);
@@ -1238,7 +1080,11 @@ export default function SettingsScreen({
     if (isValid || autoBackupEnableVerifyPin === storeAutoBackupPin) {
       if (pendingAutoBackupFreq) {
         setAutoBackupFrequency(pendingAutoBackupFreq);
-        showNotificationToast(lang === 'id' ? 'Pencadangan otomatis diaktifkan!' : 'Auto-backup enabled!');
+        if (pendingAutoBackupFreq === 'off') {
+          showNotificationToast(lang === 'id' ? 'Pencadangan otomatis dinonaktifkan.' : 'Auto-backup disabled.');
+        } else {
+          showNotificationToast(lang === 'id' ? 'Pencadangan otomatis diaktifkan!' : 'Auto-backup enabled!');
+        }
       }
       setShowAutoBackupEnableVerify(false);
       setAutoBackupEnableVerifyPin('');
@@ -1327,294 +1173,64 @@ export default function SettingsScreen({
     }
   };
 
-  const handleAutoBackupPinForceReset = async () => {
-    await recordAutoBackupPinChange(null);
+  const handleAutoBackupPinForceReset = () => {
     setShowAutoBackupPinDisableModal(false);
     setAutoBackupDisablePin('');
-    showNotificationToast(lang === 'id' ? 'PIN Cadangan Otomatis berhasil di-reset.' : 'Auto-Backup PIN reset successfully.');
+    setForgotAutoBackupAnswerInput('');
+    setForgotAutoBackupAnswerError(false);
+    setShowForgotAutoBackupPinModal(true);
   };
 
-  // Manual Backup trigger events
+  const handleForgotAutoBackupPinSubmit = async () => {
+    if (!pinRecoveryAnswer || !forgotAutoBackupAnswerInput.trim()) return;
+    const isValid = await verifyPin(forgotAutoBackupAnswerInput.trim().toLowerCase(), pinRecoveryAnswer || '');
+    const isCorrect = isValid || forgotAutoBackupAnswerInput.trim().toLowerCase() === (pinRecoveryAnswer || '').trim().toLowerCase();
+
+    if (isCorrect) {
+      if (pinRecoveryAnswer && !pinRecoveryAnswer.startsWith('pbkdf2_v1.')) {
+        const hashed = await createPinHash(forgotAutoBackupAnswerInput.trim().toLowerCase());
+        setPinRecoveryAnswer(hashed);
+      }
+      await recordAutoBackupPinChange(null);
+      setShowForgotAutoBackupPinModal(false);
+      setShowAutoBackupPinDisableModal(false);
+      setShowAutoBackupEnableVerify(false);
+      setForgotAutoBackupAnswerInput('');
+      setForgotAutoBackupAnswerError(false);
+      setAutoBackupDisablePin('');
+      showNotificationToast(
+        lang === 'id' 
+          ? 'Jawaban terverifikasi! PIN Cadangan Otomatis berhasil di-reset.' 
+          : 'Verified! Auto-Backup PIN reset successfully.'
+      );
+    } else {
+      setForgotAutoBackupAnswerError(true);
+      setTimeout(() => setForgotAutoBackupAnswerError(false), 2000);
+    }
+  };
+
+  // Manual Backup modal openers (file processing is delegated to BackupRestoreModal)
   const handleExportClick = () => {
-    setBackupPassword('');
-    setShowBackupPassword(false);
-    setBackupErrorMessage(null);
-    setExportCustomFilename(autoBackupFilenamePrefix || 'tata_cadangan');
     setBackupModalMode('export');
   };
 
-  const handleFileSelect = (file: File) => {
-    if (!file) return;
-    if (!file.name.toLowerCase().endsWith('.json') && file.type !== 'application/json' && file.type !== '') {
-      setBackupErrorMessage(lang === 'id' ? 'Format file tidak didukung. Harap pilih file cadangan berformat .json' : 'Unsupported format. Please select a .json backup file.');
-      return;
-    }
-    setBackupFileName(file.name);
-    setBackupFileSize(file.size);
-    setBackupPassword('');
-    setShowBackupPassword(false);
-    setBackupErrorMessage(null);
-    
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setBackupFileContent(e.target?.result as string);
-      setBackupModalMode('import');
-    };
-    reader.onerror = () => {
-      setBackupErrorMessage(lang === 'id' ? 'Gagal membaca isi file dari perangkat Anda.' : 'Failed reading file contents from your device.');
-    };
-    reader.readAsText(file);
-  };
-
-  const openFileInput = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json,application/json';
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        handleFileSelect(file);
-      }
-    };
-    input.click();
-  };
-
   const handleImportClick = () => {
-    setBackupPassword('');
-    setShowBackupPassword(false);
-    setBackupErrorMessage(null);
-    setRestoreStrategy('replace');
     setBackupModalMode('import');
   };
 
-  const processExport = async () => {
-    setIsProcessingBackup(true);
-    setBackupErrorMessage(null);
-    try {
-      const exportData = await createFullBackup(exportOptions);
-
-      // Attach clear metadata
-      exportData.appName = 'Tata';
-      exportData.version = '5.1';
-      exportData.exportedAt = new Date().toISOString();
-      exportData.summary = {
-        notesCount: exportData.notes?.length || 0,
-        tasksCount: exportData.tasks?.length || 0,
-        txCount: exportData.transactions?.length || 0,
-        moodsCount: exportData.moods?.length || 0,
-        hasDisciplineMedia: Boolean(exportData.disciplineMediaMap && Object.keys(exportData.disciplineMediaMap).length > 0)
-      };
-
-      const dataStr = JSON.stringify(exportData, null, 2);
-      let finalContent = dataStr;
-      
-      if (backupPassword.trim()) {
-        finalContent = await encryptData(dataStr, backupPassword.trim());
-      }
-
-      const blob = new Blob([finalContent], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      
-      const d = new Date();
-      const timestamp = `${d.getFullYear()}${(d.getMonth()+1).toString().padStart(2,'0')}${d.getDate().toString().padStart(2,'0')}_${d.getHours().toString().padStart(2,'0')}${d.getMinutes().toString().padStart(2,'0')}`;
-      const prefix = (exportCustomFilename.trim() || autoBackupFilenamePrefix || 'tata_backup').replace(/[^a-z0-9_-]/gi, '_');
-      const suffix = backupPassword.trim() ? '_encrypted' : '';
-      a.download = `${prefix}_${timestamp}${suffix}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-
-      playCelebrationSound();
-      setBackupModalMode(null);
-      showNotificationToast(lang === 'id' ? 'Ekspor data berhasil diunduh ke perangkat Anda!' : 'Data backup exported and downloaded successfully!');
-    } catch (e: any) {
-      console.error("Export error:", e);
-      setBackupErrorMessage(lang === 'id' ? 'Gagal mengekspor data: ' + (e?.message || 'Kesalahan sistem') : 'Failed to export: ' + (e?.message || 'System error'));
-    } finally {
-      setIsProcessingBackup(false);
-    }
-  };
-
-  const processImport = async () => {
-    if (!backupFileContent) {
-      setBackupErrorMessage(lang === 'id' ? 'Silakan pilih file cadangan terlebih dahulu.' : 'Please select a backup file first.');
-      return;
-    }
-
-    setIsProcessingBackup(true);
-    setBackupErrorMessage(null);
-
-    try {
-      let dataStr = backupFileContent;
-      
-      try {
-        const parsed = JSON.parse(backupFileContent);
-        if (parsed.v && parsed.s && parsed.d) {
-          if (!backupPassword.trim()) {
-            setBackupErrorMessage(lang === 'id' ? 'File ini terenkripsi. Silakan masukkan kata sandi di bawah.' : 'This file is encrypted. Please enter the password below.');
-            setIsProcessingBackup(false);
-            return;
-          }
-          try {
-            dataStr = await decryptData(backupFileContent, backupPassword.trim());
-          } catch {
-            setBackupErrorMessage(lang === 'id' ? 'Kata sandi salah atau file cadangan rusak. Periksa kembali sandi Anda.' : 'Incorrect password or corrupted backup file. Please verify your password.');
-            setIsProcessingBackup(false);
-            return;
-          }
-        }
-      } catch {
-        setBackupErrorMessage(lang === 'id' ? 'Format file tidak valid. Pastikan memilih file .json yang sah.' : 'Invalid file format. Please select a valid .json backup file.');
-        setIsProcessingBackup(false);
-        return;
-      }
-      
-      const rawData = JSON.parse(dataStr);
-      const data = normalizeBackupData(rawData);
-
-      if (!data) {
-        setBackupErrorMessage(lang === 'id' ? 'File tidak memuat data yang dikenali oleh Tata.' : 'File does not contain recognized Tata data.');
-        setIsProcessingBackup(false);
-        return;
-      }
-
-      const hasAnyData = 
-        (data.notes && data.notes.length > 0) || 
-        (data.tasks && data.tasks.length > 0) || 
-        (data.transactions && data.transactions.length > 0) || 
-        (data.moods && data.moods.length > 0) || 
-        (data.debts && data.debts.length > 0) || 
-        (data.savingsGoals && data.savingsGoals.length > 0) ||
-        data.user || 
-        data.appPin || 
-        data.customWallpaper || 
-        data.bannerWallpaper || 
-        rawData.version || 
-        rawData.appName === 'Noto' || 
-        rawData.appName === 'Tata';
-
-      if (!hasAnyData) {
-        setBackupErrorMessage(lang === 'id' ? 'File cadangan ini kosong.' : 'This backup file is empty.');
-        setIsProcessingBackup(false);
-        return;
-      }
-
-      let finalNotes = data.notes || [];
-      let finalTasks = data.tasks || [];
-      let finalTransactions = data.transactions || [];
-      let finalMoods = data.moods || [];
-      let finalDebts = data.debts || [];
-      let finalSavingsGoals = data.savingsGoals || [];
-      let finalDisciplineMedia = { ...(data.disciplineMediaMap || {}) };
-
-      if (restoreStrategy === 'merge') {
-        // Merge mode: retain existing records, append new ones with ID collision check
-        const existingNoteIds = new Set(notes.map(n => n.id));
-        const incomingNotes = finalNotes.map((n: any) => {
-          if (existingNoteIds.has(n.id)) return { ...n, id: generateId() };
-          return n;
-        });
-        finalNotes = [...notes, ...incomingNotes];
-
-        const existingTaskIds = new Set(tasks.map(t => t.id));
-        const incomingTasks = finalTasks.map((t: any) => {
-          if (existingTaskIds.has(t.id)) {
-            const oldId = t.id;
-            const newId = generateId();
-            const oldMediaKey = `tata_disc_media_${oldId}`;
-            if (finalDisciplineMedia[oldMediaKey]) {
-              finalDisciplineMedia[`tata_disc_media_${newId}`] = finalDisciplineMedia[oldMediaKey];
-              delete finalDisciplineMedia[oldMediaKey];
-            }
-            return { ...t, id: newId };
-          }
-          return t;
-        });
-        finalTasks = [...tasks, ...incomingTasks];
-
-        const existingTxIds = new Set(transactions.map(tx => tx.id));
-        const incomingTx = finalTransactions.map((tx: any) => {
-          if (existingTxIds.has(tx.id)) return { ...tx, id: generateId() };
-          return tx;
-        });
-        finalTransactions = [...transactions, ...incomingTx];
-
-        const existingMoodDates = new Set(moods.map(m => m.date));
-        const incomingMoods = finalMoods.filter((m: any) => !existingMoodDates.has(m.date));
-        finalMoods = [...moods, ...incomingMoods];
-
-        const existingDebtIds = new Set(debts.map(d => d.id));
-        const incomingDebts = finalDebts.map((d: any) => {
-          if (existingDebtIds.has(d.id)) return { ...d, id: generateId() };
-          return d;
-        });
-        finalDebts = [...debts, ...incomingDebts];
-
-        const existingSgIds = new Set(savingsGoals.map(s => s.id));
-        const incomingSg = finalSavingsGoals.map((s: any) => {
-          if (existingSgIds.has(s.id)) return { ...s, id: generateId() };
-          return s;
-        });
-        finalSavingsGoals = [...savingsGoals, ...incomingSg];
-      }
-      // Replace mode: keep normalized IDs intact to preserve disciplineMediaMap relationships
-
-      await importFullBackup({
-        ...data,
-        notes: finalNotes,
-        tasks: finalTasks,
-        transactions: finalTransactions,
-        moods: finalMoods,
-        debts: finalDebts,
-        savingsGoals: finalSavingsGoals,
-        user: data.userProfileIncluded === false 
-          ? { name: 'Pengguna Tata', email: '', bio: '', avatar: '' } 
-          : (data.user || (restoreStrategy === 'replace' ? { name: 'Pengguna Tata', email: '', bio: '', avatar: '' } : user)),
-        userAvatar: data.userProfileIncluded === false ? null : (data.userAvatar !== undefined ? data.userAvatar : (restoreStrategy === 'replace' ? null : undefined)),
-        streak: data.userProfileIncluded === false ? 0 : (data.streak !== undefined ? data.streak : (restoreStrategy === 'replace' ? 0 : streak)),
-        lastTaskCompleted: data.userProfileIncluded === false ? null : (data.lastTaskCompleted !== undefined ? data.lastTaskCompleted : (restoreStrategy === 'replace' ? null : undefined)),
-        journeyStartDate: data.userProfileIncluded === false ? getTodayDateString() : (data.journeyStartDate !== undefined ? data.journeyStartDate : (restoreStrategy === 'replace' ? getTodayDateString() : journeyStartDate)),
-        appPin: data.settingsIncluded === false ? null : (data.appPin !== undefined ? data.appPin : (restoreStrategy === 'replace' ? null : appPin)),
-        notePin: data.settingsIncluded === false ? null : (data.notePin !== undefined ? data.notePin : (restoreStrategy === 'replace' ? null : notePin)),
-        pinRecoveryQuestion: data.settingsIncluded === false ? '' : (data.pinRecoveryQuestion || (restoreStrategy === 'replace' ? '' : pinRecoveryQuestion)),
-        pinRecoveryAnswer: data.settingsIncluded === false ? '' : (data.pinRecoveryAnswer || (restoreStrategy === 'replace' ? '' : pinRecoveryAnswer)),
-        lang: data.lang || lang,
-        isLiteMode: data.isLiteMode !== undefined ? data.isLiteMode : isLiteMode,
-        autoBackupFrequency: data.autoBackupFrequency || autoBackupFrequency,
-        autoBackupFilenamePrefix: data.autoBackupFilenamePrefix || autoBackupFilenamePrefix,
-        autoBackupPin: data.settingsIncluded === false ? null : (data.autoBackupPin || (restoreStrategy === 'replace' ? null : storeAutoBackupPin)),
-        autoBackupPinHistory: data.settingsIncluded === false ? [] : (data.autoBackupPinHistory || (restoreStrategy === 'replace' ? [] : autoBackupPinHistory)),
-        disciplineMediaMap: finalDisciplineMedia
-      });
-
-      playCelebrationSound();
-      setBackupModalMode(null);
-      showNotificationToast(
-        lang === 'id' 
-          ? `Pemulihan berhasil (${finalNotes.length} catatan, ${finalTasks.length} tugas)! Memuat ulang...` 
-          : `Restore successful (${finalNotes.length} notes, ${finalTasks.length} tasks)! Reloading...`
-      );
-      setTimeout(() => window.location.reload(), 1200);
-    } catch(err: any) {
-      console.error("Import error:", err);
-      setBackupErrorMessage(
-        lang === 'id' 
-          ? 'Gagal memulihkan data: ' + (err?.message || 'Format tidak didukung.') 
-          : 'Failed to restore: ' + (err?.message || 'Unsupported format.')
-      );
-    } finally {
-      setIsProcessingBackup(false);
-    }
-  };
 
   const handleFrequencySelect = (freq: 'off' | '3_days' | '1_week' | '1_month') => {
     if (freq === 'off') {
-      setAutoBackupFrequency('off');
-      showNotificationToast(lang === 'id' ? 'Pencadangan otomatis dinonaktifkan.' : 'Auto-backup disabled.');
+      if (storeAutoBackupPin && autoBackupFrequency !== 'off') {
+        setPendingAutoBackupFreq('off');
+        setAutoBackupEnableVerifyPin('');
+        setShowAutoBackupEnableVerify(true);
+      } else {
+        setAutoBackupFrequency('off');
+        showNotificationToast(lang === 'id' ? 'Pencadangan otomatis dinonaktifkan.' : 'Auto-backup disabled.');
+      }
     } else {
+      if (freq === autoBackupFrequency) return;
       setPendingAutoBackupFreq(freq);
       if (!storeAutoBackupPin) {
         setAutoBackupPinSetupStep(1);
@@ -1905,7 +1521,7 @@ export default function SettingsScreen({
     >
       {/* Reset progress overlay */}
       {isResetting && (
-        <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md z-[9999] flex flex-col items-center justify-center p-6 text-center">
+        <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-[9999] flex flex-col items-center justify-center p-6 text-center">
           <div className="w-16 h-16 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mb-4" />
           <p className={`font-bold text-lg ${primaryTextThemeClass}`}>
             {lang === 'id' ? 'Mengatur Ulang Aplikasi...' : 'Resetting Application...'}
@@ -2041,7 +1657,12 @@ export default function SettingsScreen({
                           ? user.name 
                           : (tataAccount?.name || user.name || (lang === 'id' ? 'Pengguna Tata' : 'Tata User'))}
                       </h2>
-                      {isAccountPremium ? (
+                      {isTrialActive ? (
+                        <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                          <Sparkles size={10} className="text-emerald-400 shrink-0" />
+                          <span>{lang === 'id' ? 'UJI COBA 6 HARI' : '6-DAY TRIAL'}</span>
+                        </span>
+                      ) : isAccountPremium ? (
                         <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">
                           PREMIUM
                         </span>
@@ -2090,11 +1711,17 @@ export default function SettingsScreen({
                     </div>
                     <div className="shrink-0 flex items-center gap-1.5 text-slate-400">
                       <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                        isAccountPremium 
-                          ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' 
-                          : 'bg-slate-800 text-slate-400'
+                        isTrialActive
+                          ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                          : isAccountPremium 
+                            ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' 
+                            : 'bg-slate-800 text-slate-400'
                       }`}>
-                        {isAccountPremium ? (tataAccount?.premiumType?.includes('lifetime') ? 'Lifetime' : 'Pro Max') : 'Gratis'}
+                        {isTrialActive
+                          ? (lang === 'id' ? 'Uji Coba 6 Hari' : '6-Day Trial')
+                          : isAccountPremium 
+                            ? (tataAccount?.premiumType?.includes('lifetime') ? 'Lifetime' : 'Pro Max') 
+                            : (lang === 'id' ? 'Gratis' : 'Free')}
                       </span>
                       <ChevronRight size={16} className="text-slate-400" />
                     </div>
@@ -2358,27 +1985,56 @@ export default function SettingsScreen({
                     </div>
                   </div>
 
-                  {/* Cadangan & Pemulihan Data (.json) */}
+                  {/* Ekspor Cadangan Data (.json) */}
                   <div 
                     onClick={handleExportClick}
                     className={`w-full flex items-center justify-between px-4 py-3.5 transition-colors text-left cursor-pointer ${cardRowHoverClass}`}
                   >
                     <div className="flex items-center gap-3.5 min-w-0 pr-2">
                       {isOrganic ? (
-                        <Icon3DDatabase size={24} />
+                        <Icon3DDownload size={24} />
                       ) : isLiteMode ? (
                         <LiteStickerIcon variant="database" size="sm" />
                       ) : (
                         <div className="w-8 h-8 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center shrink-0">
-                          <Database size={16} />
+                          <Download size={16} />
                         </div>
                       )}
                       <div className="min-w-0">
                         <span className={`font-semibold text-[14px] block truncate ${cardRowTextClass}`}>
-                          {lang === 'id' ? 'Cadangan & Pemulihan (.json)' : 'Backup & Restore (.json)'}
+                          {lang === 'id' ? 'Ekspor Cadangan Data (.json)' : 'Export Backup (.json)'}
                         </span>
                         <span className={`text-[11px] block truncate ${cardRowSubtextClass}`}>
-                          {lang === 'id' ? 'Ekspor cadangan atau pulihkan catatan & tugas' : 'Export backup or restore notes & tasks'}
+                          {lang === 'id' ? 'Unduh salinan data catatan & tugas' : 'Download copy of notes & tasks'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="shrink-0 flex items-center text-slate-400">
+                      <ChevronRight size={16} />
+                    </div>
+                  </div>
+
+                  {/* Pulihkan Data (.json) */}
+                  <div 
+                    onClick={handleImportClick}
+                    className={`w-full flex items-center justify-between px-4 py-3.5 transition-colors text-left cursor-pointer ${cardRowHoverClass}`}
+                  >
+                    <div className="flex items-center gap-3.5 min-w-0 pr-2">
+                      {isOrganic ? (
+                        <Icon3DUpload size={24} />
+                      ) : isLiteMode ? (
+                        <LiteStickerIcon variant="database" size="sm" />
+                      ) : (
+                        <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                          <Upload size={16} />
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <span className={`font-semibold text-[14px] block truncate ${cardRowTextClass}`}>
+                          {lang === 'id' ? 'Pulihkan Data (.json)' : 'Restore Data (.json)'}
+                        </span>
+                        <span className={`text-[11px] block truncate ${cardRowSubtextClass}`}>
+                          {lang === 'id' ? 'Impor & pulihkan dari file cadangan' : 'Import & restore from backup file'}
                         </span>
                       </div>
                     </div>
@@ -2931,7 +2587,7 @@ export default function SettingsScreen({
                       {/* Theme cards grid */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {[
-                          {
+                          ...((appVersion === 'organic' || appVersion === 'pro_max') ? [{
                             id: 'organic',
                             name: 'Pro Max',
                             vibe: lang === 'id' ? 'Hangat, alami & sentuhan 3D eksklusif' : 'Warm, tactile & exclusive 3D tones',
@@ -2941,7 +2597,7 @@ export default function SettingsScreen({
                             accent: '#C35E40',
                             text: '#24170D',
                             dot: 'bg-[#C35E40]'
-                          },
+                          }] : []),
                           {
                             id: 'dark',
                             name: lang === 'id' ? 'Gelap' : 'Dark',
@@ -3014,6 +2670,32 @@ export default function SettingsScreen({
                             <div
                               key={theme.id}
                               onClick={() => {
+                                if (theme.id === 'organic') {
+                                  if (!tataAccount) {
+                                    playTapSound();
+                                    setShowGoogleTrialModal(true);
+                                    return;
+                                  }
+                                  if (!canAccessPro) {
+                                    playTapSound();
+                                    setShowLicenseModal(true);
+                                    showNotificationToast(
+                                      lang === 'id' 
+                                        ? 'Masa uji coba selesai. Akun di Tata Lite, semua data tetap aman!' 
+                                        : 'Trial ended. Active in Tata Lite, data is safe!'
+                                    );
+                                    return;
+                                  }
+                                  setAppVersion('pro_max');
+                                  setAppTheme('organic');
+                                  try {
+                                    localStorage.setItem('tata_app_version', 'pro_max');
+                                    localStorage.setItem('tata_theme', 'organic');
+                                  } catch (e) {}
+                                  showNotificationToast(lang === 'id' ? 'Mode Pro Max & Tema Organik diaktifkan!' : 'Pro Max Mode & Organic theme activated!');
+                                  return;
+                                }
+
                                 setAppTheme(theme.id as any);
                                 try {
                                   localStorage.setItem('tata_theme', theme.id);
@@ -3970,34 +3652,64 @@ export default function SettingsScreen({
                     <span className="text-xs font-bold text-slate-400 uppercase tracking-wider px-3 block">
                       {lang === 'id' ? 'Cadangan & Pemulihan Data' : 'Data Backup & Restore'}
                     </span>
-                    <div className={`${cardThemeClass} rounded-2xl p-4 sm:p-5 shadow-sm`}>
-                      <button 
-                        onClick={handleExportClick}
-                        className="w-full flex items-center justify-between p-3.5 sm:p-4 bg-slate-950/70 hover:bg-slate-950 border border-slate-800 rounded-2xl transition-all text-left cursor-pointer active:scale-95 group"
-                      >
-                        <div className="flex items-center gap-3.5 min-w-0 pr-2">
-                          {isOrganic ? (
-                            <Icon3DDatabase size={28} />
-                          ) : isLiteMode ? (
-                            <LiteStickerIcon variant="database" size="md" />
-                          ) : (
-                            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center shrink-0">
-                              <Database size={20} />
+                    <div className={`${cardThemeClass} rounded-2xl p-3 sm:p-4 shadow-sm`}>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {/* Tombol Ekspor */}
+                        <button 
+                          type="button"
+                          onClick={handleExportClick}
+                          className="flex items-center justify-between p-3.5 sm:p-4 bg-slate-950/70 hover:bg-slate-950 border border-slate-800 rounded-2xl transition-all text-left cursor-pointer active:scale-98 group"
+                        >
+                          <div className="flex items-center gap-3.5 min-w-0 pr-2">
+                            {isOrganic ? (
+                              <Icon3DDownload size={26} />
+                            ) : (
+                              <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center shrink-0">
+                                <Download size={18} />
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <p className={`font-bold text-sm ${primaryTextThemeClass} group-hover:text-indigo-400 transition-colors`}>
+                                {lang === 'id' ? 'Ekspor Cadangan (.json)' : 'Export Backup (.json)'}
+                              </p>
+                              <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">
+                                {lang === 'id' ? 'Unduh file cadangan aman ke perangkat' : 'Download secure backup file to device'}
+                              </p>
                             </div>
-                          )}
-                          <div className="min-w-0">
-                            <p className={`font-bold text-sm ${primaryTextThemeClass} group-hover:text-indigo-400 transition-colors`}>
-                              {lang === 'id' ? 'Kelola Cadangan & Pemulihan (.json)' : 'Manage Backup & Restore (.json)'}
-                            </p>
-                            <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">
-                              {lang === 'id' ? 'Ekspor cadangan aman atau pulihkan catatan, tugas & transaksi' : 'Export secure backup or restore notes, tasks & records'}
-                            </p>
                           </div>
-                        </div>
-                        <div className="shrink-0 flex items-center text-slate-500 group-hover:text-indigo-400 transition-colors">
-                          <ChevronRight size={18} />
-                        </div>
-                      </button>
+                          <div className="shrink-0 flex items-center text-slate-500 group-hover:text-indigo-400 transition-colors">
+                            <ChevronRight size={18} />
+                          </div>
+                        </button>
+
+                        {/* Tombol Pulihkan */}
+                        <button 
+                          type="button"
+                          onClick={handleImportClick}
+                          className="flex items-center justify-between p-3.5 sm:p-4 bg-slate-950/70 hover:bg-slate-950 border border-slate-800 rounded-2xl transition-all text-left cursor-pointer active:scale-98 group"
+                        >
+                          <div className="flex items-center gap-3.5 min-w-0 pr-2">
+                            {isOrganic ? (
+                              <Icon3DUpload size={26} />
+                            ) : (
+                              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                                <Upload size={18} />
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <p className={`font-bold text-sm ${primaryTextThemeClass} group-hover:text-emerald-400 transition-colors`}>
+                                {lang === 'id' ? 'Pulihkan Data (.json)' : 'Restore Data (.json)'}
+                              </p>
+                              <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">
+                                {lang === 'id' ? 'Impor & pulihkan dari file cadangan' : 'Import & restore from backup file'}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="shrink-0 flex items-center text-slate-500 group-hover:text-emerald-400 transition-colors">
+                            <ChevronRight size={18} />
+                          </div>
+                        </button>
+                      </div>
                     </div>
                   </div>
 
@@ -5528,7 +5240,11 @@ export default function SettingsScreen({
                 </div>
               )}
               <h3 className={`text-base font-extrabold ${primaryTextThemeClass} font-sans`}>{lang === 'id' ? 'Verifikasi PIN Cadangan' : 'Verify Backup PIN'}</h3>
-              <p className="text-[11px] text-slate-400 leading-normal mt-1.5">{lang === 'id' ? 'Masukkan PIN Cadangan Otomatis Anda untuk menyimpan perubahan frekuensi.' : 'Please enter your Auto-Backup PIN to confirm frequency alteration.'}</p>
+              <p className="text-[11px] text-slate-400 leading-normal mt-1.5">
+                {pendingAutoBackupFreq === 'off'
+                  ? (lang === 'id' ? 'Masukkan PIN Cadangan Otomatis Anda untuk menonaktifkan pencadangan otomatis.' : 'Please enter your Auto-Backup PIN to disable auto-backup.')
+                  : (lang === 'id' ? 'Masukkan PIN Cadangan Otomatis Anda untuk menyimpan perubahan frekuensi.' : 'Please enter your Auto-Backup PIN to confirm frequency alteration.')}
+              </p>
             </div>
 
             {/* Segmented PIN input */}
@@ -5574,6 +5290,23 @@ export default function SettingsScreen({
             {autoBackupEnableVerifyError && (
               <p className="text-[10px] text-red-400 font-bold text-center mb-4 animate-pulse">{lang === 'id' ? 'PIN Cadangan salah!' : 'Incorrect Backup PIN!'}</p>
             )}
+
+            <div className="text-center mb-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAutoBackupEnableVerify(false);
+                  setAutoBackupEnableVerifyPin('');
+                  setPendingAutoBackupFreq(null);
+                  setForgotAutoBackupAnswerInput('');
+                  setForgotAutoBackupAnswerError(false);
+                  setShowForgotAutoBackupPinModal(true);
+                }}
+                className="text-[11px] text-amber-400 hover:text-amber-300 font-bold underline transition-colors cursor-pointer"
+              >
+                {lang === 'id' ? 'Lupa PIN Cadangan?' : 'Forgot Backup PIN?'}
+              </button>
+            </div>
 
             <div className="flex gap-3">
               <button 
@@ -5946,7 +5679,7 @@ export default function SettingsScreen({
                 onClick={handleAutoBackupPinForceReset}
                 className="text-[11px] text-amber-400 hover:text-amber-300 font-bold underline transition-colors cursor-pointer"
               >
-                {lang === 'id' ? 'Lupa PIN? Reset Paksa PIN Cadangan' : 'Forgot PIN? Force Reset Backup PIN'}
+                {lang === 'id' ? 'Lupa PIN? Pemulihan dengan Pertanyaan Keamanan' : 'Forgot PIN? Recover with Security Question'}
               </button>
             </div>
 
@@ -5974,6 +5707,105 @@ export default function SettingsScreen({
                 {lang === 'id' ? 'Nonaktifkan' : 'Disable'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* POPUP MODAL: FORGOT AUTO BACKUP PIN RECOVERY */}
+      {showForgotAutoBackupPinModal && (
+        <div className="fixed inset-0 z-[270] bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className={`${modalThemeClass} p-6 rounded-[2rem] w-full max-w-sm shadow-2xl relative ${forgotAutoBackupAnswerError ? 'animate-pulse border-red-500/50' : ''}`}>
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mx-auto mb-3">
+              <KeyRound size={22} />
+            </div>
+            <h3 className="text-base font-black text-slate-50 mb-1 text-center">
+              {lang === 'id' ? 'Pemulihan PIN Cadangan' : 'Backup PIN Recovery'}
+            </h3>
+
+            {!pinRecoveryAnswer ? (
+              <div className="space-y-4 pt-2">
+                <div className="bg-amber-500/10 border border-amber-500/30 p-4 rounded-2xl text-left space-y-2">
+                  <div className="flex items-center gap-2 text-amber-400 font-bold text-xs">
+                    <AlertTriangle className="w-4 h-4 shrink-0" />
+                    <span>{lang === 'id' ? 'Pertanyaan Keamanan Belum Diatur' : 'No Security Question Set'}</span>
+                  </div>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    {lang === 'id'
+                      ? 'Pertanyaan pemulihan keamanan belum diatur pada sistem PIN Anda, sehingga PIN cadangan tidak dapat dipulihkan lewat pertanyaan keamanan.'
+                      : 'No security recovery question was configured on your PIN system, so the backup PIN cannot be recovered via security answer.'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowForgotAutoBackupPinModal(false)}
+                  className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-750 text-slate-200 text-xs font-bold transition-colors cursor-pointer"
+                >
+                  {lang === 'id' ? 'Saya Mengerti' : 'I Understand'}
+                </button>
+              </div>
+            ) : (
+              <div className="pt-2">
+                <p className="text-xs text-slate-400 mb-3 text-center leading-relaxed">
+                  {lang === 'id'
+                    ? 'Jawab pertanyaan keamanan akun Tata Anda untuk me-reset PIN cadangan otomatis.'
+                    : 'Answer your Tata account security question to reset the auto-backup PIN.'}
+                </p>
+
+                {pinRecoveryQuestion && (
+                  <div className="bg-slate-950 border border-slate-800 p-3.5 rounded-2xl mb-3 text-left">
+                    <span className="text-[10px] text-amber-400 font-bold uppercase tracking-widest mb-1 block">
+                      {lang === 'id' ? 'Pertanyaan Keamanan' : 'Security Question'}
+                    </span>
+                    <p className={`text-xs sm:text-sm font-medium ${primaryTextThemeClass} leading-snug`}>{pinRecoveryQuestion}</p>
+                  </div>
+                )}
+
+                <input
+                  type="text"
+                  autoFocus
+                  value={forgotAutoBackupAnswerInput}
+                  onChange={e => {
+                    setForgotAutoBackupAnswerInput(e.target.value);
+                    setForgotAutoBackupAnswerError(false);
+                  }}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      handleForgotAutoBackupPinSubmit();
+                    }
+                  }}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-50 mb-3 outline-none focus:border-amber-500/60 transition-colors"
+                  placeholder={lang === 'id' ? "Jawaban Anda..." : "Your Answer..."}
+                />
+
+                {forgotAutoBackupAnswerError && (
+                  <p className="text-xs text-rose-400 font-semibold mb-3 text-left">
+                    {lang === 'id' ? 'Jawaban keamanan salah. Coba lagi.' : 'Incorrect security answer. Try again.'}
+                  </p>
+                )}
+
+                <div className="flex justify-end gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowForgotAutoBackupPinModal(false);
+                      setForgotAutoBackupAnswerInput('');
+                      setForgotAutoBackupAnswerError(false);
+                    }}
+                    className="flex-1 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-200 transition-colors cursor-pointer bg-slate-950/40"
+                  >
+                    {lang === 'id' ? 'Batal' : 'Cancel'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleForgotAutoBackupPinSubmit}
+                    disabled={!forgotAutoBackupAnswerInput.trim()}
+                    className="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 text-xs font-extrabold disabled:opacity-50 transition-colors cursor-pointer shadow-md shadow-amber-500/20"
+                  >
+                    {lang === 'id' ? 'Verifikasi & Reset' : 'Verify & Reset'}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -6424,6 +6256,10 @@ export default function SettingsScreen({
                   }
                   setAppVersion('pro_max');
                   setAppTheme('organic');
+                  try {
+                    localStorage.setItem('tata_app_version', 'pro_max');
+                    localStorage.setItem('tata_theme', 'organic');
+                  } catch (e) {}
                   setShowModeModal(false);
                   showNotificationToast(lang === 'id' ? 'Mode Pro Max aktif!' : 'Pro Max Mode active!');
                 }}
@@ -6478,7 +6314,11 @@ export default function SettingsScreen({
                     return;
                   }
                   setAppVersion('pro');
-                  if (appTheme === 'organic') setAppTheme('dark');
+                  if (appTheme === 'organic') {
+                    setAppTheme('dark');
+                    try { localStorage.setItem('tata_theme', 'dark'); } catch (e) {}
+                  }
+                  try { localStorage.setItem('tata_app_version', 'pro'); } catch (e) {}
                   setShowModeModal(false);
                   showNotificationToast(lang === 'id' ? 'Mode Pro aktif!' : 'Pro Mode active!');
                 }}
@@ -6516,7 +6356,11 @@ export default function SettingsScreen({
               <button
                 onClick={() => {
                   setAppVersion('lite');
-                  if (appTheme === 'organic') setAppTheme('dark');
+                  if (appTheme === 'organic') {
+                    setAppTheme('dark');
+                    try { localStorage.setItem('tata_theme', 'dark'); } catch (e) {}
+                  }
+                  try { localStorage.setItem('tata_app_version', 'lite'); } catch (e) {}
                   setShowModeModal(false);
                   showNotificationToast(lang === 'id' ? 'Mode Lite aktif!' : 'Lite Mode active!');
                 }}

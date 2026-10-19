@@ -92,6 +92,7 @@ import { getOrganicThemePalette } from './organicThemePalettes';
 import OrganicStreakModal from './OrganicStreakModal';
 import { getLargeItem, getLargeItemSync } from '../../utils/db';
 import { triggerHaptic, playTaskCompleteSound, playConfirmSound, playTapSound } from '../../utils/sound';
+import { generateId } from '../../utils';
 
 interface OrganicHomeProps {
   appTheme?: string;
@@ -461,15 +462,15 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
 
   const handleCreateNewNote = () => {
     triggerHaptic('light');
-    const newId = Date.now().toString();
+    const newId = generateId();
     const newNote: Note = {
       id: newId,
       title: '',
       content: '',
       date: new Date().toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' }),
+      updatedAt: Date.now(),
       tags: []
     };
-    addNote(newNote);
     onOpenNote(newNote);
   };
 
@@ -1329,6 +1330,130 @@ export const OrganicHomeView = React.memo(function OrganicHomeView({
                 </div>
               )}
             </div>
+
+            {/* 8. CATATAN TERBARU (RECENT NOTES) */}
+            {recentNotes.length > 0 && (
+              <div className="w-full pt-1">
+                <div className="flex items-center justify-between gap-2.5 mb-3 px-1">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-7 h-7 rounded-xl flex items-center justify-center shadow-xs ${palette.brandBg}`}>
+                      <Icon3DFileText size={16} />
+                    </div>
+                    <h2 className={`text-sm font-extrabold uppercase tracking-wider ${palette.priorityTitle}`}>
+                      {lang === 'id' ? 'Catatan Terbaru' : 'Recent Notes'}
+                    </h2>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${palette.searchBadge}`}>
+                      {recentNotes.length}
+                    </span>
+                  </div>
+
+                  <button 
+                    onClick={() => {
+                      triggerHaptic('light');
+                      onNavigate('search');
+                    }}
+                    className={`text-xs font-bold hover:underline flex items-center gap-1 cursor-pointer touch-manipulation select-none ${palette.moodLink}`}
+                  >
+                    <span>{lang === 'id' ? 'Semua Catatan' : 'All Notes'}</span>
+                    <Icon3DChevronRight size={13} />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {recentNotes.slice(0, 4).map((note) => {
+                    const firstImage = note.thumbnailUrl || extractFirstImageUrl(note.content);
+                    const cleanText = getCleanTextPreview(note.content);
+                    const displayTitle = note.title || (firstImage ? (lang === 'id' ? 'Catatan Foto' : 'Photo Note') : (lang === 'id' ? 'Catatan Tanpa Judul' : 'Untitled Note'));
+
+                    return (
+                      <div
+                        key={note.id}
+                        onClick={() => {
+                          triggerHaptic('light');
+                          onOpenNote(note);
+                        }}
+                        className={`p-3.5 sm:p-4 rounded-2xl border transition-all cursor-pointer shadow-xs flex flex-col justify-between group touch-manipulation ${palette.noteCard} ${palette.noteCardBorder} ${palette.noteCardHoverBorder} hover:shadow-md`}
+                      >
+                        <div>
+                          {firstImage && (
+                            <div className="relative w-full h-28 sm:h-32 mb-2.5 rounded-xl overflow-hidden bg-black/10 dark:bg-white/5 border border-black/5 dark:border-white/10">
+                              <img
+                                src={firstImage}
+                                alt="Preview"
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                loading="lazy"
+                              />
+                              <div className="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-xs text-white text-[9px] font-bold flex items-center gap-1">
+                                <Icon3DCamera size={11} />
+                                <span>{lang === 'id' ? 'Foto' : 'Photo'}</span>
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="flex items-center justify-between gap-1 mb-2">
+                            <div className="flex items-center gap-1 overflow-x-hidden">
+                              {note.pinned && (
+                                <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-md uppercase flex items-center gap-1 shrink-0 ${palette.noteTagBadge}`}>
+                                  <Icon3DPin size={11} />
+                                  <span>{lang === 'id' ? 'Prioritas' : 'Pinned'}</span>
+                                </span>
+                              )}
+                              {note.tags && note.tags.length > 0 && (
+                                <span className="text-[9px] font-bold opacity-75 bg-black/5 dark:bg-white/5 px-1.5 py-0.5 rounded-md uppercase truncate max-w-[90px]">
+                                  {note.tags[0].replace('#', '')}
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-1 shrink-0">
+                              {note.sharedWithAI && (
+                                <span className="px-1.5 py-0.5 bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 text-[9px] font-bold rounded flex items-center gap-0.5" title={lang === 'id' ? 'Telah masuk Tata AI' : 'Shared with Tata AI'}>
+                                  <Icon3DTataAI size={11} />
+                                  <span>AI</span>
+                                </span>
+                              )}
+                              <button
+                                type="button"
+                                onClick={(e) => handleTogglePinNote(note, e)}
+                                className="w-7 h-7 min-w-[28px] min-h-[28px] sm:w-8 sm:h-8 rounded-lg flex items-center justify-center opacity-70 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5 active:scale-90 transition-all cursor-pointer touch-manipulation"
+                                title={note.pinned ? (lang === 'id' ? 'Lepas dari Prioritas Utama' : 'Unpin note') : (lang === 'id' ? 'Sematkan ke Prioritas' : 'Pin note')}
+                              >
+                                {note.pinned ? <Icon3DClose size={13} /> : <Icon3DPin size={14} className="opacity-70" />}
+                              </button>
+                            </div>
+                          </div>
+
+                          <h4 className={`text-xs sm:text-sm font-bold transition-colors line-clamp-1 leading-snug mb-1 ${palette.noteCardText}`}>
+                            {displayTitle}
+                          </h4>
+
+                          {note.isLocked ? (
+                            <p className="text-[11px] text-amber-500 font-medium flex items-center gap-1 my-1">
+                              <Icon3DGoldLock size={13} />
+                              <span>{lang === 'id' ? 'Terkunci PIN' : 'Locked with PIN'}</span>
+                            </p>
+                          ) : (
+                            <p className={`text-[11px] line-clamp-2 leading-relaxed ${palette.noteCardSub}`}>
+                              {cleanText || (firstImage ? (lang === 'id' ? '📸 [Berisi Foto]' : '📸 [Contains Photo]') : '...')}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="flex items-center justify-between pt-2.5 mt-2 border-t border-black/5 dark:border-white/5 text-[10px] font-mono opacity-60">
+                          <span>{note.date}</span>
+                          {note.reminder && (
+                            <span className="flex items-center gap-1 text-rose-500 font-sans font-bold">
+                              <Icon3DBell size={11} />
+                              <span>{note.reminder}</span>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Elegant Garden / Aesthetic Footer */}
             <div className="pt-6 pb-8 flex flex-col items-center justify-center text-center">

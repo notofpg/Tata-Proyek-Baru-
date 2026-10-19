@@ -326,6 +326,7 @@ export default function AICompanionScreen({ onBack }: AICompanionProps) {
         content: text,
         tags: ['tata-ai', 'ai'],
         date: todayStr,
+        updatedAt: Date.now(),
         sharedWithAI: true
       };
       addNote(newNote);
@@ -354,6 +355,7 @@ export default function AICompanionScreen({ onBack }: AICompanionProps) {
       content: formattedContent,
       tags: ['tata-ai', 'chat-export'],
       date: todayStr,
+      updatedAt: Date.now(),
       sharedWithAI: true
     };
     addNote(newNote);

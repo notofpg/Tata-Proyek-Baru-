@@ -415,9 +415,8 @@ const safeSetItem = (key: string, value: string) => {
           }
         } catch (_) {}
       }
-      try {
-        localStorage.removeItem(key);
-      } catch (_) {}
+      // CRITICAL: DO NOT call localStorage.removeItem(key) which wiped out existing user data!
+      // If quota is full, memoryCache and IndexedDB still preserve the data safely.
     } else {
       console.warn(`[Tata Storage] Failed to save "${key}" to localStorage:`, e);
     }
@@ -1986,6 +1985,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     safeSetItem('tata_user', JSON.stringify(lightweightUser));
   }, [user]);
 
+  const currentNotesRef = useRef<Note[]>(notes);
+  useEffect(() => {
+    currentNotesRef.current = notes;
+  }, [notes]);
+
   const notesInitStrRef = useRef<string | null>(null);
   const notesSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   useEffect(() => { 
@@ -2122,38 +2126,38 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const addNote = (note: Note) => {
     playTapSound();
-    setNotes(prev => {
-      const next = prev.some(n => n.id === note.id) ? prev.map(n => n.id === note.id ? note : n) : [note, ...prev];
-      try {
-        const str = JSON.stringify(next);
-        safeSetItem('tata_notes', str);
-        setLargeItem('tata_notes', str).catch(() => {});
-      } catch (_) {}
-      return next;
-    });
+    const prev = currentNotesRef.current || [];
+    const next = prev.some(n => n.id === note.id) ? prev.map(n => n.id === note.id ? note : n) : [note, ...prev];
+    currentNotesRef.current = next;
+    try {
+      const str = JSON.stringify(next);
+      safeSetItem('tata_notes', str);
+      setLargeItem('tata_notes', str).catch(() => {});
+    } catch (_) {}
+    setNotes(next);
   };
   const updateNote = (note: Note) => {
-    setNotes(prev => {
-      const next = prev.map(n => n.id === note.id ? note : n);
-      try {
-        const str = JSON.stringify(next);
-        safeSetItem('tata_notes', str);
-        setLargeItem('tata_notes', str).catch(() => {});
-      } catch (_) {}
-      return next;
-    });
+    const prev = currentNotesRef.current || [];
+    const next = prev.map(n => n.id === note.id ? note : n);
+    currentNotesRef.current = next;
+    try {
+      const str = JSON.stringify(next);
+      safeSetItem('tata_notes', str);
+      setLargeItem('tata_notes', str).catch(() => {});
+    } catch (_) {}
+    setNotes(next);
   };
   const deleteNote = (id: string) => {
     playDeleteSound();
-    setNotes(prev => {
-      const next = prev.filter(n => n.id !== id);
-      try {
-        const str = JSON.stringify(next);
-        safeSetItem('tata_notes', str);
-        setLargeItem('tata_notes', str).catch(() => {});
-      } catch (_) {}
-      return next;
-    });
+    const prev = currentNotesRef.current || [];
+    const next = prev.filter(n => n.id !== id);
+    currentNotesRef.current = next;
+    try {
+      const str = JSON.stringify(next);
+      safeSetItem('tata_notes', str);
+      setLargeItem('tata_notes', str).catch(() => {});
+    } catch (_) {}
+    setNotes(next);
   };
 
   const addTask = (task: Task) => {
