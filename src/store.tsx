@@ -9,6 +9,8 @@ import { playTaskCompleteSound, playTaskUncheckSound, playCelebrationSound, play
 import { getStoredJourneyStartDate, calculateJourneyDay, getTodayDateString, TATA_JOURNEY_START_KEY } from './utils/journey';
 import { generateInitialsAvatar, sanitizeAvatarUrl } from './utils/avatar';
 
+export const AppContext = createContext<any>(undefined);
+
 const safeReadStorage = (key: string): string | null => {
   try {
     return window.localStorage.getItem(key);
@@ -63,7 +65,7 @@ const safeSetItem = (key: string, value: string) => {
           if (Array.isArray(parsed)) {
             const lightweightNotes = parsed.map((n: any) => ({
               ...n,
-              content: typeof n.content === 'string' ? n.content.replace(/src="data:image\/[^\"]+"/g, 'src=""') : '',
+              content: typeof n.content === 'string' ? n.content.replace(/src="data:image\/[^"]+"/g, 'src=""') : '',
               thumbnailUrl: n.thumbnailUrl && String(n.thumbnailUrl).startsWith('data:') ? undefined : n.thumbnailUrl
             }));
             localStorage.setItem(key, JSON.stringify(lightweightNotes));
