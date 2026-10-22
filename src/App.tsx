@@ -1,7 +1,9 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { playTapSound } from "./utils/sound";
-import { Home, CheckCircle2, Calendar as CalendarIcon, Settings, Lock, Layers, Bell, X, Wallet, WifiOff, FileText, Database, Download, AlertTriangle, Bot, Sparkles, Shuffle, RefreshCw, Gamepad2, Keyboard, MonitorSmartphone, CloudSun, CloudOff, Star, Plus, MoreHorizontal, Search, Shield, BellRing, ArrowLeft, ListTodo, CheckSquare, MessageSquare, CircleDashed, Briefcase, Target, TimerReset, Trash2, PlusCircle, PenLine, Sparkle, ChevronRight, Palette, NotebookText, CreditCard, ShoppingBag, TrendingUp, BadgeDollarSign, Coins, BriefcaseBusiness, Landmark, LandmarkIcon, Users, Moon, SunMedium, ChevronLeft, ArrowUpRight, BellDot, Heart, NotebookPen, Rocket, PackageCheck, CheckCheck, KeyRound, LockKeyhole, Cpu, Wrench, Zap, Activity, DownloadCloud, UploadCloud, ServerCog, Bookmark, Save, UserCircle2, Cctv, AppWindow, LucideIcon } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import type { Note } from './types';
+import { useAppStore } from './store';
+import { useTranslation } from './translations';
+import { safeReadStorage, safeWriteStorage } from './store-safety';
+
 import HomeScreen from './screens/HomeScreen';
 import TasksScreen from './screens/TasksScreen';
 import CalendarScreen from './screens/CalendarScreen';
@@ -20,52 +22,52 @@ import TetrisScreen from './screens/TetrisScreen';
 import MemoryGameScreen from './screens/MemoryGameScreen';
 import SpaceInvadersScreen from './screens/SpaceInvadersScreen';
 import type { SettingsSectionType } from './screens/SettingsScreen';
-import { addDynamicNotif } from './utils/notifications';
-import { backgroundTimer } from './utils/backgroundTimer';
-import { Note } from './types';
-import { generateId, verifyPin, createPinHash, encryptData } from './utils';
-import { useAppStore } from './store';
-import { useTranslation } from './translations';
-import { getLargeItem, getLargeItemSync } from './utils/db';
-import { isSwipeOnInteractiveOrScrollable, MIN_SWIPE_DISTANCE, MIN_SWIPE_RATIO, MAX_SWIPE_TIME_MS } from './utils/swipeUtils';
-import {
-  Icon3DNavHome,
-  Icon3DNavTasks,
-  Icon3DNavCalendar,
-  Icon3DNavNotes,
-  Icon3DNavSettings,
-  Icon3DGoldLock,
-  Icon3DShuffle,
-  Icon3DBackspace,
-  Icon3DWarning,
-  Icon3DShield,
-  Icon3DKey,
-  Icon3DClose,
-  Icon3DBell
-} from './components/home/Organic3DIcons';
 import { getOrganicThemePalette } from './components/home/organicThemePalettes';
-import { LiteStickerIcon } from './components/LiteModeIcons';
-import { safeReadStorage, safeWriteStorage, safeRemoveStorage } from './store-safety';
 
-export type ScreenItem = 'home' | 'tasks' | 'search' | 'calendar' | 'finance' | 'settings' | 'note-editor' | 'game' | 'tictactoe' | 'puzzle' | 'tetris' | 'games-hub' | 'memory' | 'space-invaders' | 'ai-companion' | 'account';
+export type ScreenItem =
+  | 'home'
+  | 'tasks'
+  | 'search'
+  | 'calendar'
+  | 'finance'
+  | 'settings'
+  | 'note-editor'
+  | 'game'
+  | 'tictactoe'
+  | 'puzzle'
+  | 'tetris'
+  | 'games-hub'
+  | 'memory'
+  | 'space-invaders'
+  | 'ai-companion'
+  | 'account';
 
 export default function App() {
-  const { appPin, isUnlocked, setIsUnlocked, lang, tasks, notes, reminderActive, reminderTime, hasCompletedOnboarding, setHasCompletedOnboarding, isRefreshing, refreshStep, handleRefreshApp, isLiteMode, appVersion, transactions, moods, user, streak, debts, pinRecoveryQuestion, pinRecoveryAnswer, pinHistory, savingsTarget, savingsTargetTitle, savingsBalance, archivedTags, autoBackupFrequency, autoBackupFilenamePrefix, lastAutoBackupTimestamp, setLastAutoBackupTimestamp, autoBackupPin: storeAutoBackupPin, autoBackupPinHistory, createFullBackup, tataAccount } = useAppStore();
+  const store = useAppStore();
+  const {
+    hasCompletedOnboarding,
+    setHasCompletedOnboarding,
+    lang,
+    isUnlocked,
+    setIsUnlocked,
+  } = store;
+
   const t = useTranslation(lang);
 
-  const [currentScreen, _setCurrentScreen] = useState<ScreenItem>('home');
-  const [screenExtra, setScreenExtra] = useState<any>(null);
-  const [activeSettingsSection, setActiveSettingsSection] = useState<SettingsSectionType>(null);
-  const [showAutoBackupModal, setShowAutoBackupModal] = useState(false);
-  const [enteredAutoBackupPin, setEnteredAutoBackupPin] = useState('');
-  const [enteredAutoBackupPinError, setEnteredAutoBackupPinError] = useState(false);
-  const [localToastMessage, setLocalToastMessage] = useState<string | null>(null);
-  const [inAppAlarm, setInAppAlarm] = useState<{ id: number; title: string; body: string; isAlarm?: boolean; noteId?: string } | null>(null);
-
   const appThemeInit = () => {
-    const stored = safeReadStorage('tata_theme') as 'dark' | 'light' | 'pink' | 'cool' | 'cute' | 'simple' | 'organic' | 'wallpaper' | null;
+    const stored = safeReadStorage('tata_theme') as
+      | 'dark'
+      | 'light'
+      | 'pink'
+      | 'cool'
+      | 'cute'
+      | 'simple'
+      | 'organic'
+      | 'wallpaper'
+      | null;
     const currentVersion = safeReadStorage('tata_app_version') || 'lite';
     const base = stored || 'dark';
+
     if (currentVersion === 'lite' && (base === 'organic' || base === 'wallpaper')) return 'dark';
     if (currentVersion !== 'organic' && currentVersion !== 'pro_max' && base === 'organic') return 'dark';
     if (currentVersion === 'organic' || currentVersion === 'pro_max') return base || 'organic';
@@ -73,110 +75,112 @@ export default function App() {
   };
 
   const [appTheme, setAppTheme] = useState<'dark' | 'light' | 'pink' | 'cool' | 'cute' | 'simple' | 'organic' | 'wallpaper'>(appThemeInit);
-  const [wallpaperAccent, setWallpaperAccent] = useState<string>(() => safeReadStorage('tata_wallpaper_accent') || 'blue');
+  const [currentScreen, setCurrentScreen] = useState<ScreenItem>('home');
+  const [screenExtra, setScreenExtra] = useState<any>(null);
+  const [activeSettingsSection, setActiveSettingsSection] = useState<SettingsSectionType>(null);
 
   useEffect(() => {
     safeWriteStorage('tata_theme', appTheme);
   }, [appTheme]);
 
   useEffect(() => {
-    safeWriteStorage('tata_wallpaper_accent', wallpaperAccent);
-  }, [wallpaperAccent]);
-
-  useEffect(() => {
-    const handleAccentChange = () => {
-      const stored = safeReadStorage('tata_wallpaper_accent');
-      if (stored) setWallpaperAccent(stored);
-    };
-    const handleSettingsChange = () => {
-      try {
-        setWallpaperDim(parseInt(safeReadStorage('tata_wallpaper_dim') || '35', 10));
-        setWallpaperBlur(parseInt(safeReadStorage('tata_wallpaper_blur') || '0', 10));
-        setWallpaperFit((safeReadStorage('tata_wallpaper_fit') as 'cover' | 'contain') || 'cover');
-        setWallpaperPosition((safeReadStorage('tata_wallpaper_position') as 'center' | 'top' | 'bottom') || 'center');
-      } catch (e) {
-        console.warn('[Tata Storage] Failed to sync wallpaper settings safely.', e);
-      }
-    };
-
-    window.addEventListener('tata_wallpaper_accent_changed', handleAccentChange);
-    window.addEventListener('tata_wallpaper_settings_changed', handleSettingsChange);
-    return () => {
-      window.removeEventListener('tata_wallpaper_accent_changed', handleAccentChange);
-      window.removeEventListener('tata_wallpaper_settings_changed', handleSettingsChange);
-    };
-  }, []);
-
-  useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
-      window.history.replaceState({ screen: 'home', section: null }, '');
+      const state = { screen: currentScreen, section: activeSettingsSection };
+      window.history.replaceState(state, '', window.location.href);
     } catch (e) {
       console.warn('[Tata App] Failed to replace history state safely.', e);
     }
-  }, []);
+  }, [currentScreen, activeSettingsSection]);
 
-  const [customWallpaper, setCustomWallpaper] = useState<string | null>(() => getLargeItemSync('tata_custom_wallpaper'));
-  const [wallpaperDim, setWallpaperDim] = useState<number>(() => parseInt(safeReadStorage('tata_wallpaper_dim') || '35', 10));
-  const [wallpaperBlur, setWallpaperBlur] = useState<number>(() => parseInt(safeReadStorage('tata_wallpaper_blur') || '0', 10));
-  const [wallpaperFit, setWallpaperFit] = useState<'cover' | 'contain'>(() => (safeReadStorage('tata_wallpaper_fit') as 'cover' | 'contain') || 'cover');
-  const [wallpaperPosition, setWallpaperPosition] = useState<'center' | 'top' | 'bottom'>(() => (safeReadStorage('tata_wallpaper_position') as 'center' | 'top' | 'bottom') || 'center');
+  const palette = useMemo(() => getOrganicThemePalette(appTheme), [appTheme]);
 
-  useEffect(() => {
-    const checkNotifications = () => {
-      const now = new Date();
-      const currentHour = now.getHours().toString().padStart(2, '0');
-      const currentMinute = now.getMinutes().toString().padStart(2, '0');
-      const currentTime = `${currentHour}:${currentMinute}`;
-      const localDate = new Date(now.getTime() - (now.getTimezoneOffset() * 60000));
-      const todayDate = localDate.toISOString().split('T')[0];
-      let lastNotif = safeReadStorage('tata_last_notif_date_time') || '';
+  const navigate = (screen: ScreenItem, extra?: any) => {
+    setCurrentScreen(screen);
+    setScreenExtra(extra ?? null);
+    setActiveSettingsSection(null);
+  };
 
-      const sendNotification = (title: string, body: string, isImportant: boolean = false, noteId?: string, isMissedBacklog: boolean = false) => {
-        const id = Date.now();
-        const isVisible = document.visibilityState === 'visible';
-        if (typeof addDynamicNotif === 'function') {
-          try {
-            addDynamicNotif({
-              title: isMissedBacklog ? `[${lang === 'id' ? 'Terlewat' : 'Missed'}] ${title}` : title,
-              body,
-              type: noteId ? 'note' : isImportant ? 'task' : 'general',
-              targetScreen: noteId ? 'note-editor' : 'tasks',
-              targetId: noteId,
-              priority: isImportant ? 'high' : 'medium'
-            });
-          } catch (e) {
-            console.warn('[Tata App] Failed to push notification badge safely.', e);
-          }
-        }
-        if (isMissedBacklog) return;
-        setInAppAlarm({ title, body, id, isAlarm: isImportant, noteId });
-        if (!isImportant) {
-          setTimeout(() => setInAppAlarm(prev => prev && prev.id === id ? null : prev), 10000);
-        }
-      };
+  const openNote = (note: Note) => {
+    setCurrentScreen('note-editor');
+    setScreenExtra(note);
+  };
 
-      if (reminderActive && reminderTime && currentTime >= reminderTime && lastNotif !== `${todayDate}_${reminderTime}`) {
-        safeWriteStorage('tata_last_notif_date_time', `${todayDate}_${reminderTime}`);
-        const todayTasks = tasks.filter(t => t.date === todayDate || t.date === 'Hari ini' || (t.date && t.date.toLowerCase() === 'today') || t.repeat === 'daily');
-        const hasTaskOpen = todayTasks.some(task => !task.completed);
-        const title = hasTaskOpen ? (lang === 'id' ? 'Jangan lewatkan hari ini' : 'Don\'t miss today') : (lang === 'id' ? 'Kerja bagus!' : 'Nice work!');
-        const body = hasTaskOpen ? (lang === 'id' ? 'Ada tugas yang menunggu Anda.' : 'You still have tasks waiting.') : (lang === 'id' ? 'Semua tugas hari ini sudah selesai.' : 'Everything is done for today.');
-        sendNotification(title, body, false);
-      }
-    };
+  const onBack = () => {
+    setCurrentScreen('home');
+    setScreenExtra(null);
+    setActiveSettingsSection(null);
+  };
 
-    checkNotifications();
-    const unsubscribeBgTimer = backgroundTimer.subscribe(checkNotifications);
-    return () => unsubscribeBgTimer();
-  }, [reminderActive, reminderTime, tasks, lang]);
+  if (!hasCompletedOnboarding) {
+    return <OnboardingScreen onFinish={() => setHasCompletedOnboarding(true)} />;
+  }
+
+  if (!isUnlocked) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-slate-950 text-slate-100">
+        <div className="text-center">
+          <div className="text-3xl font-black tracking-tight">Tata</div>
+          <div className="mt-2 text-sm text-slate-400">{t('lockScreen') || 'Locked'}</div>
+          <button
+            type="button"
+            onClick={() => setIsUnlocked(true)}
+            className="mt-5 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-indigo-500/20 hover:bg-indigo-500"
+          >
+            {t('unlock') || 'Unlock'}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const renderScreen = () => {
+    switch (currentScreen) {
+      case 'tasks':
+        return <TasksScreen appTheme={appTheme} onBack={onBack} onNavigate={navigate} extra={screenExtra} />;
+      case 'calendar':
+        return <CalendarScreen appTheme={appTheme} onBack={onBack} onNavigate={navigate} extra={screenExtra} />;
+      case 'search':
+        return <SearchScreen appTheme={appTheme} onOpenNote={openNote} onNavigate={navigate} />;
+      case 'finance':
+        return <FinanceScreen appTheme={appTheme} onBack={onBack} onNavigate={navigate} extra={screenExtra} />;
+      case 'settings':
+        return <SettingsScreen appTheme={appTheme} onBack={onBack} onNavigate={navigate} activeSection={activeSettingsSection} setActiveSection={setActiveSettingsSection} extra={screenExtra} />;
+      case 'note-editor':
+        return <NoteEditorScreen appTheme={appTheme} note={screenExtra ?? null} onBack={onBack} onNavigate={navigate} />;
+      case 'account':
+        return <AccountScreen appTheme={appTheme} onBack={onBack} onNavigate={navigate} />;
+      case 'ai-companion':
+        return <AICompanionScreen appTheme={appTheme} onBack={onBack} onNavigate={navigate} extra={screenExtra} />;
+      case 'games-hub':
+        return <GamesHubScreen appTheme={appTheme} onSelectGame={(game) => navigate(game as ScreenItem)} onBack={onBack} />;
+      case 'game':
+        return <GameScreen onBack={onBack} />;
+      case 'tictactoe':
+        return <TicTacToeScreen onBack={onBack} />;
+      case 'puzzle':
+        return <PuzzleScreen onBack={onBack} />;
+      case 'tetris':
+        return <TetrisScreen onBack={onBack} />;
+      case 'memory':
+        return <MemoryGameScreen onBack={onBack} />;
+      case 'space-invaders':
+        return <SpaceInvadersScreen onBack={onBack} />;
+      default:
+        return (
+          <HomeScreen
+            appTheme={appTheme}
+            setAppTheme={setAppTheme}
+            onOpenNote={openNote}
+            onNavigate={navigate}
+          />
+        );
+    }
+  };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-slate-950 text-slate-100">
-      <div className="text-center">
-        <div className="text-2xl font-black tracking-tight">Tata</div>
-        <div className="mt-2 text-sm text-slate-400">Booting safely…</div>
-      </div>
+    <div className={`min-h-screen w-full ${palette.rootBg || 'bg-slate-950'} ${palette.rootText}`}>
+      {renderScreen()}
     </div>
   );
 }
