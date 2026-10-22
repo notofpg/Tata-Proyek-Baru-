@@ -9,7 +9,8 @@
     "start": "node server.ts",
     "preview": "npm run build && npm run start",
     "clean": "rm -rf dist api/_server.cjs",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "vercel-build": "npm run build"
   },
   "dependencies": {
     "@fontsource/caveat": "^5.3.0",
