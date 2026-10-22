@@ -92,8 +92,8 @@ const NoteTitleInput = React.memo<{
 
   return (
     <div className="flex flex-col mb-4">
-      <span className={`text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider mb-1 opacity-70 ${
-        isOrganic ? palette.subText : 'text-slate-400'
+      <span className={`text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider mb-1 ${
+        palette?.subText || (palette?.isDark ? 'text-slate-400' : 'text-slate-600')
       }`}>
         {label}
       </span>
@@ -106,7 +106,9 @@ const NoteTitleInput = React.memo<{
         autoCorrect="off"
         spellCheck="false"
         className={`w-full text-xl sm:text-2xl font-normal bg-transparent border-none outline-none tracking-tight transition-colors select-text ${
-          isOrganic ? `${palette.titleText.replace('font-black', '').replace('font-bold', '')} placeholder:opacity-40` : 'text-slate-100 placeholder-slate-500'
+          palette?.titleText 
+            ? `${palette.titleText.replace('font-black', '').replace('font-bold', '')} placeholder:opacity-40` 
+            : (palette?.isDark ? 'text-slate-100 placeholder-slate-500' : 'text-slate-900 placeholder-slate-400')
         }`}
         placeholder={placeholder}
       />

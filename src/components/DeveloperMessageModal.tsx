@@ -271,7 +271,7 @@ export default function DeveloperMessageModal({
                       onClick={handleCopyMessage}
                       className={`px-2.5 py-1 rounded-lg font-bold text-[11px] flex items-center gap-1 transition-all cursor-pointer border ${
                         isLight
-                          ? 'bg-white hover:bg-slate-850 text-slate-200 border-slate-800'
+                          ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'
                           : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'
                       }`}
                       title={lang === 'id' ? 'Salin isi pesan' : 'Copy message text'}

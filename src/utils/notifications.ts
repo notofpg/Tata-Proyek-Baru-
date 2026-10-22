@@ -418,8 +418,8 @@ export const buildAllNotifications = (
       priority: 'low',
       title: lang === 'id' ? '🛡️ Privasi 100% Offline-First Terjamin' : '🛡️ 100% Offline-First Privacy Verified',
       body: lang === 'id'
-        ? 'Semua catatan, tugas, dan transaksi kas Anda tersimpan lokal di perangkat ini tanpa pelacakan atau server database luar.'
-        : 'All your notes, tasks, and cash transactions are stored strictly on this device with zero external cloud database tracking.',
+        ? 'Semua catatan, tugas, dan transaksi kas Anda tersimpan aman secara lokal di perangkat Anda dengan privasi penuh.'
+        : 'All your notes, tasks, and cash transactions are safely stored locally on your device with full privacy.',
       timestamp: now.getTime(),
       targetScreen: 'settings',
       timeFormatted: 'v5.1'

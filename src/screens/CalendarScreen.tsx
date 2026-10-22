@@ -169,9 +169,9 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
   const is3D = !isLite && (isProMax || appVersion === 'organic' || isOrganic);
   const palette = useMemo(() => {
     const storedTheme = typeof window !== 'undefined' ? localStorage.getItem('tata_theme') : null;
-    const effectiveTheme = isOrganic ? 'organic' : (appTheme || storedTheme || 'dark');
+    const effectiveTheme = appTheme || storedTheme || (isProMax ? 'organic' : 'dark');
     return getOrganicThemePalette(effectiveTheme);
-  }, [appTheme, isOrganic]);
+  }, [appTheme, isProMax]);
 
   useEffect(() => {
     if (isLiteMode && activeTab !== 'calendar') {
@@ -977,9 +977,9 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
 
   const currentSelectedDayMood = (moods || []).find(x => x && x.date === selectedDateStr)?.mood;
 
-  const isLight = isOrganic || isProMax || appTheme === 'light' || appTheme === 'cute' || appTheme === 'pink' || appTheme === 'organic' || appTheme === 'pro_max';
+  const isOrganicTheme = appTheme === 'organic' || appTheme === 'pro_max' || (!appTheme && (appVersion === 'organic' || appVersion === 'pro_max'));
   
-  const isOrganicTheme = isOrganic || isProMax || appTheme === 'organic' || appTheme === 'pro_max';
+  const isLight = appTheme === 'light' || appTheme === 'cute' || appTheme === 'pink' || isOrganicTheme;
 
   const cardThemeClass = isLight
     ? (isOrganicTheme
@@ -1029,7 +1029,7 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
           : appTheme === 'pink'
             ? 'text-[#9D174D]'
             : 'text-slate-600')
-    : 'text-slate-400';
+    : (appTheme === 'simple' ? 'text-stone-400' : 'text-slate-400');
 
   const primaryTextThemeClass = isLight
     ? (isOrganicTheme
@@ -1039,7 +1039,7 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
           : appTheme === 'pink'
             ? 'text-[#500724]'
             : 'text-slate-900')
-    : 'text-slate-100';
+    : (appTheme === 'simple' ? 'text-stone-100' : 'text-slate-100');
 
   const borderThemeClass = isLight
     ? (isOrganicTheme
@@ -1049,7 +1049,11 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
           : appTheme === 'pink'
             ? 'border-[#FBCFE8]'
             : 'border-slate-200')
-    : 'border-slate-800/80';
+    : (appTheme === 'simple'
+        ? 'border-[#2E2823]'
+        : appTheme === 'cool'
+          ? 'border-[#1E3A8A]/80'
+          : 'border-slate-800/80');
 
   const btnSecondaryThemeClass = isLight
     ? (isOrganicTheme
@@ -1059,7 +1063,11 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
           : appTheme === 'pink'
             ? 'bg-[#FCE7F3] hover:bg-[#FBCFE8] text-[#500724] border border-[#F9A8D4]'
             : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200')
-    : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/60';
+    : (appTheme === 'simple'
+        ? 'bg-[#26221E] hover:bg-[#302B26] text-stone-200 border border-[#363029]'
+        : appTheme === 'cool'
+          ? 'bg-[#131F3B] hover:bg-[#1A2B52] text-slate-200 border border-[#1E3A8A]/60'
+          : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/60');
 
   const modalThemeClass = isLight
     ? (isOrganicTheme
@@ -1069,7 +1077,11 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
           : appTheme === 'pink'
             ? 'bg-[#FFF5F8] border border-[#FBCFE8] text-[#500724]'
             : 'bg-white border border-slate-200 text-slate-900')
-    : 'bg-slate-900 border border-slate-800 text-slate-100';
+    : (appTheme === 'simple'
+        ? 'bg-[#1C1917] border border-[#2E2823] text-stone-100'
+        : appTheme === 'cool'
+          ? 'bg-[#0D162B] border border-[#1E3A8A] text-slate-100'
+          : 'bg-slate-900 border border-slate-800 text-slate-100');
 
   const modalHeaderThemeClass = isLight
     ? (isOrganicTheme
@@ -1079,17 +1091,21 @@ export default function CalendarScreen({ appTheme, onOpenNote, onNavigate }: Cal
           : appTheme === 'pink'
             ? 'bg-[#FDE2EC] border-b border-[#F9A8D4] text-[#500724]'
             : 'bg-slate-50 border-b border-slate-200 text-slate-900')
-    : 'bg-slate-950 border-b border-slate-800 text-slate-100';
+    : (appTheme === 'simple'
+        ? 'bg-[#141210] border-b border-[#2E2823] text-stone-100'
+        : appTheme === 'cool'
+          ? 'bg-[#070D1A] border-b border-[#1E3A8A] text-slate-100'
+          : 'bg-slate-950 border-b border-slate-800 text-slate-100');
 
   return (
     <div className={`flex flex-col h-full font-sans ${primaryTextThemeClass}`}>
       
       {/* Top Header */}
       <div className={`flex-none pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-3 px-4 sm:px-6 flex items-center justify-between border-b transition-colors backdrop-blur-md z-20 shrink-0 ${
-        isOrganicTheme
-          ? 'bg-[#FAF5EA]/95 border-[#EADCC8] text-[#2B1E14]'
-          : appTheme === 'wallpaper'
-            ? 'bg-slate-950/40 border-white/10 text-white backdrop-blur-xl'
+        appTheme === 'wallpaper'
+          ? 'bg-slate-950/40 border-white/10 text-white backdrop-blur-xl'
+          : isOrganicTheme
+            ? 'bg-[#FAF5EA]/95 border-[#EADCC8] text-[#2B1E14]'
             : appTheme === 'light'
               ? 'bg-white/95 border-slate-200 text-slate-900'
               : appTheme === 'cute'

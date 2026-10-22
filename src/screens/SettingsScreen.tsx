@@ -30,7 +30,8 @@ import {
   Icon3DUpload, Icon3DTrash, Icon3DRefresh, Icon3DBell, Icon3DGamepad,
   Icon3DInfo, Icon3DShield, Icon3DFlame, Icon3DHeart, Icon3DInstagram,
   Icon3DMail, Icon3DKey, Icon3DUser, Icon3DHelp, Icon3DCrop,
-  Icon3DCamera, Icon3DHistory, Icon3DCheck, Icon3DShare, Icon3DGift
+  Icon3DCamera, Icon3DHistory, Icon3DCheck, Icon3DShare, Icon3DGift,
+  Icon3DTrophy
 } from '../components/home/Organic3DIcons';
 
 export type SettingsSectionType = 'profile' | 'theme' | 'appearance' | 'ai' | 'screen-lock' | 'security' | 'note-pin' | 'backup' | 'notifications' | 'privacy' | 'about' | null;
@@ -223,10 +224,6 @@ export default function SettingsScreen({
     networkStatus: string;
     isFullyOffline: boolean;
   } | null>(null);
-  const [disableTelemetry, setDisableTelemetry] = useState<boolean>(() => {
-    return localStorage.getItem('tata_disable_telemetry') === 'true';
-  });
-
   const handleRunPrivacyAudit = () => {
     setIsAuditingPrivacy(true);
     setTimeout(() => {
@@ -251,26 +248,12 @@ export default function SettingsScreen({
         moodsCount: moods.length,
         debtsCount: debts.length,
         pinSecurity: appPin ? (appPin.length > 20 ? 'SHA-256 Salted Hash' : 'Terlindungi') : (lang === 'id' ? 'Nonaktif' : 'Disabled'),
-        networkStatus: lang === 'id' ? '0 Byte Terkirim ke Cloud (100% Terisolasi)' : '0 Bytes Sent to Cloud (100% Isolated)',
+        networkStatus: lang === 'id' ? '100% Data Pribadi Tersimpan Lokal' : '100% Personal Data Stored Locally',
         isFullyOffline: true
       });
       setIsAuditingPrivacy(false);
       showNotificationToast(lang === 'id' ? 'Audit Privasi Selesai: 100% Terisolasi Lokal!' : 'Privacy Audit Completed: 100% Locally Isolated!');
     }, 450);
-  };
-
-  const toggleTelemetry = () => {
-    const nextVal = !disableTelemetry;
-    setDisableTelemetry(nextVal);
-    localStorage.setItem('tata_disable_telemetry', nextVal ? 'true' : 'false');
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new Event('tata_telemetry_changed'));
-    }
-    showNotificationToast(
-      lang === 'id'
-        ? (nextVal ? 'Statistik anonim penggunaan aplikasi (Vercel Analytics) dinonaktifkan.' : 'Statistik anonim penggunaan aplikasi (Vercel Analytics) diaktifkan.')
-        : (nextVal ? 'Anonymous app usage statistics (Vercel Analytics) disabled.' : 'Anonymous app usage statistics (Vercel Analytics) enabled.')
-    );
   };
 
   // Re-map for existing code to work seamlessly
@@ -1493,6 +1476,18 @@ export default function SettingsScreen({
     ? 'bg-black/5 hover:bg-black/10 border-slate-200 text-slate-700'
     : 'bg-slate-800/60 hover:bg-slate-800 border-slate-700/60 text-slate-300';
 
+  const toggleBtnThemeClass = isLight
+    ? (appTheme === 'organic' || appTheme === 'cute'
+        ? 'bg-[#F4ECDC]/70 border-[#EADCC8] text-[#7D6A58] hover:bg-[#F4ECDC]'
+        : appTheme === 'pink'
+          ? 'bg-pink-50 border-pink-200 text-pink-600 hover:bg-pink-100/60'
+          : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50')
+    : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200';
+
+  const toggleBtnActiveIndigoClass = isLight
+    ? 'bg-indigo-50 border-indigo-500 text-indigo-700 font-bold ring-1 ring-indigo-500/30'
+    : 'bg-indigo-600/20 border-indigo-500 text-indigo-200 font-bold ring-1 ring-indigo-500/50';
+
   const cardProfileThemeClass = isLight
     ? (appTheme === 'organic' || appTheme === 'cute'
         ? 'p-4 bg-[#FAF5EA] hover:bg-[#F4ECDC] border border-[#EADCC8] rounded-2xl cursor-pointer transition-all flex items-center justify-between group shadow-xs active:scale-[0.99]'
@@ -1514,6 +1509,31 @@ export default function SettingsScreen({
   const sectionHeaderClass = isLight
     ? (appTheme === 'organic' ? 'text-[#7D6A58]' : appTheme === 'cute' ? 'text-[#7A5B3E]' : appTheme === 'pink' ? 'text-[#9D3C65]' : 'text-slate-500')
     : 'text-slate-400';
+
+  const getPinDigitClass = (isFilled: boolean, isCurrent: boolean, color: 'indigo' | 'amber' | 'rose' = 'indigo') => {
+    if (isFilled) {
+      if (color === 'amber') return 'border-amber-500 bg-amber-500/15 text-amber-500 font-black';
+      if (color === 'rose') return 'border-rose-500 bg-rose-500/15 text-rose-500 font-black';
+      return 'border-indigo-500 bg-indigo-500/15 text-indigo-500 font-black';
+    }
+    if (isCurrent) {
+      if (isLight) {
+        if (color === 'amber') return 'border-amber-500 bg-amber-50 text-amber-600 shadow-xs';
+        if (color === 'rose') return 'border-rose-500 bg-rose-50 text-rose-600 shadow-xs';
+        return 'border-indigo-500 bg-indigo-50 text-indigo-600 shadow-xs';
+      }
+      if (color === 'amber') return 'border-amber-500/60 bg-slate-950/60 text-amber-300';
+      if (color === 'rose') return 'border-rose-500/60 bg-slate-950/60 text-rose-300';
+      return 'border-indigo-500/60 bg-slate-950/60 text-indigo-300';
+    }
+    // Empty state
+    if (isLight) {
+      if (appTheme === 'organic' || appTheme === 'cute') return 'border-[#EADCC8] bg-[#F4ECDC]/70 text-[#7D6A58]';
+      if (appTheme === 'pink') return 'border-pink-200 bg-[#FCE7F3]/70 text-pink-300';
+      return 'border-slate-200 bg-slate-100 text-slate-400';
+    }
+    return 'border-slate-800 bg-slate-950/40 text-slate-600';
+  };
 
   return (
     <div 
@@ -1611,7 +1631,7 @@ export default function SettingsScreen({
           <button
             onClick={handleRefreshApp}
             disabled={isRefreshing}
-            className="p-2.5 rounded-2xl bg-slate-950/60 hover:bg-slate-800/80 border border-slate-800 text-slate-400 hover:text-cyan-400 transition-all cursor-pointer flex items-center justify-center shrink-0 active:scale-95 shadow-sm"
+            className={`p-2.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-center shrink-0 active:scale-95 shadow-xs ${btnSecondaryThemeClass}`}
             title={lang === 'id' ? 'Segarkan Aplikasi & Cache' : 'Refresh App & Cache'}
           >
             <RefreshCw size={16} className={isRefreshing ? 'animate-spin text-cyan-400' : ''} />
@@ -1619,7 +1639,7 @@ export default function SettingsScreen({
         ) : (
           <button
             onClick={() => updateActiveSection(null)}
-            className="px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-slate-300 hover:text-white text-xs font-bold transition-all cursor-pointer flex items-center gap-1 shrink-0"
+            className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center gap-1 shrink-0 ${btnSecondaryThemeClass}`}
           >
             <span>{lang === 'id' ? 'Semua' : 'All'}</span>
           </button>
@@ -1639,7 +1659,11 @@ export default function SettingsScreen({
               >
                 <div className="flex items-center gap-3.5 min-w-0">
                   <div className="relative shrink-0">
-                    <div className="w-12 h-12 rounded-full bg-slate-950/60 border border-slate-700/80 flex items-center justify-center overflow-hidden shadow-inner ring-2 ring-indigo-500/20 group-hover:ring-indigo-500/40 transition-all">
+                    <div className={`w-12 h-12 rounded-full border flex items-center justify-center overflow-hidden shadow-inner ring-2 ring-indigo-500/20 group-hover:ring-indigo-500/40 transition-all ${
+                      isLight
+                        ? (appTheme === 'organic' || appTheme === 'cute' ? 'bg-[#F4ECDC] border-[#EADCC8]' : appTheme === 'pink' ? 'bg-pink-100 border-pink-200' : 'bg-slate-100 border-slate-200')
+                        : 'bg-slate-950/60 border-slate-700/80'
+                    }`}>
                       {user.avatarUrl === 'indexeddb:user_avatar' ? (
                         <div className="w-full h-full bg-slate-800 animate-pulse" />
                       ) : (user.avatarUrl || tataAccount?.avatarUrl) ? (
@@ -1702,9 +1726,15 @@ export default function SettingsScreen({
                     className={`w-full flex items-center justify-between px-4 py-3.5 transition-colors text-left cursor-pointer ${cardRowHoverClass}`}
                   >
                     <div className="flex items-center gap-3.5 min-w-0 pr-2">
-                      <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center shrink-0">
-                        <Crown size={16} className="fill-amber-400/30" />
-                      </div>
+                      {isOrganic ? (
+                        <Icon3DTrophy size={24} />
+                      ) : isLiteMode ? (
+                        <LiteStickerIcon variant="sparkles" size="sm" />
+                      ) : (
+                        <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center shrink-0">
+                          <Crown size={16} className="fill-amber-400/30" />
+                        </div>
+                      )}
                       <span className={`font-semibold text-[14px] block truncate ${cardRowTextClass}`}>
                         {lang === 'id' ? 'Akun Tata & Lisensi' : 'Tata Account & License'}
                       </span>
@@ -1783,7 +1813,7 @@ export default function SettingsScreen({
                   {/* Mode Tampilan */}
                   <div 
                     onClick={() => setShowModeModal(true)}
-                    className="w-full flex items-center justify-between px-4 py-3.5 transition-colors text-left cursor-pointer hover:bg-slate-800/40 active:bg-slate-800/70"
+                    className={`w-full flex items-center justify-between px-4 py-3.5 transition-colors text-left cursor-pointer ${cardRowHoverClass}`}
                   >
                     <div className="flex items-center gap-3.5 min-w-0 pr-2">
                       {isOrganic ? (
@@ -1837,7 +1867,7 @@ export default function SettingsScreen({
                   {/* Tata AI BYOK */}
                   <div 
                     onClick={() => updateActiveSection('ai')}
-                    className="w-full flex items-center justify-between px-4 py-3.5 transition-colors text-left cursor-pointer hover:bg-slate-800/40 active:bg-slate-800/70"
+                    className={`w-full flex items-center justify-between px-4 py-3.5 transition-colors text-left cursor-pointer ${cardRowHoverClass}`}
                   >
                     <div className="flex items-center gap-3.5 min-w-0 pr-2">
                       {isOrganic ? (
@@ -2385,9 +2415,13 @@ export default function SettingsScreen({
                         className={`p-4 transition-colors cursor-pointer flex items-center justify-between gap-3 group ${cardRowHoverClass}`}
                       >
                         <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-zinc-950 flex items-center justify-center shrink-0 shadow-md group-hover:scale-105 transition-transform">
-                            <Crown className="w-5 h-5 fill-current" />
-                          </div>
+                          {isOrganic ? (
+                            <Icon3DTrophy size={36} className="group-hover:scale-105 transition-transform shrink-0" />
+                          ) : (
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-zinc-950 flex items-center justify-center shrink-0 shadow-md group-hover:scale-105 transition-transform">
+                              <Crown className="w-5 h-5 fill-current" />
+                            </div>
+                          )}
 
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2 flex-wrap">
@@ -2771,16 +2805,32 @@ export default function SettingsScreen({
                       </div>
 
                       {/* Callout to switch to wallpaper tab */}
-                      <div className="p-4 bg-gradient-to-r from-indigo-950/40 via-slate-900/90 to-slate-900/90 border border-indigo-500/20 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className={`p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                        isLight
+                          ? (appTheme === 'organic' || appTheme === 'cute'
+                              ? 'bg-gradient-to-r from-[#F4ECDC] via-[#FAF5EA] to-[#FAF5EA] border border-[#EADCC8]'
+                              : appTheme === 'pink'
+                                ? 'bg-gradient-to-r from-[#FCE7F3] via-[#FFF0F5] to-[#FFF0F5] border border-pink-200'
+                                : 'bg-gradient-to-r from-indigo-50/80 via-white to-white border border-indigo-100')
+                          : 'bg-gradient-to-r from-indigo-950/40 via-slate-900/90 to-slate-900/90 border border-indigo-500/20'
+                      }`}>
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0">
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                            isLight
+                              ? (appTheme === 'organic' || appTheme === 'cute'
+                                  ? 'bg-[#EADCC8]/50 border border-[#EADCC8] text-[#7D6A58]'
+                                  : appTheme === 'pink'
+                                    ? 'bg-pink-100 border border-pink-200 text-pink-600'
+                                    : 'bg-indigo-50 border border-indigo-200 text-indigo-600')
+                              : 'bg-indigo-500/10 border border-indigo-500/20 text-indigo-400'
+                          }`}>
                             <Smartphone size={20} />
                           </div>
                           <div>
                             <h4 className={`text-xs sm:text-sm font-bold ${primaryTextThemeClass}`}>
                               {lang === 'id' ? 'Ingin Menggunakan Foto Sendiri?' : 'Want to Use Your Own Photo?'}
                             </h4>
-                            <p className="text-[11px] text-slate-400 mt-0.5">
+                            <p className={`text-[11px] mt-0.5 ${subTextThemeClass}`}>
                               {lang === 'id' ? 'Pasang foto galeri favorit Anda sebagai wallpaper layar penuh Tata.' : 'Set your favorite gallery photo as a full-screen wallpaper.'}
                             </p>
                           </div>
@@ -2802,8 +2852,12 @@ export default function SettingsScreen({
                   {themeTab === 'wallpaper' && (
                     <div className="space-y-4">
                       {isLiteMode ? (
-                        <div className="p-4 bg-slate-900/60 border border-slate-800/80 rounded-2xl text-center space-y-2">
-                          <p className="text-xs text-slate-400">
+                        <div className={`p-4 rounded-2xl text-center space-y-2 border ${
+                          isLight
+                            ? (appTheme === 'organic' || appTheme === 'cute' ? 'bg-[#FAF5EA] border-[#EADCC8]' : appTheme === 'pink' ? 'bg-pink-50 border-pink-200' : 'bg-slate-50 border-slate-200')
+                            : 'bg-slate-900/60 border-slate-800/80'
+                        }`}>
+                          <p className={`text-xs ${subTextThemeClass}`}>
                             {lang === 'id' 
                               ? 'Kustomisasi Wallpaper dinonaktifkan di Mode Lite. Beralih ke Mode Pro atau Pro Max untuk memasang foto latar.' 
                               : 'Wallpaper settings are disabled in Lite Mode. Switch to Pro or Pro Max Mode to customize background.'}
@@ -2821,14 +2875,22 @@ export default function SettingsScreen({
                           {/* Activation Banner */}
                           <div className={`p-3.5 sm:p-4 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
                             appTheme === 'wallpaper'
-                              ? 'bg-emerald-950/30 border-emerald-500/30 text-emerald-300'
-                              : 'bg-indigo-950/30 border-indigo-500/30 text-slate-300'
+                              ? (isLight ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-emerald-950/30 border-emerald-500/30 text-emerald-300')
+                              : (isLight
+                                  ? (appTheme === 'organic' || appTheme === 'cute'
+                                      ? 'bg-gradient-to-r from-[#F4ECDC] via-[#FAF5EA] to-[#FAF5EA] border-[#EADCC8] text-[#2B1E14]'
+                                      : appTheme === 'pink'
+                                        ? 'bg-gradient-to-r from-[#FCE7F3] via-[#FFF0F5] to-[#FFF0F5] border-pink-200 text-[#500724]'
+                                        : 'bg-indigo-50/70 border-indigo-200 text-slate-800')
+                                  : 'bg-indigo-950/30 border-indigo-500/30 text-slate-300')
                           }`}>
                             <div className="flex items-center gap-3 min-w-0">
                               <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${
                                 appTheme === 'wallpaper'
                                   ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
-                                  : 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400'
+                                  : isLight
+                                    ? (appTheme === 'organic' || appTheme === 'cute' ? 'bg-[#EADCC8]/50 border-[#EADCC8] text-[#7D6A58]' : 'bg-indigo-100 border-indigo-200 text-indigo-600')
+                                    : 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400'
                               }`}>
                                 {appTheme === 'wallpaper' ? <Check size={18} strokeWidth={2.5} /> : <Sparkles size={18} />}
                               </div>
@@ -2838,7 +2900,7 @@ export default function SettingsScreen({
                                     ? (lang === 'id' ? 'Tema Wallpaper Sedang Aktif' : 'Wallpaper Theme Active') 
                                     : (lang === 'id' ? 'Tema Wallpaper Belum Aktif' : 'Wallpaper Theme Inactive')}
                                 </h4>
-                                <p className="text-[11px] text-slate-400 mt-0.5">
+                                <p className={`text-[11px] mt-0.5 ${subTextThemeClass}`}>
                                   {appTheme === 'wallpaper'
                                     ? (lang === 'id' ? 'Layar utama dan menu Tata sedang menampilkan foto latar Anda.' : 'Home screen and menus are using your background photo.')
                                     : (lang === 'id' ? 'Ketuk tombol di samping untuk mengaktifkan foto sebagai latar layar Tata.' : 'Tap button to apply your photo as full screen background.')}
@@ -2872,7 +2934,11 @@ export default function SettingsScreen({
                           <div className={`p-4 ${cardThemeClass} rounded-2xl space-y-4`}>
                             <div className="flex flex-col sm:flex-row items-center gap-4">
                               {/* Phone frame preview */}
-                              <div className="w-24 sm:w-28 h-40 rounded-2xl overflow-hidden border-2 border-slate-700 bg-slate-950 shrink-0 relative shadow-lg">
+                              <div className={`w-24 sm:w-28 h-40 rounded-2xl overflow-hidden border-2 shrink-0 relative shadow-lg ${
+                                isLight
+                                  ? (appTheme === 'organic' || appTheme === 'cute' ? 'border-[#EADCC8] bg-[#F4ECDC]' : appTheme === 'pink' ? 'border-pink-200 bg-[#FFF0F5]' : 'border-slate-300 bg-slate-100')
+                                  : 'border-slate-700 bg-slate-950'
+                              }`}>
                                 {localCustomWallpaper ? (
                                   <img 
                                     src={localCustomWallpaper} 
@@ -2886,9 +2952,17 @@ export default function SettingsScreen({
                                     referrerPolicy="no-referrer"
                                   />
                                 ) : (
-                                  <div className="w-full h-full bg-gradient-to-br from-indigo-950 via-slate-950 to-slate-900 flex flex-col items-center justify-center p-2 text-center text-slate-500">
-                                    <ImageIcon size={22} className="text-slate-600 mb-1" />
-                                    <span className="text-[9px] font-bold text-slate-400">Default Gradient</span>
+                                  <div className={`w-full h-full flex flex-col items-center justify-center p-2 text-center ${
+                                    isLight
+                                      ? (appTheme === 'organic' || appTheme === 'cute'
+                                          ? 'bg-[#F4ECDC] text-[#7D6A58]'
+                                          : appTheme === 'pink'
+                                            ? 'bg-pink-50 text-pink-500'
+                                            : 'bg-slate-100 text-slate-500')
+                                      : 'bg-gradient-to-br from-indigo-950 via-slate-950 to-slate-900 text-slate-500'
+                                  }`}>
+                                    <ImageIcon size={22} className={isLight ? (appTheme === 'organic' || appTheme === 'cute' ? 'text-[#8A6A4E] mb-1' : appTheme === 'pink' ? 'text-pink-400 mb-1' : 'text-slate-400 mb-1') : 'text-slate-600 mb-1'} />
+                                    <span className={`text-[9px] font-bold ${isLight ? (appTheme === 'organic' || appTheme === 'cute' ? 'text-[#7D6A58]' : appTheme === 'pink' ? 'text-pink-600' : 'text-slate-600') : 'text-slate-400'}`}>Default Gradient</span>
                                   </div>
                                 )}
                                 {/* Dimming overlay */}
@@ -2921,12 +2995,20 @@ export default function SettingsScreen({
                                         {lang === 'id' ? 'Foto Kustom' : 'Custom Photo'}
                                       </span>
                                     ) : (
-                                      <span className="text-[10px] text-slate-400 font-medium bg-slate-800 px-2 py-0.5 rounded-full">
+                                      <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                                        isLight
+                                          ? (appTheme === 'organic' || appTheme === 'cute'
+                                              ? 'bg-[#EADCC8]/60 text-[#7D6A58]'
+                                              : appTheme === 'pink'
+                                                ? 'bg-pink-100 text-pink-600'
+                                                : 'bg-slate-200 text-slate-700')
+                                          : 'bg-slate-800 text-slate-400'
+                                      }`}>
                                         {lang === 'id' ? 'Gradien Bawaan' : 'Default'}
                                       </span>
                                     )}
                                   </div>
-                                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                                  <p className={`text-xs mt-1 leading-relaxed ${subTextThemeClass}`}>
                                     {localCustomWallpaper 
                                       ? (lang === 'id' ? 'Foto dipasang dalam kualitas penuh. Gunakan tombol "Atur & Potong" untuk memilih bagian foto yang ingin difokuskan.' : 'Photo active in full resolution. Use "Adjust & Crop" to re-frame.')
                                       : (lang === 'id' ? 'Unggah foto pribadi dari galeri atau pilih dari koleksi gambar estetik di bawah ini.' : 'Upload your own photo or pick from curated presets below.')}
@@ -2949,7 +3031,15 @@ export default function SettingsScreen({
                                           setCropperTarget('custom');
                                           setCropperModalOpen(true);
                                         }}
-                                        className="py-2 px-3.5 bg-slate-800 hover:bg-slate-700 text-indigo-300 border border-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95"
+                                        className={`py-2 px-3.5 border rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 ${
+                                          isLight
+                                            ? (appTheme === 'organic' || appTheme === 'cute'
+                                                ? 'bg-[#FAF5EA] hover:bg-[#F4ECDC] text-[#7D6A58] border-[#EADCC8]'
+                                                : appTheme === 'pink'
+                                                  ? 'bg-white hover:bg-pink-50 text-pink-600 border-pink-200'
+                                                  : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200')
+                                            : 'bg-slate-800 hover:bg-slate-700 text-indigo-300 border-slate-700'
+                                        }`}
                                       >
                                         <Crop size={14} />
                                         <span>{lang === 'id' ? 'Atur & Potong' : 'Adjust & Crop'}</span>
@@ -3031,7 +3121,7 @@ export default function SettingsScreen({
 
                           {/* Adjustment Controls Card */}
                           <div className={`${cardThemeClass} rounded-2xl p-4 sm:p-5 space-y-4 shadow-sm`}>
-                            <div className="flex items-center gap-2 pb-2 border-b border-slate-800">
+                            <div className={`flex items-center gap-2 pb-2 border-b ${borderThemeClass}`}>
                               <Sliders size={15} className="text-indigo-400" />
                               <h4 className={`text-xs font-bold ${primaryTextThemeClass} uppercase tracking-wider`}>
                                 {lang === 'id' ? 'Penyesuaian & Kenyamanan Layar' : 'Screen & Comfort Settings'}
@@ -3043,7 +3133,7 @@ export default function SettingsScreen({
                               {/* Fill Mode */}
                               <div className={`p-3 ${innerCardThemeClass} rounded-xl space-y-2`}>
                                 <div className="flex items-center justify-between">
-                                  <span className="text-[11px] font-bold text-slate-300">
+                                  <span className={`text-[11px] font-bold ${primaryTextThemeClass}`}>
                                     {lang === 'id' ? 'Gaya Layar' : 'Fill Mode'}
                                   </span>
                                   <span className="text-[10px] font-semibold text-indigo-400">
@@ -3056,14 +3146,14 @@ export default function SettingsScreen({
                                     onClick={() => handleSetWallpaperFit('cover')}
                                     className={`p-2 rounded-lg border text-left transition-all cursor-pointer flex items-center gap-2 ${
                                       wallpaperFit === 'cover'
-                                        ? 'bg-indigo-600/20 border-indigo-500 text-indigo-200 font-bold ring-1 ring-indigo-500/50'
-                                        : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
+                                        ? toggleBtnActiveIndigoClass
+                                        : toggleBtnThemeClass
                                     }`}
                                   >
                                     <Smartphone size={16} className="text-indigo-400 shrink-0" />
                                     <div className="min-w-0">
                                       <span className="text-xs block font-bold leading-none">{lang === 'id' ? 'Penuh' : 'Fill'}</span>
-                                      <span className="text-[9px] text-slate-400 truncate block mt-0.5">{lang === 'id' ? 'Isi seluruh layar' : 'Full cover'}</span>
+                                      <span className={`text-[9px] truncate block mt-0.5 ${subTextThemeClass}`}>{lang === 'id' ? 'Isi seluruh layar' : 'Full cover'}</span>
                                     </div>
                                   </button>
                                   <button
@@ -3071,14 +3161,14 @@ export default function SettingsScreen({
                                     onClick={() => handleSetWallpaperFit('contain')}
                                     className={`p-2 rounded-lg border text-left transition-all cursor-pointer flex items-center gap-2 ${
                                       wallpaperFit === 'contain'
-                                        ? 'bg-indigo-600/20 border-indigo-500 text-indigo-200 font-bold ring-1 ring-indigo-500/50'
-                                        : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
+                                        ? toggleBtnActiveIndigoClass
+                                        : toggleBtnThemeClass
                                     }`}
                                   >
                                     <ImageIcon size={16} className="text-indigo-400 shrink-0" />
                                     <div className="min-w-0">
                                       <span className="text-xs block font-bold leading-none">{lang === 'id' ? 'Utuh' : 'Contain'}</span>
-                                      <span className="text-[9px] text-slate-400 truncate block mt-0.5">{lang === 'id' ? 'Tanpa terpotong' : 'No crop'}</span>
+                                      <span className={`text-[9px] truncate block mt-0.5 ${subTextThemeClass}`}>{lang === 'id' ? 'Tanpa terpotong' : 'No crop'}</span>
                                     </div>
                                   </button>
                                 </div>
@@ -3087,7 +3177,7 @@ export default function SettingsScreen({
                               {/* Position Focus */}
                               <div className={`p-3 ${innerCardThemeClass} rounded-xl space-y-2`}>
                                 <div className="flex items-center justify-between">
-                                  <span className="text-[11px] font-bold text-slate-300">
+                                  <span className={`text-[11px] font-bold ${primaryTextThemeClass}`}>
                                     {lang === 'id' ? 'Fokus Posisi Layar' : 'Position Focus'}
                                   </span>
                                   <span className="text-[10px] font-semibold text-indigo-400">
@@ -3110,8 +3200,8 @@ export default function SettingsScreen({
                                         onClick={() => handleSetWallpaperPosition(pos.id as any)}
                                         className={`py-2 px-1 rounded-lg border text-center transition-all cursor-pointer ${
                                           isPosActive
-                                            ? 'bg-indigo-600/20 border-indigo-500 text-indigo-200 font-bold ring-1 ring-indigo-500/50'
-                                            : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
+                                            ? toggleBtnActiveIndigoClass
+                                            : toggleBtnThemeClass
                                         }`}
                                       >
                                         <span className="text-xs block font-bold">{lang === 'id' ? pos.labelId : pos.labelEn}</span>
@@ -3127,7 +3217,7 @@ export default function SettingsScreen({
                               {/* Keredupan */}
                               <div className={`p-3 ${innerCardThemeClass} rounded-xl space-y-2`}>
                                 <div className="flex items-center justify-between">
-                                  <span className="text-[11px] font-bold text-slate-300">
+                                  <span className={`text-[11px] font-bold ${primaryTextThemeClass}`}>
                                     {lang === 'id' ? 'Keredupan Latar' : 'Dimming'}
                                   </span>
                                   <span className="text-[11px] font-mono text-indigo-400 font-bold">{wallpaperDim}%</span>
@@ -3146,7 +3236,7 @@ export default function SettingsScreen({
                                       className={`py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
                                         wallpaperDim === item.val
                                           ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm'
-                                          : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
+                                          : toggleBtnThemeClass
                                       }`}
                                     >
                                       {item.label}
@@ -3158,7 +3248,7 @@ export default function SettingsScreen({
                               {/* Blur */}
                               <div className={`p-3 ${innerCardThemeClass} rounded-xl space-y-2`}>
                                 <div className="flex items-center justify-between">
-                                  <span className="text-[11px] font-bold text-slate-300">
+                                  <span className={`text-[11px] font-bold ${primaryTextThemeClass}`}>
                                     {lang === 'id' ? 'Efek Blur (Kenyamanan Baca)' : 'Blur Effect'}
                                   </span>
                                   <span className="text-[11px] font-mono text-indigo-400 font-bold">{wallpaperBlur}px</span>
@@ -3176,7 +3266,7 @@ export default function SettingsScreen({
                                       className={`py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
                                         wallpaperBlur === item.val
                                           ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm'
-                                          : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
+                                          : toggleBtnThemeClass
                                       }`}
                                     >
                                       {lang === 'id' ? item.labelId : item.labelEn}
@@ -3187,12 +3277,12 @@ export default function SettingsScreen({
                             </div>
 
                             {/* Section 3: Accent Colors */}
-                            <div className="pt-2 border-t border-slate-800/80 space-y-2">
+                            <div className={`pt-2 border-t ${borderThemeClass} space-y-2`}>
                               <div className="flex items-center justify-between">
-                                <span className="text-[11px] font-bold text-slate-300">
+                                <span className={`text-[11px] font-bold ${primaryTextThemeClass}`}>
                                   {lang === 'id' ? 'Warna Aksen Tombol & Sorotan' : 'UI Button & Highlight Accent'}
                                 </span>
-                                <span className="text-[10px] text-slate-400">8 {lang === 'id' ? 'Warna' : 'Colors'}</span>
+                                <span className={`text-[10px] ${subTextThemeClass}`}>8 {lang === 'id' ? 'Warna' : 'Colors'}</span>
                               </div>
                               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                 {[
@@ -3213,8 +3303,16 @@ export default function SettingsScreen({
                                       onClick={() => handleSetWallpaperAccent(acc.id)}
                                       className={`flex items-center gap-2 p-2 rounded-xl border transition-all cursor-pointer ${
                                         isSelected 
-                                          ? `bg-slate-950 border-indigo-500 text-slate-100 font-bold shadow-sm ring-1 ${acc.ring}` 
-                                          : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+                                          ? (isLight 
+                                              ? `bg-white border-indigo-500 text-slate-900 font-bold shadow-xs ring-1 ${acc.ring}`
+                                              : `bg-slate-950 border-indigo-500 text-slate-100 font-bold shadow-sm ring-1 ${acc.ring}`)
+                                          : (isLight
+                                              ? (appTheme === 'organic' || appTheme === 'cute'
+                                                  ? 'bg-[#FAF5EA] border-[#EADCC8] text-[#7D6A58] hover:bg-[#F4ECDC]'
+                                                  : appTheme === 'pink'
+                                                    ? 'bg-white border-pink-200 text-pink-600 hover:bg-pink-50'
+                                                    : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50')
+                                              : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-800/40')
                                       }`}
                                     >
                                       <span className={`w-3.5 h-3.5 rounded-full ${acc.bg} ${acc.border} border shrink-0`} />
@@ -3240,7 +3338,7 @@ export default function SettingsScreen({
                             <h3 className={`text-sm font-bold ${primaryTextThemeClass}`}>
                               {lang === 'id' ? 'Banner Sambutan Beranda' : 'Home Greeting Banner'}
                             </h3>
-                            <p className="text-[11px] text-slate-400 mt-0.5">
+                            <p className={`text-[11px] mt-0.5 ${subTextThemeClass}`}>
                               {lang === 'id' ? 'Foto ini tampil eksklusif sebagai latar kartu sambutan di halaman Beranda' : 'This photo exclusively decorates the welcome card on the Home screen'}
                             </p>
                           </div>
@@ -3249,14 +3347,26 @@ export default function SettingsScreen({
                               {lang === 'id' ? 'Terpasang' : 'Active'}
                             </span>
                           ) : (
-                            <span className="text-[10px] text-slate-400 font-medium bg-slate-800 px-2.5 py-0.5 rounded-full shrink-0">
+                            <span className={`text-[10px] font-medium px-2.5 py-0.5 rounded-full shrink-0 ${
+                              isLight
+                                ? (appTheme === 'organic' || appTheme === 'cute' ? 'bg-[#EADCC8]/60 text-[#7D6A58]' : appTheme === 'pink' ? 'bg-pink-100 text-pink-600' : 'bg-slate-200 text-slate-700')
+                                : 'bg-slate-800 text-slate-400'
+                            }`}>
                               {lang === 'id' ? 'Bawaan' : 'Default'}
                             </span>
                           )}
                         </div>
 
                         {/* Banner Aspect Ratio Preview Card */}
-                        <div className="w-full aspect-[2.6/1] max-h-40 rounded-2xl overflow-hidden relative border-2 border-slate-700/80 bg-slate-950 shadow-inner">
+                        <div className={`w-full aspect-[2.6/1] max-h-40 rounded-2xl overflow-hidden relative border-2 shadow-inner ${
+                          isLight
+                            ? (appTheme === 'organic' || appTheme === 'cute'
+                                ? 'border-[#EADCC8] bg-[#F4ECDC]'
+                                : appTheme === 'pink'
+                                  ? 'border-pink-200 bg-[#FFF0F5]'
+                                  : 'border-slate-200 bg-slate-100')
+                            : 'border-slate-700/80 bg-slate-950'
+                        }`}>
                           {localBannerWallpaper ? (
                             <img 
                               src={localBannerWallpaper} 
@@ -3265,8 +3375,16 @@ export default function SettingsScreen({
                               referrerPolicy="no-referrer"
                             />
                           ) : (
-                            <div className="w-full h-full bg-gradient-to-r from-indigo-950 via-slate-900 to-indigo-900/60 flex flex-col items-center justify-center text-slate-400 text-xs font-medium p-4 text-center">
-                              <ImageIcon size={22} className="text-indigo-400 mb-1" />
+                            <div className={`w-full h-full flex flex-col items-center justify-center text-xs font-medium p-4 text-center ${
+                              isLight
+                                ? (appTheme === 'organic' || appTheme === 'cute'
+                                    ? 'bg-gradient-to-r from-[#F4ECDC] via-[#FAF5EA] to-[#F4ECDC] text-[#7D6A58]'
+                                    : appTheme === 'pink'
+                                      ? 'bg-gradient-to-r from-[#FCE7F3] via-[#FFF0F5] to-[#FCE7F3] text-pink-600'
+                                      : 'bg-gradient-to-r from-indigo-50 via-slate-50 to-indigo-50 text-slate-500')
+                                : 'bg-gradient-to-r from-indigo-950 via-slate-900 to-indigo-900/60 text-slate-400'
+                            }`}>
+                              <ImageIcon size={22} className={isLight ? (appTheme === 'organic' || appTheme === 'cute' ? 'text-[#8A6A4E] mb-1' : appTheme === 'pink' ? 'text-pink-500 mb-1' : 'text-indigo-500 mb-1') : 'text-indigo-400 mb-1'} />
                               <span>{lang === 'id' ? 'Pratinjau Banner Kartu Beranda' : 'Home Banner Card Preview'}</span>
                             </div>
                           )}
@@ -3289,7 +3407,15 @@ export default function SettingsScreen({
                                   setCropperTarget('banner');
                                   setCropperModalOpen(true);
                                 }}
-                                className="py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-indigo-300 border border-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95"
+                                className={`py-2.5 px-4 border rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 ${
+                                  isLight
+                                    ? (appTheme === 'organic' || appTheme === 'cute'
+                                        ? 'bg-[#FAF5EA] hover:bg-[#F4ECDC] text-[#7D6A58] border-[#EADCC8]'
+                                        : appTheme === 'pink'
+                                          ? 'bg-white hover:bg-pink-50 text-pink-600 border-pink-200'
+                                          : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200')
+                                    : 'bg-slate-800 hover:bg-slate-700 text-indigo-300 border-slate-700'
+                                }`}
                               >
                                 <Crop size={14} />
                                 <span>{lang === 'id' ? 'Atur & Potong' : 'Adjust & Crop'}</span>
@@ -3312,7 +3438,7 @@ export default function SettingsScreen({
                           )}
                         </div>
 
-                        <p className="text-[11px] text-slate-400 leading-relaxed bg-slate-950/60 p-3 rounded-xl border border-slate-800">
+                        <p className={`text-[11px] leading-relaxed p-3 rounded-xl border ${innerCardThemeClass} ${subTextThemeClass}`}>
                           {lang === 'id'
                             ? 'Tips: Di halaman Beranda, Anda juga dapat mengetuk 2x kartu sambutan kapan saja untuk langsung memotong dan mengatur ulang posisi fotonya.'
                             : 'Tip: On the Home screen, you can also double-tap the welcome card at any time to immediately crop and reposition the photo.'}
@@ -3597,9 +3723,13 @@ export default function SettingsScreen({
                     <div className={`${cardThemeClass} rounded-2xl p-4 sm:p-5 shadow-sm space-y-3`}>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3.5 min-w-0 pr-2">
-                          <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
-                            <KeyRound size={18} />
-                          </div>
+                          {isOrganic ? (
+                            <Icon3DKey size={28} />
+                          ) : (
+                            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
+                              <KeyRound size={18} />
+                            </div>
+                          )}
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
                               <span className={`font-bold text-sm ${primaryTextThemeClass} block truncate`}>
@@ -3628,13 +3758,13 @@ export default function SettingsScreen({
                             setPinAnswerInput('');
                             setShowRecoveryQuestionModal(true);
                           }}
-                          className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-400 hover:text-amber-300 font-bold text-xs rounded-xl cursor-pointer transition-all shrink-0 active:scale-95 border border-slate-700/60"
+                          className={`px-3.5 py-1.5 font-bold text-xs rounded-xl cursor-pointer transition-all shrink-0 active:scale-95 border ${btnSecondaryThemeClass}`}
                         >
                           {pinRecoveryAnswer ? (lang === 'id' ? 'Ubah' : 'Change') : (lang === 'id' ? 'Atur' : 'Set Up')}
                         </button>
                       </div>
 
-                      <div className="pt-2.5 border-t border-slate-800/60 text-[11px] text-slate-400 leading-relaxed">
+                      <div className={`pt-2.5 border-t ${borderThemeClass} text-[11px] ${subTextThemeClass} leading-relaxed`}>
                         {lang === 'id' 
                           ? 'Kunci layar awal masuk dan kunci catatan menggunakan 1 opsi lupa PIN yang sama. Jika Anda lupa PIN, jawab pertanyaan keamanan ini untuk membuka akses.' 
                           : 'The app entrance PIN and note PIN share the exact same 1 recovery question. Answer this question to regain access if you ever forget either PIN.'}
@@ -3658,7 +3788,15 @@ export default function SettingsScreen({
                         <button 
                           type="button"
                           onClick={handleExportClick}
-                          className="flex items-center justify-between p-3.5 sm:p-4 bg-slate-950/70 hover:bg-slate-950 border border-slate-800 rounded-2xl transition-all text-left cursor-pointer active:scale-98 group"
+                          className={`flex items-center justify-between p-3.5 sm:p-4 border rounded-2xl transition-all text-left cursor-pointer active:scale-98 group ${
+                            isLight
+                              ? (appTheme === 'organic' || appTheme === 'cute'
+                                  ? 'bg-[#FAF5EA] hover:bg-[#F4ECDC] border-[#EADCC8]'
+                                  : appTheme === 'pink'
+                                    ? 'bg-white hover:bg-pink-50 border-pink-200'
+                                    : 'bg-white hover:bg-slate-50 border-slate-200 shadow-xs')
+                              : 'bg-slate-950/70 hover:bg-slate-950 border-slate-800'
+                          }`}
                         >
                           <div className="flex items-center gap-3.5 min-w-0 pr-2">
                             {isOrganic ? (
@@ -3672,7 +3810,7 @@ export default function SettingsScreen({
                               <p className={`font-bold text-sm ${primaryTextThemeClass} group-hover:text-indigo-400 transition-colors`}>
                                 {lang === 'id' ? 'Ekspor Cadangan (.json)' : 'Export Backup (.json)'}
                               </p>
-                              <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">
+                              <p className={`text-xs mt-0.5 leading-relaxed ${subTextThemeClass}`}>
                                 {lang === 'id' ? 'Unduh file cadangan aman ke perangkat' : 'Download secure backup file to device'}
                               </p>
                             </div>
@@ -3686,7 +3824,15 @@ export default function SettingsScreen({
                         <button 
                           type="button"
                           onClick={handleImportClick}
-                          className="flex items-center justify-between p-3.5 sm:p-4 bg-slate-950/70 hover:bg-slate-950 border border-slate-800 rounded-2xl transition-all text-left cursor-pointer active:scale-98 group"
+                          className={`flex items-center justify-between p-3.5 sm:p-4 border rounded-2xl transition-all text-left cursor-pointer active:scale-98 group ${
+                            isLight
+                              ? (appTheme === 'organic' || appTheme === 'cute'
+                                  ? 'bg-[#FAF5EA] hover:bg-[#F4ECDC] border-[#EADCC8]'
+                                  : appTheme === 'pink'
+                                    ? 'bg-white hover:bg-pink-50 border-pink-200'
+                                    : 'bg-white hover:bg-slate-50 border-slate-200 shadow-xs')
+                              : 'bg-slate-950/70 hover:bg-slate-950 border-slate-800'
+                          }`}
                         >
                           <div className="flex items-center gap-3.5 min-w-0 pr-2">
                             {isOrganic ? (
@@ -3700,7 +3846,7 @@ export default function SettingsScreen({
                               <p className={`font-bold text-sm ${primaryTextThemeClass} group-hover:text-emerald-400 transition-colors`}>
                                 {lang === 'id' ? 'Pulihkan Data (.json)' : 'Restore Data (.json)'}
                               </p>
-                              <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">
+                              <p className={`text-xs mt-0.5 leading-relaxed ${subTextThemeClass}`}>
                                 {lang === 'id' ? 'Impor & pulihkan dari file cadangan' : 'Import & restore from backup file'}
                               </p>
                             </div>
@@ -3728,11 +3874,19 @@ export default function SettingsScreen({
                     <span className="text-xs font-bold text-rose-400 uppercase tracking-wider px-3 block flex items-center gap-1.5">
                       <AlertTriangle size={13} /> {lang === 'id' ? 'Zona Bahaya' : 'Danger Zone'}
                     </span>
-                    <div className="bg-rose-950/20 border border-rose-900/30 rounded-2xl p-4 sm:p-5 shadow-sm">
+                    <div className={`border rounded-2xl p-4 sm:p-5 shadow-sm ${
+                      isLight
+                        ? 'bg-rose-50 border-rose-200 text-rose-950'
+                        : 'bg-rose-950/20 border-rose-900/30'
+                    }`}>
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div className="flex flex-col min-w-0 flex-1">
-                          <span className="font-bold text-xs text-rose-300">{lang === 'id' ? 'Hapus Seluruh Data & Reset' : 'Hard Reset All Data'}</span>
-                          <span className="text-[11px] text-slate-400 mt-0.5">{lang === 'id' ? 'Menghapus database lokal, catatan, tugas, dan keuangan secara permanen.' : 'Permanently wipe all local records and settings.'}</span>
+                          <span className={`font-bold text-xs ${isLight ? 'text-rose-700' : 'text-rose-300'}`}>
+                            {lang === 'id' ? 'Hapus Seluruh Data & Reset' : 'Hard Reset All Data'}
+                          </span>
+                          <span className={`text-[11px] mt-0.5 ${subTextThemeClass}`}>
+                            {lang === 'id' ? 'Menghapus database lokal, catatan, tugas, dan keuangan secara permanen.' : 'Permanently wipe all local records and settings.'}
+                          </span>
                         </div>
                         <button
                           onClick={() => setShowResetConfirm(true)}
@@ -3948,51 +4102,111 @@ export default function SettingsScreen({
               {(currentActiveSection === 'about' || currentActiveSection === 'privacy') && (
                 <div className="space-y-6">
                   {/* 1. Hero Brand Card */}
-                  <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-indigo-950/40 to-slate-900 border border-slate-800 p-5 sm:p-6 shadow-md">
+                  <div className={`relative overflow-hidden rounded-3xl p-5 sm:p-6 shadow-md border ${
+                    isLight
+                      ? (appTheme === 'organic' || appTheme === 'cute'
+                          ? 'bg-gradient-to-br from-[#FAF5EA] via-[#F4ECDC] to-[#FAF5EA] border-[#EADCC8]'
+                          : appTheme === 'pink'
+                            ? 'bg-gradient-to-br from-[#FFF0F5] via-[#FCE7F3] to-[#FFF0F5] border-pink-200'
+                            : 'bg-gradient-to-br from-white via-slate-50 to-indigo-50/30 border-slate-200')
+                      : 'bg-gradient-to-br from-slate-900 via-indigo-950/40 to-slate-900 border-slate-800'
+                  }`}>
                     <div className="absolute top-0 right-0 -mt-8 -mr-8 w-40 h-40 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
                     
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-4">
-                      <div className="w-14 h-14 rounded-2xl overflow-hidden border border-slate-700/60 bg-slate-900 flex items-center justify-center shrink-0 shadow-lg">
+                      <div className={`w-14 h-14 rounded-2xl overflow-hidden border flex items-center justify-center shrink-0 shadow-lg ${
+                        isLight
+                          ? (appTheme === 'organic' || appTheme === 'cute'
+                              ? 'border-[#EADCC8] bg-white'
+                              : appTheme === 'pink'
+                                ? 'border-pink-200 bg-white'
+                                : 'border-slate-200 bg-white')
+                          : 'border-slate-700/60 bg-slate-900'
+                      }`}>
                         <img src="/icon.png" alt="Tata Logo" className="w-full h-full object-cover" />
                       </div>
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
-                          <h2 className="font-black text-xl text-slate-50 tracking-tight">Tata</h2>
-                          <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                          <h2 className={`font-black text-xl tracking-tight ${primaryTextThemeClass}`}>Tata</h2>
+                          <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold border ${
+                            isLight
+                              ? (appTheme === 'organic' || appTheme === 'cute'
+                                  ? 'bg-[#EADCC8]/60 text-[#7D6A58] border-[#EADCC8]'
+                                  : appTheme === 'pink'
+                                    ? 'bg-pink-100 text-pink-700 border-pink-200'
+                                    : 'bg-indigo-50 text-indigo-700 border-indigo-200')
+                              : 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30'
+                          }`}>
                             v5.1.0 Stable
                           </span>
-                          <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                          <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
                             100% Offline-First
                           </span>
                         </div>
-                        <p className="text-xs font-semibold text-indigo-300 mt-0.5">
+                        <p className={`text-xs font-semibold mt-0.5 ${
+                          isLight
+                            ? (appTheme === 'organic' || appTheme === 'cute'
+                                ? 'text-[#8A6A4E]'
+                                : appTheme === 'pink'
+                                  ? 'text-pink-600'
+                                  : 'text-indigo-600')
+                            : 'text-indigo-300'
+                        }`}>
                           {lang === 'id' ? 'Karya Independen oleh Noto (@noto.grow)' : 'Independent Work by Noto (@noto.grow)'}
                         </p>
                       </div>
                     </div>
 
-                    <p className="text-xs sm:text-sm text-slate-300 leading-relaxed mb-4">
+                    <p className={`text-xs sm:text-sm leading-relaxed mb-4 ${subTextThemeClass}`}>
                       {lang === 'id' 
                         ? 'Tata adalah ruang produktivitas yang tenang, privat, dan bebas distraksi. Diciptakan dengan filosofi tanpa database cloud, tanpa pelacak pihak ketiga, dan 100% kepemilikan data ada di tangan Anda.'
                         : 'Tata is a calm, distraction-free productivity space. Built upon zero cloud databases, no third-party trackers, and 100% user data ownership on your device.'}
                     </p>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 border-t border-slate-800/80">
-                      <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-950/40 border border-slate-800/50">
-                        <Lock size={14} className="text-emerald-400 shrink-0" />
-                        <div className="text-[11px] font-medium text-slate-300">
+                    <div className={`grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 border-t ${
+                      isLight
+                        ? (appTheme === 'organic' || appTheme === 'cute' ? 'border-[#EADCC8]/80' : appTheme === 'pink' ? 'border-pink-200/80' : 'border-slate-200/80')
+                        : 'border-slate-800/80'
+                    }`}>
+                      <div className={`flex items-center gap-2 p-2 rounded-xl border ${
+                        isLight
+                          ? (appTheme === 'organic' || appTheme === 'cute' ? 'bg-[#FAF5EA] border-[#EADCC8]' : appTheme === 'pink' ? 'bg-pink-50/60 border-pink-200' : 'bg-white border-slate-200')
+                          : 'bg-slate-950/40 border-slate-800/50'
+                      }`}>
+                        {isOrganic ? (
+                          <Icon3DLock size={18} />
+                        ) : (
+                          <Lock size={14} className="text-emerald-500 shrink-0" />
+                        )}
+                        <div className={`text-[11px] font-medium ${primaryTextThemeClass}`}>
                           {lang === 'id' ? '100% Offline (Lokal)' : '100% Offline (Local)'}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-950/40 border border-slate-800/50">
-                        <ShieldCheck size={14} className="text-sky-400 shrink-0" />
-                        <div className="text-[11px] font-medium text-slate-300">
+                      <div className={`flex items-center gap-2 p-2 rounded-xl border ${
+                        isLight
+                          ? (appTheme === 'organic' || appTheme === 'cute' ? 'bg-[#FAF5EA] border-[#EADCC8]' : appTheme === 'pink' ? 'bg-pink-50/60 border-pink-200' : 'bg-white border-slate-200')
+                          : 'bg-slate-950/40 border-slate-800/50'
+                      }`}>
+                        {isOrganic ? (
+                          <Icon3DShield size={18} />
+                        ) : (
+                          <ShieldCheck size={14} className="text-sky-500 shrink-0" />
+                        )}
+                        <div className={`text-[11px] font-medium ${primaryTextThemeClass}`}>
                           {lang === 'id' ? 'Tanpa Server Cloud' : 'Zero Cloud Server'}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-950/40 border border-slate-800/50">
-                        <Database size={14} className="text-indigo-400 shrink-0" />
-                        <div className="text-[11px] font-medium text-slate-300">
+                      <div className={`flex items-center gap-2 p-2 rounded-xl border ${
+                        isLight
+                          ? (appTheme === 'organic' || appTheme === 'cute' ? 'bg-[#FAF5EA] border-[#EADCC8]' : appTheme === 'pink' ? 'bg-pink-50/60 border-pink-200' : 'bg-white border-slate-200')
+                          : 'bg-slate-950/40 border-slate-800/50'
+                      }`}>
+                        {isOrganic ? (
+                          <Icon3DDatabase size={18} />
+                        ) : (
+                          <Database size={14} className="text-indigo-500 shrink-0" />
+                        )}
+                        <div className={`text-[11px] font-medium ${primaryTextThemeClass}`}>
                           {lang === 'id' ? 'Data Milik Anda' : 'User-Owned Data'}
                         </div>
                       </div>
@@ -4004,26 +4218,44 @@ export default function SettingsScreen({
                     <span className="text-xs font-bold text-slate-400 uppercase tracking-wider px-3 block">
                       {lang === 'id' ? 'Status Privasi & Kedaulatan Data' : 'Privacy Status & Data Sovereignty'}
                     </span>
-                    <div className="bg-emerald-950/20 border border-emerald-500/30 rounded-2xl p-4 sm:p-5 shadow-sm space-y-3 relative overflow-hidden">
+                    <div className={`border rounded-2xl p-4 sm:p-5 shadow-sm space-y-3 relative overflow-hidden ${
+                      isLight
+                        ? (appTheme === 'organic' || appTheme === 'cute'
+                            ? 'bg-emerald-500/10 border-emerald-500/30'
+                            : appTheme === 'pink'
+                              ? 'bg-pink-500/10 border-pink-500/30'
+                              : 'bg-emerald-50/70 border-emerald-200')
+                        : 'bg-emerald-950/20 border-emerald-500/30'
+                    }`}>
                       <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none" />
                       <div className="flex items-center gap-3">
                         {isOrganic ? (
                           <Icon3DShield size={28} />
                         ) : (
-                          <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shrink-0 shadow-inner">
+                          <div className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 shadow-inner ${
+                            isLight
+                              ? 'bg-emerald-500/15 text-emerald-600 border-emerald-500/30'
+                              : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                          }`}>
                             <ShieldCheck size={20} />
                           </div>
                         )}
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="font-extrabold text-sm text-emerald-300">
+                            <span className={`font-extrabold text-sm ${
+                              isLight ? 'text-emerald-800' : 'text-emerald-300'
+                            }`}>
                               {lang === 'id' ? 'Isolasi Lokal Penuh & Terenkripsi' : 'Full Local Isolation & Encrypted'}
                             </span>
-                            <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 uppercase tracking-wider">
+                            <span className={`px-1.5 py-0.5 rounded text-[9px] font-black border uppercase tracking-wider ${
+                              isLight
+                                ? 'bg-emerald-500/20 text-emerald-800 border-emerald-500/40'
+                                : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                            }`}>
                               Verifikasi Aktif
                             </span>
                           </div>
-                          <span className="text-xs text-slate-300 leading-relaxed block mt-0.5">
+                          <span className={`text-xs leading-relaxed block mt-0.5 ${subTextThemeClass}`}>
                             {lang === 'id'
                               ? 'Catatan, tugas, riwayat keuangan, dan foto tersimpan eksklusif di memori lokal peramban Anda.'
                               : 'Notes, tasks, financial records, and photos are strictly stored in local device memory.'}
@@ -4032,21 +4264,37 @@ export default function SettingsScreen({
                       </div>
 
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-emerald-500/20 text-center">
-                        <div className="p-2 bg-slate-900/60 rounded-xl border border-slate-800/80">
-                          <span className="text-[10px] text-slate-400 block font-medium">Cloud Server</span>
-                          <span className="text-xs font-black text-emerald-400">0 Byte (Nol)</span>
+                        <div className={`p-2 rounded-xl border ${
+                          isLight
+                            ? (appTheme === 'organic' || appTheme === 'cute' ? 'bg-white/90 border-[#EADCC8]' : appTheme === 'pink' ? 'bg-white/90 border-pink-200' : 'bg-white border-slate-200 shadow-xs')
+                            : 'bg-slate-900/60 border-slate-800/80'
+                        }`}>
+                          <span className={`text-[10px] block font-medium ${subTextThemeClass}`}>Cloud Server</span>
+                          <span className="text-xs font-black text-emerald-500">{lang === 'id' ? 'Terisolasi Aman' : 'Safe & Isolated'}</span>
                         </div>
-                        <div className="p-2 bg-slate-900/60 rounded-xl border border-slate-800/80">
-                          <span className="text-[10px] text-slate-400 block font-medium">Penyimpanan</span>
-                          <span className="text-xs font-black text-sky-400">Local Only</span>
+                        <div className={`p-2 rounded-xl border ${
+                          isLight
+                            ? (appTheme === 'organic' || appTheme === 'cute' ? 'bg-white/90 border-[#EADCC8]' : appTheme === 'pink' ? 'bg-white/90 border-pink-200' : 'bg-white border-slate-200 shadow-xs')
+                            : 'bg-slate-900/60 border-slate-800/80'
+                        }`}>
+                          <span className={`text-[10px] block font-medium ${subTextThemeClass}`}>Penyimpanan</span>
+                          <span className="text-xs font-black text-sky-500">Local Only</span>
                         </div>
-                        <div className="p-2 bg-slate-900/60 rounded-xl border border-slate-800/80">
-                          <span className="text-[10px] text-slate-400 block font-medium">Tata AI</span>
-                          <span className="text-xs font-black text-purple-400">Stateless BYOK</span>
+                        <div className={`p-2 rounded-xl border ${
+                          isLight
+                            ? (appTheme === 'organic' || appTheme === 'cute' ? 'bg-white/90 border-[#EADCC8]' : appTheme === 'pink' ? 'bg-white/90 border-pink-200' : 'bg-white border-slate-200 shadow-xs')
+                            : 'bg-slate-900/60 border-slate-800/80'
+                        }`}>
+                          <span className={`text-[10px] block font-medium ${subTextThemeClass}`}>Tata AI</span>
+                          <span className="text-xs font-black text-purple-500">Stateless BYOK</span>
                         </div>
-                        <div className="p-2 bg-slate-900/60 rounded-xl border border-slate-800/80">
-                          <span className="text-[10px] text-slate-400 block font-medium">Cadangan</span>
-                          <span className="text-xs font-black text-amber-400">AES-256 File</span>
+                        <div className={`p-2 rounded-xl border ${
+                          isLight
+                            ? (appTheme === 'organic' || appTheme === 'cute' ? 'bg-white/90 border-[#EADCC8]' : appTheme === 'pink' ? 'bg-white/90 border-pink-200' : 'bg-white border-slate-200 shadow-xs')
+                            : 'bg-slate-900/60 border-slate-800/80'
+                        }`}>
+                          <span className={`text-[10px] block font-medium ${subTextThemeClass}`}>Cadangan</span>
+                          <span className="text-xs font-black text-amber-500">AES-256 File</span>
                         </div>
                       </div>
                     </div>
@@ -4076,41 +4324,65 @@ export default function SettingsScreen({
                       </div>
 
                       {privacyAuditResult && (
-                        <div className="bg-slate-950/80 border border-emerald-500/30 rounded-xl p-3.5 space-y-3 text-xs animate-in fade-in zoom-in-95 duration-200">
-                          <div className="flex items-center justify-between border-b border-slate-800/80 pb-2">
-                            <span className="font-bold text-emerald-400 flex items-center gap-1.5">
+                        <div className={`border rounded-xl p-3.5 space-y-3 text-xs animate-in fade-in zoom-in-95 duration-200 ${
+                          isLight
+                            ? (appTheme === 'organic' || appTheme === 'cute'
+                                ? 'bg-[#FAF5EA] border-emerald-500/30'
+                                : appTheme === 'pink'
+                                  ? 'bg-[#FFF0F5] border-pink-300'
+                                  : 'bg-white border-emerald-200 shadow-xs')
+                            : 'bg-slate-950/80 border-emerald-500/30'
+                        }`}>
+                          <div className={`flex items-center justify-between border-b pb-2 ${
+                            isLight
+                              ? (appTheme === 'organic' || appTheme === 'cute' ? 'border-[#EADCC8]' : appTheme === 'pink' ? 'border-pink-200' : 'border-slate-200')
+                              : 'border-slate-800/80'
+                          }`}>
+                            <span className="font-bold text-emerald-500 flex items-center gap-1.5">
                               <ShieldCheck size={14} />
                               {lang === 'id' ? 'Hasil Audit: 100% Lolos Isolasi Lokal' : 'Audit Result: 100% Passed Local Isolation'}
                             </span>
-                            <span className="text-[10px] text-slate-400">{privacyAuditResult.timestamp}</span>
+                            <span className={`text-[10px] ${subTextThemeClass}`}>{privacyAuditResult.timestamp}</span>
                           </div>
 
-                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-slate-300">
-                            <div className="p-2 bg-slate-900/60 rounded-lg border border-slate-800">
-                              <span className="text-[10px] text-slate-400 block">{lang === 'id' ? 'Total Entri Lokal' : 'Total Local Items'}</span>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                            <div className={`p-2 rounded-lg border ${
+                              isLight
+                                ? (appTheme === 'organic' || appTheme === 'cute' ? 'bg-[#F4ECDC]/70 border-[#EADCC8]' : appTheme === 'pink' ? 'bg-pink-50/70 border-pink-200' : 'bg-slate-50 border-slate-200')
+                                : 'bg-slate-900/60 border-slate-800'
+                            }`}>
+                              <span className={`text-[10px] block ${subTextThemeClass}`}>{lang === 'id' ? 'Total Entri Lokal' : 'Total Local Items'}</span>
                               <span className={`font-bold ${primaryTextThemeClass}`}>{privacyAuditResult.totalRecords} {lang === 'id' ? 'item' : 'items'}</span>
                             </div>
-                            <div className="p-2 bg-slate-900/60 rounded-lg border border-slate-800">
-                              <span className="text-[10px] text-slate-400 block">{lang === 'id' ? 'Ukuran LocalStorage' : 'LocalStorage Size'}</span>
-                              <span className="font-bold text-sky-400">~{privacyAuditResult.localStorageSizeKB} KB</span>
+                            <div className={`p-2 rounded-lg border ${
+                              isLight
+                                ? (appTheme === 'organic' || appTheme === 'cute' ? 'bg-[#F4ECDC]/70 border-[#EADCC8]' : appTheme === 'pink' ? 'bg-pink-50/70 border-pink-200' : 'bg-slate-50 border-slate-200')
+                                : 'bg-slate-900/60 border-slate-800'
+                            }`}>
+                              <span className={`text-[10px] block ${subTextThemeClass}`}>{lang === 'id' ? 'Ukuran LocalStorage' : 'LocalStorage Size'}</span>
+                              <span className="font-bold text-sky-500">~{privacyAuditResult.localStorageSizeKB} KB</span>
                             </div>
-                            <div className="p-2 bg-slate-900/60 rounded-lg border border-slate-800">
-                              <span className="text-[10px] text-slate-400 block">{lang === 'id' ? 'Proteksi PIN' : 'PIN Security'}</span>
-                              <span className="font-bold text-purple-400">{privacyAuditResult.pinSecurity}</span>
+                            <div className={`p-2 rounded-lg border ${
+                              isLight
+                                ? (appTheme === 'organic' || appTheme === 'cute' ? 'bg-[#F4ECDC]/70 border-[#EADCC8]' : appTheme === 'pink' ? 'bg-pink-50/70 border-pink-200' : 'bg-slate-50 border-slate-200')
+                                : 'bg-slate-900/60 border-slate-800'
+                            }`}>
+                              <span className={`text-[10px] block ${subTextThemeClass}`}>{lang === 'id' ? 'Proteksi PIN' : 'PIN Security'}</span>
+                              <span className="font-bold text-purple-500">{privacyAuditResult.pinSecurity}</span>
                             </div>
                           </div>
 
-                          <ul className="space-y-1.5 pt-1 text-[11px] text-slate-300">
+                          <ul className={`space-y-1.5 pt-1 text-[11px] ${subTextThemeClass}`}>
                             <li className="flex items-center gap-2">
-                              <span className="text-emerald-400 font-bold">✓</span>
+                              <span className="text-emerald-500 font-bold">✓</span>
                               <span>{privacyAuditResult.networkStatus}</span>
                             </li>
                             <li className="flex items-center gap-2">
-                              <span className="text-emerald-400 font-bold">✓</span>
+                              <span className="text-emerald-500 font-bold">✓</span>
                               <span>{lang === 'id' ? 'Tata AI: Model Stateless (Hanya dipanggil saat Anda menekan tombol)' : 'Tata AI: Stateless Model (Invoked only upon explicit button click)'}</span>
                             </li>
                             <li className="flex items-center gap-2">
-                              <span className="text-emerald-400 font-bold">✓</span>
+                              <span className="text-emerald-500 font-bold">✓</span>
                               <span>{lang === 'id' ? 'Penyimpanan Foto & Dokumen: Diproses lokal di RAM/IndexedDB' : 'Photo & Document storage: Processed locally in RAM/IndexedDB'}</span>
                             </li>
                           </ul>
@@ -4124,11 +4396,11 @@ export default function SettingsScreen({
                     <span className="text-xs font-bold text-slate-400 uppercase tracking-wider px-3 block">
                       {lang === 'id' ? 'Dokumen Resmi & Pembaruan' : 'Official Documents & Updates'}
                     </span>
-                    <div className={`${cardThemeClass} rounded-2xl overflow-hidden divide-y divide-slate-800/60 shadow-sm`}>
+                    <div className={`${cardThemeClass} rounded-2xl overflow-hidden divide-y ${borderThemeClass} shadow-sm`}>
                       {/* White Paper & Kebijakan Privasi Lengkap */}
                       <button 
                         onClick={() => setShowPrivacyPolicy(true)}
-                        className="w-full flex items-center justify-between p-3.5 hover:bg-slate-800/50 transition-all text-left cursor-pointer group"
+                        className={`w-full flex items-center justify-between p-3.5 transition-all text-left cursor-pointer group ${cardRowHoverClass}`}
                       >
                         <div className="flex items-center gap-3.5 min-w-0 pr-2">
                           {isOrganic ? (
@@ -4149,7 +4421,7 @@ export default function SettingsScreen({
                                 White Paper
                               </span>
                             </div>
-                            <span className="text-[11px] text-slate-400 block truncate">
+                            <span className={`text-[11px] block truncate ${subTextThemeClass}`}>
                               {lang === 'id' ? 'Buku putih lengkap: arsitektur offline, tier Lite/Pro/Pro Max, akun Google & privasi' : 'Complete white paper: offline architecture, Lite/Pro/Pro Max tiers, Google account & privacy'}
                             </span>
                           </div>
@@ -4160,7 +4432,7 @@ export default function SettingsScreen({
                       {/* Pesan dari Pengembang */}
                       <button 
                         onClick={() => setShowDevMessageModal(true)}
-                        className="w-full flex items-center justify-between p-3.5 hover:bg-slate-800/50 transition-all text-left cursor-pointer group"
+                        className={`w-full flex items-center justify-between p-3.5 transition-all text-left cursor-pointer group ${cardRowHoverClass}`}
                       >
                         <div className="flex items-center gap-3.5 min-w-0 pr-2">
                           {isOrganic ? (
@@ -4176,7 +4448,7 @@ export default function SettingsScreen({
                             <span className={`font-semibold text-[14px] ${primaryTextThemeClass} block truncate`}>
                               {lang === 'id' ? 'Pesan dari Pengembang (Noto)' : 'Developer Message (Noto)'}
                             </span>
-                            <span className="text-[11px] text-slate-400 block truncate">
+                            <span className={`text-[11px] block truncate ${subTextThemeClass}`}>
                               {lang === 'id' ? 'Sepatah kata hangat tentang visi & misi awal mula dibuatnya Tata' : 'A warm note about the vision and initial purpose behind Tata'}
                             </span>
                           </div>
@@ -4187,7 +4459,7 @@ export default function SettingsScreen({
                       {/* Catatan Rilis & Fitur Baru */}
                       <button 
                         onClick={() => setShowUpdateNotes(true)}
-                        className="w-full flex items-center justify-between p-3.5 hover:bg-slate-800/50 transition-all text-left cursor-pointer group"
+                        className={`w-full flex items-center justify-between p-3.5 transition-all text-left cursor-pointer group ${cardRowHoverClass}`}
                       >
                         <div className="flex items-center gap-3.5 min-w-0 pr-2">
                           {isOrganic ? (
@@ -4203,7 +4475,7 @@ export default function SettingsScreen({
                             <span className={`font-semibold text-[14px] ${primaryTextThemeClass} block truncate`}>
                               {lang === 'id' ? 'Catatan Rilis & Fitur Baru (v5.1.0)' : 'Release Notes & New Features (v5.1.0)'}
                             </span>
-                            <span className="text-[11px] text-slate-400 block truncate">
+                            <span className={`text-[11px] block truncate ${subTextThemeClass}`}>
                               {lang === 'id' ? 'Daftar pembaruan, optimasi performa & penyempurnaan sistem Tata' : 'Update changelog, performance enhancements & refinements'}
                             </span>
                           </div>
@@ -4246,7 +4518,7 @@ export default function SettingsScreen({
                       </div>
 
                       {/* Notifikasi */}
-                      <div className="pt-3 border-t border-slate-800/60 flex items-center justify-between gap-3">
+                      <div className={`pt-3 border-t ${borderThemeClass} flex items-center justify-between gap-3`}>
                         <div className="flex items-center gap-3">
                           {isOrganic ? (
                             <Icon3DBell size={24} />
@@ -4266,7 +4538,7 @@ export default function SettingsScreen({
                                 </span>
                               )}
                             </div>
-                            <span className="text-[11px] text-slate-400 leading-tight block">
+                            <span className={`text-[11px] leading-tight block ${subTextThemeClass}`}>
                               {lang === 'id' ? 'Alarm berjalan di peramban tanpa server push cloud.' : 'Alarms run in-browser without cloud push servers.'}
                             </span>
                           </div>
@@ -4280,44 +4552,34 @@ export default function SettingsScreen({
                         </button>
                       </div>
 
-                      {/* Telemetri Toggle */}
-                      <div className="pt-3 border-t border-slate-800/60 flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                          {isOrganic ? (
-                            <Icon3DShuffle size={24} />
-                          ) : (
-                            <div className="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center shrink-0">
-                              <ShieldCheck size={16} />
-                            </div>
-                          )}
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className={`font-bold text-xs ${primaryTextThemeClass}`}>
-                                {lang === 'id' ? 'Statistik anonim penggunaan aplikasi' : 'Anonymous app usage statistics'}
-                              </span>
-                              <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${!disableTelemetry ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}`}>
-                                {!disableTelemetry ? (lang === 'id' ? 'Aktif' : 'Active') : (lang === 'id' ? 'Mati' : 'Off')}
-                              </span>
-                            </div>
-                            <span className="text-[11px] text-slate-400 leading-tight block">
-                              {lang === 'id'
-                                ? 'Hanya menghitung statistik pengunjung web via Vercel Analytics (aktif secara default). Anda dapat mematikannya kapan saja. Data pribadi Anda (catatan, tugas, keuangan, mood) tetap 100% tersimpan lokal di perangkat.'
-                                : 'Only counts visitor numbers via Vercel Analytics (enabled by default). You can turn it off anytime. Your private data (notes, tasks, finances, moods) strictly stays 100% locally on your device.'}
+                      {/* Tata Aman & Terlindungi (Privacy-First) */}
+                      <div className={`pt-3 border-t ${borderThemeClass} flex items-start gap-3`}>
+                        {isOrganic ? (
+                          <Icon3DShield size={24} />
+                        ) : (
+                          <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                            <ShieldCheck size={16} />
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className={`font-bold text-xs ${primaryTextThemeClass}`}>
+                              {lang === 'id' ? 'Tata Aman & Terlindungi' : 'Tata is Safe & Protected'}
+                            </span>
+                            <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 uppercase tracking-wider">
+                              {lang === 'id' ? 'Privasi Penuh' : 'Privacy-First'}
                             </span>
                           </div>
+                          <p className={`text-[11px] leading-relaxed mt-1 ${subTextThemeClass}`}>
+                            {lang === 'id'
+                              ? 'Tata menjamin keamanan data Anda seutuhnya. Semua catatan, tugas, riwayat keuangan, dan PIN tersimpan aman secara lokal di perangkat Anda.'
+                              : 'Tata ensures your data remains completely secure. All notes, tasks, financial records, and PINs strictly stay on your own device.'}
+                          </p>
                         </div>
-                        <button
-                          type="button"
-                          onClick={toggleTelemetry}
-                          aria-label={lang === 'id' ? 'Toggle Statistik anonim penggunaan aplikasi' : 'Toggle anonymous app usage statistics'}
-                          className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${!disableTelemetry ? 'bg-emerald-500' : 'bg-slate-800'}`}
-                        >
-                          <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${!disableTelemetry ? 'translate-x-5' : 'translate-x-0'}`} />
-                        </button>
                       </div>
 
                       {/* Browser Storage Tips */}
-                      <div className="pt-3 border-t border-slate-800/60">
+                      <div className={`pt-3 border-t ${borderThemeClass}`}>
                         <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl flex gap-3 text-amber-200">
                           <AlertTriangle className="w-4 h-4 flex-shrink-0 text-amber-400 mt-0.5" />
                           <div>
@@ -4338,13 +4600,13 @@ export default function SettingsScreen({
                     <span className="text-xs font-bold text-slate-400 uppercase tracking-wider px-3 block">
                       {lang === 'id' ? 'Komunitas & Kontak Resmi (@noto.grow)' : 'Community & Official Contact (@noto.grow)'}
                     </span>
-                    <div className={`${cardThemeClass} rounded-2xl overflow-hidden divide-y divide-slate-800/60 shadow-sm`}>
+                    <div className={`${cardThemeClass} rounded-2xl overflow-hidden divide-y ${borderThemeClass} shadow-sm`}>
                       {/* Instagram Resmi */}
                       <a 
                         href="https://www.instagram.com/noto.grow/"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="w-full flex items-center justify-between p-3.5 hover:bg-slate-800/50 transition-all text-left cursor-pointer group"
+                        className={`w-full flex items-center justify-between p-3.5 transition-all text-left cursor-pointer group ${cardRowHoverClass}`}
                       >
                         <div className="flex items-center gap-3.5 min-w-0 pr-2">
                           {isOrganic ? (
@@ -4360,7 +4622,7 @@ export default function SettingsScreen({
                             <span className={`font-semibold text-[14px] ${primaryTextThemeClass} block truncate`}>
                               Instagram Resmi (@noto.grow)
                             </span>
-                            <span className="text-[11px] text-slate-400 block truncate">
+                            <span className={`text-[11px] block truncate ${subTextThemeClass}`}>
                               {lang === 'id' ? 'Ikuti info pembaruan terkini & tips produktivitas dari Noto' : 'Follow latest updates & productivity tips from Noto'}
                             </span>
                           </div>
@@ -4371,7 +4633,7 @@ export default function SettingsScreen({
                       {/* Email Pengembang */}
                       <a 
                         href="mailto:notofpg@gmail.com"
-                        className="w-full flex items-center justify-between p-3.5 hover:bg-slate-800/50 transition-all text-left cursor-pointer group"
+                        className={`w-full flex items-center justify-between p-3.5 transition-all text-left cursor-pointer group ${cardRowHoverClass}`}
                       >
                         <div className="flex items-center gap-3.5 min-w-0 pr-2">
                           {isOrganic ? (
@@ -4387,7 +4649,7 @@ export default function SettingsScreen({
                             <span className={`font-semibold text-[14px] ${primaryTextThemeClass} block truncate`}>
                               {lang === 'id' ? 'Email Pengembang' : 'Developer Email'}
                             </span>
-                            <span className="text-[11px] text-slate-400 block truncate">
+                            <span className={`text-[11px] block truncate ${subTextThemeClass}`}>
                               notofpg@gmail.com • {lang === 'id' ? 'Saran, masukan, atau laporan kendala' : 'Feedback, inquiries, or bug reports'}
                             </span>
                           </div>
@@ -4398,7 +4660,7 @@ export default function SettingsScreen({
                       {/* Undang & Bagikan Tata */}
                       <button 
                         onClick={() => setShowInviteModal(true)}
-                        className="w-full flex items-center justify-between p-3.5 hover:bg-slate-800/50 transition-all text-left cursor-pointer group"
+                        className={`w-full flex items-center justify-between p-3.5 transition-all text-left cursor-pointer group ${cardRowHoverClass}`}
                       >
                         <div className="flex items-center gap-3.5 min-w-0 pr-2">
                           {isOrganic ? (
@@ -4419,7 +4681,7 @@ export default function SettingsScreen({
                                 Free
                               </span>
                             </div>
-                            <span className="text-[11px] text-slate-400 block truncate">
+                            <span className={`text-[11px] block truncate ${subTextThemeClass}`}>
                               {lang === 'id' ? 'Bagikan link Tata via WhatsApp, Telegram, atau barcode QR' : 'Share Tata link via WhatsApp, Telegram, or QR barcode'}
                             </span>
                           </div>
@@ -4445,18 +4707,26 @@ export default function SettingsScreen({
                     <span className="text-xs font-bold text-slate-400 uppercase tracking-wider px-3 block">
                       {lang === 'id' ? 'Filosofi Privasi AI' : 'AI Privacy Philosophy'}
                     </span>
-                    <div className="bg-indigo-950/20 border border-indigo-900/40 rounded-2xl p-4 sm:p-5 shadow-sm space-y-3">
+                    <div className={`border rounded-2xl p-4 sm:p-5 shadow-sm space-y-3 ${
+                      isLight
+                        ? (appTheme === 'organic' || appTheme === 'cute'
+                            ? 'bg-[#FAF5EA] border-[#EADCC8]'
+                            : appTheme === 'pink'
+                              ? 'bg-pink-50/70 border-pink-200'
+                              : 'bg-indigo-50/60 border-indigo-200')
+                        : 'bg-indigo-950/20 border-indigo-900/40'
+                    }`}>
                       <div className="flex items-center gap-2">
                         {isOrganic ? (
                           <Icon3DShield size={18} />
                         ) : (
-                          <ShieldCheck size={16} className="text-indigo-400" />
+                          <ShieldCheck size={16} className={isLight ? 'text-indigo-600' : 'text-indigo-400'} />
                         )}
-                        <span className="font-bold text-xs text-indigo-300">
+                        <span className={`font-bold text-xs ${isLight ? (appTheme === 'organic' || appTheme === 'cute' ? 'text-[#7D6A58]' : 'text-indigo-700') : 'text-indigo-300'}`}>
                           {lang === 'id' ? '100% Offline-First & Kendali Penuh Pengguna' : '100% Offline-First & User Controlled'}
                         </span>
                       </div>
-                      <p className="text-xs text-slate-300 leading-relaxed">
+                      <p className={`text-xs leading-relaxed ${subTextThemeClass}`}>
                         {lang === 'id' 
                           ? 'Tata dirancang offline-first. Catatan, tugas, keuangan, dan kalender Anda disimpan 100% secara lokal di perangkat. Fitur AI bersifat opsional dan hanya memproses teks saat Anda menekan tombol perintah AI secara sadar.'
                           : 'Tata is built offline-first. Your notes, tasks, finances, and calendar stay 100% on your device. AI features are purely optional and only process text upon your explicit action.'}
@@ -4808,12 +5078,12 @@ export default function SettingsScreen({
                 <Lock size={22} />
               </div>
             )}
-            <h3 className="text-xl font-bold text-slate-50 mb-1.5 text-center">
+            <h3 className={`text-xl font-bold ${primaryTextThemeClass} mb-1.5 text-center`}>
               {pinModalMode === 'create' && t('createPin')}
               {(pinModalMode === 'verify' || pinModalMode === 'remove') && t('verifyPin')}
               {pinModalMode === 'change' && t('changePin')}
             </h3>
-            <p className="text-xs text-slate-400 mb-5 text-center leading-normal">
+            <p className={`text-xs ${subTextThemeClass} mb-5 text-center leading-normal`}>
               {t('enter4Digits')}
             </p>
 
@@ -4844,13 +5114,7 @@ export default function SettingsScreen({
                   return (
                     <div 
                       key={index}
-                      className={`w-12 h-14 rounded-2xl border-2 flex items-center justify-center text-3xl font-extrabold transition-all duration-150 ${
-                        isFilled 
-                          ? 'border-indigo-500 bg-indigo-500/10 text-indigo-400' 
-                          : isCurrent
-                            ? 'border-indigo-500/50 bg-slate-950/50 text-indigo-300'
-                            : 'border-slate-800 bg-slate-950/20 text-slate-600'
-                      }`}
+                      className={`w-12 h-14 rounded-2xl border-2 flex items-center justify-center text-3xl font-extrabold transition-all duration-150 ${getPinDigitClass(isFilled, isCurrent, 'indigo')}`}
                     >
                       {isFilled ? '•' : ''}
                     </div>
@@ -4865,14 +5129,14 @@ export default function SettingsScreen({
                   type="text"
                   value={pinQuestionInput}
                   onChange={e => setPinQuestionInput(e.target.value)}
-                  className="w-full bg-slate-950/60 border border-slate-800 rounded-2xl px-4 py-3 text-slate-50 text-sm outline-none focus:border-indigo-500/60 transition-all placeholder-slate-600"
+                  className={`w-full ${inputThemeClass} rounded-2xl px-4 py-3 text-sm outline-none focus:border-indigo-500/60 transition-all`}
                   placeholder={t('securityQuestionPlaceholder')}
                 />
                 <input
                   type="text"
                   value={pinAnswerInput}
                   onChange={e => setPinAnswerInput(e.target.value)}
-                  className="w-full bg-slate-950/60 border border-slate-800 rounded-2xl px-4 py-3 text-slate-50 text-sm outline-none focus:border-indigo-500/60 transition-all placeholder-slate-600"
+                  className={`w-full ${inputThemeClass} rounded-2xl px-4 py-3 text-sm outline-none focus:border-indigo-500/60 transition-all`}
                   placeholder={t('securityAnswerPlaceholder')}
                 />
               </div>
@@ -4887,14 +5151,14 @@ export default function SettingsScreen({
                   setPinAnswerInput('');
                   setPinError(false);
                 }}
-                className="flex-1 py-3 rounded-2xl text-sm font-bold text-slate-400 hover:text-slate-200 bg-slate-950/40 border border-transparent hover:bg-slate-800/40 transition-all cursor-pointer"
+                className={`flex-1 py-3 rounded-2xl text-sm font-bold border transition-all cursor-pointer ${btnSecondaryThemeClass}`}
               >
                 {t('cancel')}
               </button>
               <button 
                 disabled={pinInput.length !== 4 || ((pinModalMode === 'create' || pinModalMode === 'change') && (!pinQuestionInput.trim() || !pinAnswerInput.trim()))}
                 onClick={handlePinSubmit}
-                className={`flex-1 py-3 rounded-2xl text-sm font-extrabold transition-all cursor-pointer ${pinInput.length === 4 && (!['create', 'change'].includes(pinModalMode) || (pinQuestionInput.trim() && pinAnswerInput.trim())) ? 'bg-indigo-400 hover:bg-indigo-300 text-zinc-950 shadow-md shadow-indigo-500/20' : 'bg-slate-850 text-slate-500 cursor-not-allowed opacity-50'}`}
+                className={`flex-1 py-3 rounded-2xl text-sm font-extrabold transition-all cursor-pointer ${pinInput.length === 4 && (!['create', 'change'].includes(pinModalMode) || (pinQuestionInput.trim() && pinAnswerInput.trim())) ? 'bg-indigo-400 hover:bg-indigo-300 text-zinc-950 shadow-md shadow-indigo-500/20' : isLight ? 'bg-black/10 text-slate-400 cursor-not-allowed opacity-60' : 'bg-slate-850 text-slate-500 cursor-not-allowed opacity-50'}`}
               >
                 {t('save')}
               </button>
@@ -4985,14 +5249,14 @@ export default function SettingsScreen({
                   setNotePinInput('');
                   setNotePinError(false);
                 }}
-                className="flex-1 py-3 rounded-2xl text-xs font-bold text-slate-400 hover:text-slate-200 bg-slate-950/40 border border-transparent hover:bg-slate-800/40 transition-all cursor-pointer"
+                className={`flex-1 py-3 rounded-2xl text-xs font-bold border transition-all cursor-pointer ${btnSecondaryThemeClass}`}
               >
                 {lang === 'id' ? 'Batal' : 'Cancel'}
               </button>
               <button 
                 disabled={notePinInput.length !== 4}
                 onClick={handleNotePinSubmit}
-                className={`flex-1 py-3 rounded-2xl text-xs font-extrabold transition-all cursor-pointer ${notePinInput.length === 4 ? 'bg-amber-400 hover:bg-amber-300 text-zinc-950 shadow-md shadow-amber-500/20' : 'bg-slate-850 text-slate-500 cursor-not-allowed opacity-50'}`}
+                className={`flex-1 py-3 rounded-2xl text-xs font-extrabold transition-all cursor-pointer ${notePinInput.length === 4 ? 'bg-amber-400 hover:bg-amber-300 text-zinc-950 shadow-md shadow-amber-500/20' : isLight ? 'bg-black/10 text-slate-400 cursor-not-allowed opacity-60' : 'bg-slate-850 text-slate-500 cursor-not-allowed opacity-50'}`}
               >
                 {lang === 'id' ? 'Simpan' : 'Save'}
               </button>
@@ -5008,7 +5272,7 @@ export default function SettingsScreen({
             <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mx-auto mb-3">
               <KeyRound size={22} />
             </div>
-            <h3 className="text-base font-black text-slate-50 mb-1 text-center">
+            <h3 className={`text-base font-black ${primaryTextThemeClass} mb-1 text-center`}>
               {lang === 'id' ? 'Pemulihan PIN Catatan' : 'Note PIN Recovery'}
             </h3>
 
@@ -5028,7 +5292,7 @@ export default function SettingsScreen({
                 <button
                   type="button"
                   onClick={() => setShowForgotNotePinModal(false)}
-                  className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-750 text-slate-200 text-xs font-bold transition-colors cursor-pointer"
+                  className={`w-full py-2.5 rounded-xl border text-xs font-bold transition-colors cursor-pointer ${btnSecondaryThemeClass}`}
                 >
                   {lang === 'id' ? 'Saya Mengerti' : 'I Understand'}
                 </button>
@@ -5042,7 +5306,7 @@ export default function SettingsScreen({
                 </p>
 
                 {pinRecoveryQuestion && (
-                  <div className="bg-slate-950 border border-slate-800 p-3.5 rounded-2xl mb-3 text-left">
+                  <div className={`border p-3.5 rounded-2xl mb-3 text-left ${innerCardThemeClass}`}>
                     <span className="text-[10px] text-amber-400 font-bold uppercase tracking-widest mb-1 block">
                       {lang === 'id' ? 'Pertanyaan Keamanan' : 'Security Question'}
                     </span>
@@ -5063,7 +5327,7 @@ export default function SettingsScreen({
                       handleForgotNotePinInSettings();
                     }
                   }}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-50 mb-3 outline-none focus:border-amber-500/60 transition-colors"
+                  className={`w-full rounded-xl px-4 py-3 text-sm mb-3 outline-none focus:border-amber-500/60 transition-colors ${inputThemeClass}`}
                   placeholder={lang === 'id' ? "Jawaban Anda..." : "Your Answer..."}
                 />
 
@@ -5081,7 +5345,7 @@ export default function SettingsScreen({
                       setForgotNoteAnswerInput('');
                       setForgotNoteAnswerError(false);
                     }}
-                    className="flex-1 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-200 transition-colors cursor-pointer bg-slate-950/40"
+                    className={`flex-1 py-2.5 rounded-xl text-xs font-bold border transition-colors cursor-pointer ${btnSecondaryThemeClass}`}
                   >
                     {lang === 'id' ? 'Batal' : 'Cancel'}
                   </button>
@@ -5107,7 +5371,7 @@ export default function SettingsScreen({
             <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mx-auto mb-3">
               <KeyRound size={22} />
             </div>
-            <h3 className="text-base font-black text-slate-50 mb-1 text-center">
+            <h3 className={`text-base font-black ${primaryTextThemeClass} mb-1 text-center`}>
               {lang === 'id' ? 'Pertanyaan Pemulihan Terpadu' : 'Unified Recovery Question'}
             </h3>
             <p className="text-xs text-slate-400 mb-5 text-center leading-normal">
@@ -5125,7 +5389,7 @@ export default function SettingsScreen({
                   type="text"
                   value={pinQuestionInput}
                   onChange={e => setPinQuestionInput(e.target.value)}
-                  className="w-full bg-slate-950/60 border border-slate-800 rounded-2xl px-4 py-3 text-slate-50 text-sm outline-none focus:border-amber-500/60 transition-all placeholder-slate-600"
+                  className={`w-full rounded-2xl px-4 py-3 text-sm outline-none focus:border-amber-500/60 transition-all ${inputThemeClass}`}
                   placeholder={lang === 'id' ? "Contoh: Nama hewan peliharaan pertama Anda?" : "e.g. What is your first pet's name?"}
                 />
               </div>
@@ -5138,7 +5402,7 @@ export default function SettingsScreen({
                   type="text"
                   value={pinAnswerInput}
                   onChange={e => setPinAnswerInput(e.target.value)}
-                  className="w-full bg-slate-950/60 border border-slate-800 rounded-2xl px-4 py-3 text-slate-50 text-sm outline-none focus:border-amber-500/60 transition-all placeholder-slate-600"
+                  className={`w-full rounded-2xl px-4 py-3 text-sm outline-none focus:border-amber-500/60 transition-all ${inputThemeClass}`}
                   placeholder={lang === 'id' ? "Masukkan jawaban rahasia..." : "Enter your secret answer..."}
                 />
               </div>
@@ -5152,7 +5416,7 @@ export default function SettingsScreen({
                   setPinQuestionInput('');
                   setPinAnswerInput('');
                 }}
-                className="flex-1 py-3 rounded-2xl text-xs font-bold text-slate-400 hover:text-slate-200 bg-slate-950/40 border border-transparent hover:bg-slate-800/40 transition-all cursor-pointer"
+                className={`flex-1 py-3 rounded-2xl text-xs font-bold border transition-all cursor-pointer ${btnSecondaryThemeClass}`}
               >
                 {lang === 'id' ? 'Batal' : 'Cancel'}
               </button>
@@ -5172,7 +5436,7 @@ export default function SettingsScreen({
                 className={`flex-1 py-3 rounded-2xl text-xs font-extrabold transition-all cursor-pointer ${
                   pinQuestionInput.trim() && pinAnswerInput.trim() 
                     ? 'bg-amber-400 hover:bg-amber-300 text-zinc-950 shadow-md shadow-amber-500/20' 
-                    : 'bg-slate-850 text-slate-500 cursor-not-allowed opacity-50'
+                    : isLight ? 'bg-black/10 text-slate-400 cursor-not-allowed opacity-60' : 'bg-slate-850 text-slate-500 cursor-not-allowed opacity-50'
                 }`}
               >
                 {lang === 'id' ? 'Simpan' : 'Save'}
@@ -5183,7 +5447,7 @@ export default function SettingsScreen({
       )}
       {showResetConfirm && (
         <div className="fixed inset-0 bg-slate-950/95 flex items-center justify-center p-4 z-[200] animate-in fade-in duration-200">
-          <div className="bg-slate-900 border border-slate-800 p-5 rounded-3xl w-full max-w-sm shadow-2xl">
+          <div className={`${modalThemeClass} p-5 rounded-3xl w-full max-w-sm shadow-2xl`}>
             <h3 className="text-xl font-bold text-red-400 mb-2">{t('reset')}</h3>
             <p className="text-sm text-slate-400 mb-6 leading-relaxed">
               {t('resetConfirmDescription')}
@@ -5191,7 +5455,7 @@ export default function SettingsScreen({
             <div className="flex justify-end gap-3">
               <button 
                 onClick={() => setShowResetConfirm(false)}
-                className="px-4 py-2 rounded-xl text-sm font-medium text-slate-400 hover:text-slate-50 bg-slate-800 transition-colors cursor-pointer"
+                className={`px-4 py-2 rounded-xl text-sm font-medium border transition-colors cursor-pointer ${btnSecondaryThemeClass}`}
               >
                 {t('cancel')}
               </button>
@@ -5272,13 +5536,7 @@ export default function SettingsScreen({
                   return (
                     <div 
                       key={index}
-                      className={`w-11 h-13 rounded-xl border-2 flex items-center justify-center text-2xl font-bold transition-all duration-150 ${
-                        isFilled 
-                          ? 'border-indigo-500 bg-indigo-500/10 text-indigo-400' 
-                          : isCurrent
-                            ? 'border-indigo-500/50 bg-slate-950/50 text-indigo-300'
-                            : 'border-slate-800 bg-slate-950/20 text-slate-600'
-                      }`}
+                      className={`w-11 h-13 rounded-xl border-2 flex items-center justify-center text-2xl font-bold transition-all duration-150 ${getPinDigitClass(isFilled, isCurrent, 'indigo')}`}
                     >
                       {isFilled ? '•' : ''}
                     </div>
@@ -5316,7 +5574,7 @@ export default function SettingsScreen({
                   setAutoBackupEnableVerifyPin('');
                   setPendingAutoBackupFreq(null);
                 }}
-                className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-750 rounded-xl text-xs font-bold text-slate-400 transition-all cursor-pointer border border-slate-800/85"
+                className={`flex-1 py-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${btnSecondaryThemeClass}`}
               >
                 {t('cancel')}
               </button>
@@ -5327,7 +5585,7 @@ export default function SettingsScreen({
                 className={`flex-1 py-2.5 font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-lg ${
                   autoBackupEnableVerifyPin.length === 4
                     ? 'bg-indigo-500 hover:bg-indigo-400 text-white shadow-indigo-500/20'
-                    : 'bg-slate-800 text-slate-500 opacity-50 cursor-not-allowed shadow-none border border-slate-850'
+                    : isLight ? 'bg-black/10 text-slate-400 opacity-60 cursor-not-allowed shadow-none border border-slate-200' : 'bg-slate-850 text-slate-500 opacity-50 cursor-not-allowed shadow-none border border-slate-850'
                 }`}
               >
                 {lang === 'id' ? 'Verifikasi' : 'Verify'}
@@ -5399,13 +5657,7 @@ export default function SettingsScreen({
                   return (
                     <div 
                       key={index}
-                      className={`w-11 h-13 rounded-xl border-2 flex items-center justify-center text-2xl font-bold transition-all duration-150 ${
-                        isFilled 
-                          ? 'border-indigo-500 bg-indigo-500/10 text-indigo-400' 
-                          : isCurrent
-                            ? 'border-indigo-500/50 bg-slate-950/50 text-indigo-300'
-                            : 'border-slate-800 bg-slate-950/20 text-slate-600'
-                      }`}
+                      className={`w-11 h-13 rounded-xl border-2 flex items-center justify-center text-2xl font-bold transition-all duration-150 ${getPinDigitClass(isFilled, isCurrent, 'indigo')}`}
                     >
                       {isFilled ? '•' : ''}
                     </div>
@@ -5432,7 +5684,7 @@ export default function SettingsScreen({
                     setPendingAutoBackupFreq(null);
                   }
                 }}
-                className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-750 rounded-xl text-xs font-bold text-slate-400 transition-all cursor-pointer border border-slate-800/85"
+                className={`flex-1 py-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${btnSecondaryThemeClass}`}
               >
                 {autoBackupPinSetupStep === 2 ? (lang === 'id' ? 'Kembali' : 'Back') : t('cancel')}
               </button>
@@ -5443,7 +5695,7 @@ export default function SettingsScreen({
                 className={`flex-1 py-2.5 font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-lg ${
                   (autoBackupPinSetupStep === 1 ? autoBackupPinSetupPin.length : autoBackupPinSetupConfirm.length) === 4
                     ? 'bg-indigo-500 hover:bg-indigo-400 text-white shadow-indigo-500/20'
-                    : 'bg-slate-800 text-slate-500 opacity-50 cursor-not-allowed shadow-none border border-slate-850'
+                    : isLight ? 'bg-black/10 text-slate-400 opacity-60 cursor-not-allowed shadow-none border border-slate-200' : 'bg-slate-850 text-slate-500 opacity-50 cursor-not-allowed shadow-none border border-slate-850'
                 }`}
               >
                 {autoBackupPinSetupStep === 1 ? (lang === 'id' ? 'Lanjut' : 'Next') : (lang === 'id' ? 'Simpan' : 'Save')}
@@ -5530,13 +5782,7 @@ export default function SettingsScreen({
                   return (
                     <div 
                       key={index}
-                      className={`w-11 h-13 rounded-xl border-2 flex items-center justify-center text-2xl font-bold transition-all duration-150 ${
-                        isFilled 
-                          ? 'border-indigo-500 bg-indigo-500/10 text-indigo-400' 
-                          : isCurrent
-                            ? 'border-indigo-500/50 bg-slate-950/50 text-indigo-300'
-                            : 'border-slate-800 bg-slate-950/20 text-slate-600'
-                      }`}
+                      className={`w-11 h-13 rounded-xl border-2 flex items-center justify-center text-2xl font-bold transition-all duration-150 ${getPinDigitClass(isFilled, isCurrent, 'indigo')}`}
                     >
                       {isFilled ? '•' : ''}
                     </div>
@@ -5568,7 +5814,7 @@ export default function SettingsScreen({
                     setAutoBackupPinChangeCurrent('');
                   }
                 }}
-                className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-750 rounded-xl text-xs font-bold text-slate-400 transition-all cursor-pointer border border-slate-800/85"
+                className={`flex-1 py-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${btnSecondaryThemeClass}`}
               >
                 {autoBackupPinChangeStep > 1 ? (lang === 'id' ? 'Kembali' : 'Back') : t('cancel')}
               </button>
@@ -5589,7 +5835,7 @@ export default function SettingsScreen({
                       ? autoBackupPinChangeNew.length 
                       : autoBackupPinChangeConfirm.length) === 4
                     ? 'bg-indigo-500 hover:bg-indigo-400 text-white shadow-indigo-500/20'
-                    : 'bg-slate-800 text-slate-500 opacity-50 cursor-not-allowed shadow-none border border-slate-850'
+                    : isLight ? 'bg-black/10 text-slate-400 opacity-60 cursor-not-allowed shadow-none border border-slate-200' : 'bg-slate-850 text-slate-500 opacity-50 cursor-not-allowed shadow-none border border-slate-850'
                 }`}
               >
                 {autoBackupPinChangeStep === 1 
@@ -5652,13 +5898,7 @@ export default function SettingsScreen({
                   return (
                     <div 
                       key={index}
-                      className={`w-11 h-13 rounded-xl border-2 flex items-center justify-center text-2xl font-bold transition-all duration-150 ${
-                        isFilled 
-                          ? 'border-rose-500 bg-rose-500/10 text-rose-400' 
-                          : isCurrent
-                            ? 'border-rose-500/50 bg-slate-950/50 text-rose-300'
-                            : 'border-slate-800 bg-slate-950/20 text-slate-600'
-                      }`}
+                      className={`w-11 h-13 rounded-xl border-2 flex items-center justify-center text-2xl font-bold transition-all duration-150 ${getPinDigitClass(isFilled, isCurrent, 'rose')}`}
                     >
                       {isFilled ? '•' : ''}
                     </div>
@@ -5690,7 +5930,7 @@ export default function SettingsScreen({
                   setShowAutoBackupPinDisableModal(false);
                   setAutoBackupDisablePin('');
                 }}
-                className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-750 rounded-xl text-xs font-bold text-slate-400 transition-all cursor-pointer border border-slate-800/85"
+                className={`flex-1 py-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${btnSecondaryThemeClass}`}
               >
                 {t('cancel')}
               </button>
@@ -5701,7 +5941,7 @@ export default function SettingsScreen({
                 className={`flex-1 py-2.5 font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-lg ${
                   autoBackupDisablePin.length === 4
                     ? 'bg-rose-500 hover:bg-rose-400 text-white shadow-rose-500/20'
-                    : 'bg-slate-800 text-slate-500 opacity-50 cursor-not-allowed shadow-none border border-slate-850'
+                    : isLight ? 'bg-black/10 text-slate-400 opacity-60 cursor-not-allowed shadow-none border border-slate-200' : 'bg-slate-850 text-slate-500 opacity-50 cursor-not-allowed shadow-none border border-slate-850'
                 }`}
               >
                 {lang === 'id' ? 'Nonaktifkan' : 'Disable'}
@@ -5718,7 +5958,7 @@ export default function SettingsScreen({
             <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mx-auto mb-3">
               <KeyRound size={22} />
             </div>
-            <h3 className="text-base font-black text-slate-50 mb-1 text-center">
+            <h3 className={`text-base font-black ${primaryTextThemeClass} mb-1 text-center`}>
               {lang === 'id' ? 'Pemulihan PIN Cadangan' : 'Backup PIN Recovery'}
             </h3>
 
@@ -5738,7 +5978,7 @@ export default function SettingsScreen({
                 <button
                   type="button"
                   onClick={() => setShowForgotAutoBackupPinModal(false)}
-                  className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-750 text-slate-200 text-xs font-bold transition-colors cursor-pointer"
+                  className={`w-full py-2.5 rounded-xl border text-xs font-bold transition-colors cursor-pointer ${btnSecondaryThemeClass}`}
                 >
                   {lang === 'id' ? 'Saya Mengerti' : 'I Understand'}
                 </button>
@@ -5752,7 +5992,7 @@ export default function SettingsScreen({
                 </p>
 
                 {pinRecoveryQuestion && (
-                  <div className="bg-slate-950 border border-slate-800 p-3.5 rounded-2xl mb-3 text-left">
+                  <div className={`border p-3.5 rounded-2xl mb-3 text-left ${innerCardThemeClass}`}>
                     <span className="text-[10px] text-amber-400 font-bold uppercase tracking-widest mb-1 block">
                       {lang === 'id' ? 'Pertanyaan Keamanan' : 'Security Question'}
                     </span>
@@ -5773,7 +6013,7 @@ export default function SettingsScreen({
                       handleForgotAutoBackupPinSubmit();
                     }
                   }}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-50 mb-3 outline-none focus:border-amber-500/60 transition-colors"
+                  className={`w-full rounded-xl px-4 py-3 text-sm mb-3 outline-none focus:border-amber-500/60 transition-colors ${inputThemeClass}`}
                   placeholder={lang === 'id' ? "Jawaban Anda..." : "Your Answer..."}
                 />
 
@@ -5791,7 +6031,7 @@ export default function SettingsScreen({
                       setForgotAutoBackupAnswerInput('');
                       setForgotAutoBackupAnswerError(false);
                     }}
-                    className="flex-1 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-200 transition-colors cursor-pointer bg-slate-950/40"
+                    className={`flex-1 py-2.5 rounded-xl text-xs font-bold border transition-colors cursor-pointer ${btnSecondaryThemeClass}`}
                   >
                     {lang === 'id' ? 'Batal' : 'Cancel'}
                   </button>
@@ -6135,14 +6375,36 @@ export default function SettingsScreen({
 
               <button
                 onClick={() => {
+                  setLang('id');
+                  setShowLanguageModal(false);
+                  showNotificationToast('Bahasa diganti ke Indonesia');
+                }}
+                className={`w-full flex items-center justify-between p-3 rounded-xl border text-left transition-all ${
+                  lang === 'id'
+                    ? (isLight ? 'bg-indigo-50 border-indigo-400 text-indigo-700' : 'bg-indigo-600/15 border-indigo-500/40 text-indigo-200')
+                    : (isLight ? (appTheme === 'organic' || appTheme === 'cute' ? 'bg-[#FAF5EA] border-[#EADCC8] text-[#7D6A58] hover:bg-[#F4ECDC]' : appTheme === 'pink' ? 'bg-pink-50/50 border-pink-200 text-pink-700 hover:bg-pink-100/50' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50') : 'bg-slate-950/40 border-slate-800 text-slate-300 hover:bg-slate-800/40')
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <span className="text-lg">🇮🇩</span>
+                  <div>
+                    <span className="text-sm font-semibold block">Bahasa Indonesia</span>
+                    <span className="text-[11px] text-slate-400 block">Bahasa resmi Indonesia</span>
+                  </div>
+                </div>
+                {lang === 'id' && <Check size={16} className="text-indigo-400" />}
+              </button>
+
+              <button
+                onClick={() => {
                   setLang('en');
                   setShowLanguageModal(false);
                   showNotificationToast('Language set to English');
                 }}
                 className={`w-full flex items-center justify-between p-3 rounded-xl border text-left transition-all ${
                   lang === 'en'
-                    ? 'bg-indigo-600/15 border-indigo-500/40 text-indigo-200'
-                    : 'bg-slate-950/40 border-slate-800 text-slate-300 hover:bg-slate-800/40'
+                    ? (isLight ? 'bg-indigo-50 border-indigo-400 text-indigo-700' : 'bg-indigo-600/15 border-indigo-500/40 text-indigo-200')
+                    : (isLight ? (appTheme === 'organic' || appTheme === 'cute' ? 'bg-[#FAF5EA] border-[#EADCC8] text-[#7D6A58] hover:bg-[#F4ECDC]' : appTheme === 'pink' ? 'bg-pink-50/50 border-pink-200 text-pink-700 hover:bg-pink-100/50' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50') : 'bg-slate-950/40 border-slate-800 text-slate-300 hover:bg-slate-800/40')
                 }`}
               >
                 <div className="flex items-center gap-2.5">
@@ -6162,8 +6424,8 @@ export default function SettingsScreen({
       {/* MODAL: APP DISPLAY MODE PICKER */}
       {showModeModal && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-[200] animate-in fade-in duration-150">
-          <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl w-full max-w-xs shadow-2xl space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+          <div className={`${modalThemeClass} p-5 rounded-2xl w-full max-w-xs shadow-2xl space-y-4`}>
+            <div className={`flex items-center justify-between pb-2 border-b ${borderThemeClass}`}>
               <h3 className={`text-sm font-bold ${primaryTextThemeClass} flex items-center gap-2`}>
                 {isOrganic ? (
                   <Icon3DSmartphone size={18} />
@@ -6174,7 +6436,7 @@ export default function SettingsScreen({
               </h3>
               <button 
                 onClick={() => setShowModeModal(false)}
-                className="w-6 h-6 rounded-full bg-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center text-xs"
+                className={`w-6 h-6 rounded-full flex items-center justify-center text-xs border ${btnSecondaryThemeClass}`}
               >
                 ✕
               </button>
@@ -6265,10 +6527,10 @@ export default function SettingsScreen({
                 }}
                 className={`w-full flex items-center justify-between p-3 rounded-xl border text-left transition-all ${
                   !canAccessPro
-                    ? 'bg-slate-950/40 border-slate-800/80 text-slate-400 hover:bg-slate-900/60'
+                    ? (isLight ? (appTheme === 'organic' || appTheme === 'cute' ? 'bg-[#FAF5EA]/50 border-[#EADCC8]/60 text-slate-400 hover:bg-[#FAF5EA]' : 'bg-slate-100 border-slate-200 text-slate-400 hover:bg-slate-50') : 'bg-slate-950/40 border-slate-800/80 text-slate-400 hover:bg-slate-900/60')
                     : (appVersion === 'organic' || appVersion === 'pro_max')
-                      ? 'bg-amber-600/15 border-amber-500/40 text-amber-900 dark:text-amber-200 font-bold shadow-sm'
-                      : 'bg-slate-950/40 border-slate-800 text-slate-300 hover:bg-slate-800/40'
+                      ? (isLight ? 'bg-amber-100 border-amber-400 text-amber-900 font-bold shadow-xs' : 'bg-amber-600/15 border-amber-500/40 text-amber-200 font-bold shadow-sm')
+                      : (isLight ? (appTheme === 'organic' || appTheme === 'cute' ? 'bg-[#FAF5EA] border-[#EADCC8] text-[#7D6A58] hover:bg-[#F4ECDC]' : appTheme === 'pink' ? 'bg-pink-50/50 border-pink-200 text-pink-700 hover:bg-pink-100/50' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50') : 'bg-slate-950/40 border-slate-800 text-slate-300 hover:bg-slate-800/40')
                 }`}
               >
                 <div className="flex items-center gap-2.5">
@@ -6324,10 +6586,10 @@ export default function SettingsScreen({
                 }}
                 className={`w-full flex items-center justify-between p-3 rounded-xl border text-left transition-all ${
                   !canAccessPro
-                    ? 'bg-slate-950/40 border-slate-800/80 text-slate-400 hover:bg-slate-900/60'
+                    ? (isLight ? (appTheme === 'organic' || appTheme === 'cute' ? 'bg-[#FAF5EA]/50 border-[#EADCC8]/60 text-slate-400 hover:bg-[#FAF5EA]' : 'bg-slate-100 border-slate-200 text-slate-400 hover:bg-slate-50') : 'bg-slate-950/40 border-slate-800/80 text-slate-400 hover:bg-slate-900/60')
                     : appVersion === 'pro'
-                      ? 'bg-indigo-600/15 border-indigo-500/40 text-indigo-200'
-                      : 'bg-slate-950/40 border-slate-800 text-slate-300 hover:bg-slate-800/40'
+                      ? (isLight ? 'bg-indigo-50 border-indigo-400 text-indigo-700 font-bold shadow-xs' : 'bg-indigo-600/15 border-indigo-500/40 text-indigo-200')
+                      : (isLight ? (appTheme === 'organic' || appTheme === 'cute' ? 'bg-[#FAF5EA] border-[#EADCC8] text-[#7D6A58] hover:bg-[#F4ECDC]' : appTheme === 'pink' ? 'bg-pink-50/50 border-pink-200 text-pink-700 hover:bg-pink-100/50' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50') : 'bg-slate-950/40 border-slate-800 text-slate-300 hover:bg-slate-800/40')
                 }`}
               >
                 <div className="flex items-center gap-2.5">
@@ -6366,8 +6628,8 @@ export default function SettingsScreen({
                 }}
                 className={`w-full flex items-center justify-between p-3 rounded-xl border text-left transition-all ${
                   appVersion === 'lite'
-                    ? 'bg-emerald-600/15 border-emerald-500/40 text-emerald-200'
-                    : 'bg-slate-950/40 border-slate-800 text-slate-300 hover:bg-slate-800/40'
+                    ? (isLight ? 'bg-emerald-50 border-emerald-400 text-emerald-700 font-bold shadow-xs' : 'bg-emerald-600/15 border-emerald-500/40 text-emerald-200')
+                    : (isLight ? (appTheme === 'organic' || appTheme === 'cute' ? 'bg-[#FAF5EA] border-[#EADCC8] text-[#7D6A58] hover:bg-[#F4ECDC]' : appTheme === 'pink' ? 'bg-pink-50/50 border-pink-200 text-pink-700 hover:bg-pink-100/50' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50') : 'bg-slate-950/40 border-slate-800 text-slate-300 hover:bg-slate-800/40')
                 }`}
               >
                 <div className="flex items-center gap-2.5">
@@ -6381,14 +6643,18 @@ export default function SettingsScreen({
               </button>
             </div>
 
-            <div className="pt-2 border-t border-slate-800/80">
+            <div className={`pt-2 border-t ${borderThemeClass}`}>
               <button
                 onClick={() => {
                   setShowModeModal(false);
                   playTapSound();
                   onNavigate && onNavigate('account');
                 }}
-                className="w-full py-2 px-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-bold flex items-center justify-between transition-all"
+                className={`w-full py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-between transition-all ${
+                  isLight 
+                    ? 'bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30 text-amber-700' 
+                    : 'bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30 text-amber-300'
+                }`}
               >
                 <div className="flex items-center gap-1.5">
                   <Crown size={14} className="text-amber-400" />
@@ -6406,11 +6672,23 @@ export default function SettingsScreen({
         <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 z-[210] animate-in fade-in duration-200">
           <div className={`${modalThemeClass} rounded-3xl w-full max-w-lg max-h-[90vh] shadow-2xl flex flex-col overflow-hidden text-slate-100`}>
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800/80 bg-slate-950/60 shrink-0">
+            <div className={`flex items-center justify-between px-5 py-4 border-b shrink-0 ${
+              isLight
+                ? (appTheme === 'organic' || appTheme === 'cute'
+                    ? 'border-[#EADCC8] bg-[#F4ECDC]/90'
+                    : appTheme === 'pink'
+                      ? 'border-pink-200 bg-[#FFF0F5]'
+                      : 'border-slate-200 bg-slate-50')
+                : 'border-slate-800/80 bg-slate-950/60'
+            }`}>
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-zinc-950 flex items-center justify-center shadow-md shrink-0">
-                  <Crown className="w-5 h-5 fill-current" />
-                </div>
+                {isOrganic ? (
+                  <Icon3DTrophy size={36} className="shrink-0" />
+                ) : (
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-zinc-950 flex items-center justify-center shadow-md shrink-0">
+                    <Crown className="w-5 h-5 fill-current" />
+                  </div>
+                )}
                 <div>
                   <h3 className={`text-sm sm:text-base font-extrabold ${primaryTextThemeClass} flex items-center gap-1.5`}>
                     <span>{lang === 'id' ? 'Lisensi Tata Pro & Pro Max' : 'Tata Pro & Pro Max Licenses'}</span>
@@ -6427,7 +6705,7 @@ export default function SettingsScreen({
                   setShowLicenseModal(false);
                   setPromoFeedback(null);
                 }}
-                className="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-slate-100 hover:bg-slate-700 flex items-center justify-center text-sm transition-colors cursor-pointer"
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm transition-colors cursor-pointer border ${btnSecondaryThemeClass}`}
               >
                 ✕
               </button>
@@ -6442,11 +6720,13 @@ export default function SettingsScreen({
                     <span className="font-extrabold text-amber-300 flex items-center gap-1.5">
                       <Sparkles className="w-4 h-4 text-amber-400" />
                       {tataAccount?.premiumType?.includes('pro_max') || tataAccount?.premiumType === 'lifetime'
-                        ? 'Tata Pro Max Aktif'
-                        : 'Tata Pro Aktif'}
+                        ? (lang === 'id' ? 'Tata Pro Max Aktif' : 'Tata Pro Max Active')
+                        : (lang === 'id' ? 'Tata Pro Aktif' : 'Tata Pro Active')}
                     </span>
                     <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-400 text-zinc-950">
-                      {tataAccount?.premiumType?.includes('lifetime') ? 'SEUMUR HIDUP' : 'AKTIF'}
+                      {tataAccount?.premiumType?.includes('lifetime') 
+                        ? (lang === 'id' ? 'SEUMUR HIDUP' : 'LIFETIME') 
+                        : (lang === 'id' ? 'AKTIF' : 'ACTIVE')}
                     </span>
                   </div>
                   <p className="text-[11px] text-slate-300">
@@ -6459,7 +6739,7 @@ export default function SettingsScreen({
 
               {/* Tier Tab Selector: Pro Max vs Pro */}
               <div className="space-y-2">
-                <div className="grid grid-cols-2 p-1 rounded-2xl bg-slate-950 border border-slate-800 gap-1">
+                <div className={`grid grid-cols-2 p-1 rounded-2xl gap-1 border ${innerCardThemeClass}`}>
                   <button
                     type="button"
                     onClick={() => {
@@ -6468,8 +6748,8 @@ export default function SettingsScreen({
                     }}
                     className={`flex items-center justify-center gap-1.5 py-2.5 px-2.5 sm:px-3 rounded-xl font-bold transition-all cursor-pointer ${
                       licenseModalTierTab === 'pro_max'
-                        ? 'bg-gradient-to-r from-amber-500/25 to-orange-500/25 text-amber-300 border border-amber-500/50 shadow-sm'
-                        : 'text-slate-400 hover:text-slate-200'
+                        ? (isLight ? 'bg-amber-100 text-amber-900 border border-amber-400 font-bold shadow-xs' : 'bg-gradient-to-r from-amber-500/25 to-orange-500/25 text-amber-300 border border-amber-500/50 shadow-sm')
+                        : (isLight ? 'text-slate-600 hover:text-slate-900' : 'text-slate-400 hover:text-slate-200')
                     }`}
                   >
                     <Crown className="w-4 h-4 fill-current text-amber-400 shrink-0" />
@@ -6487,8 +6767,8 @@ export default function SettingsScreen({
                     }}
                     className={`flex items-center justify-center gap-1.5 py-2.5 px-2.5 sm:px-3 rounded-xl font-bold transition-all cursor-pointer ${
                       licenseModalTierTab === 'pro'
-                        ? 'bg-slate-800 text-indigo-300 border border-indigo-500/40 shadow-sm'
-                        : 'text-slate-400 hover:text-slate-200'
+                        ? (isLight ? 'bg-indigo-50 text-indigo-700 border border-indigo-300 font-bold shadow-xs' : 'bg-slate-800 text-indigo-300 border border-indigo-500/40 shadow-sm')
+                        : (isLight ? 'text-slate-600 hover:text-slate-900' : 'text-slate-400 hover:text-slate-200')
                     }`}
                   >
                     <Sparkles className="w-4 h-4 text-indigo-400 shrink-0" />
@@ -6500,8 +6780,8 @@ export default function SettingsScreen({
               {/* Tier Perks Card */}
               <div className={`p-3.5 rounded-2xl border ${
                 licenseModalTierTab === 'pro_max'
-                  ? 'bg-gradient-to-br from-amber-500/10 via-slate-950 to-orange-500/10 border-amber-500/30'
-                  : 'bg-slate-950/60 border-slate-800'
+                  ? (isLight ? 'bg-amber-50/70 border-amber-200' : 'bg-gradient-to-br from-amber-500/10 via-slate-950 to-orange-500/10 border-amber-500/30')
+                  : (isLight ? 'bg-slate-50 border-slate-200' : 'bg-slate-950/60 border-slate-800')
               }`}>
                 <h4 className={`font-bold ${primaryTextThemeClass} mb-2 flex items-center gap-1.5`}>
                   {licenseModalTierTab === 'pro_max' ? (
@@ -6516,43 +6796,43 @@ export default function SettingsScreen({
                     </>
                   )}
                 </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px] text-slate-300">
+                <div className={`grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px] ${subTextThemeClass}`}>
                   {licenseModalTierTab === 'pro_max' ? (
                     <>
                       <div className="flex items-center gap-2">
                         <Check className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                        <span>Semua Keuntungan Tata Pro</span>
+                        <span>{lang === 'id' ? 'Semua Keuntungan Tata Pro' : 'All Tata Pro Benefits'}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Check className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                        <span>Sentuhan 3D Tactile & Organik</span>
+                        <span>{lang === 'id' ? 'Sentuhan 3D Tactile & Organik' : '3D Tactile & Organic Feel'}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Check className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                        <span>Mesin Dynamic Wallpaper Premium</span>
+                        <span>{lang === 'id' ? 'Mesin Dynamic Wallpaper Premium' : 'Premium Dynamic Wallpaper Engine'}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Check className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                        <span>Lencana Mahkota Emas & VIP Status</span>
+                        <span>{lang === 'id' ? 'Lencana Mahkota Emas & VIP Status' : 'Gold Crown Badge & VIP Status'}</span>
                       </div>
                     </>
                   ) : (
                     <>
                       <div className="flex items-center gap-2">
                         <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                        <span>100% Bebas Iklan Selamanya</span>
+                        <span>{lang === 'id' ? '100% Bebas Iklan Selamanya' : '100% Ad-Free Forever'}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                        <span>Akses Semua Tema Eksklusif</span>
+                        <span>{lang === 'id' ? 'Akses Semua Tema Eksklusif' : 'Access to All Exclusive Themes'}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                        <span>Cadangkan & Ekspor Tanpa Batas</span>
+                        <span>{lang === 'id' ? 'Cadangkan & Ekspor Tanpa Batas' : 'Unlimited Backup & Export'}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                        <span>100% Offline First & Privasi Terjaga</span>
+                        <span>{lang === 'id' ? '100% Offline First & Privasi Terjaga' : '100% Offline-First & Privacy Protected'}</span>
                       </div>
                     </>
                   )}
@@ -6569,75 +6849,99 @@ export default function SettingsScreen({
                   {licenseModalTierTab === 'pro_max' ? (
                     <>
                       {/* Pro Max Bulanan */}
-                      <div className="p-3 rounded-2xl bg-slate-950/80 border border-slate-800 hover:border-amber-500/50 transition-all flex flex-col justify-between space-y-2">
+                      <div className={`p-3 rounded-2xl border transition-all flex flex-col justify-between space-y-2 ${
+                        isLight
+                          ? (appTheme === 'organic' || appTheme === 'cute' ? 'bg-[#FAF5EA] border-[#EADCC8]' : appTheme === 'pink' ? 'bg-[#FFF0F5] border-pink-200' : 'bg-white border-slate-200')
+                          : 'bg-slate-950/80 border-slate-800 hover:border-amber-500/50'
+                      }`}>
                         <div>
-                          <span className="text-[10px] font-bold text-slate-400 block">Bulanan</span>
+                          <span className="text-[10px] font-bold text-slate-400 block">{lang === 'id' ? 'Bulanan' : 'Monthly'}</span>
                           <span className={`text-sm font-extrabold ${primaryTextThemeClass} block`}>Rp 29.000</span>
-                          <span className="text-[10px] text-slate-400">/ 30 hari</span>
+                          <span className="text-[10px] text-slate-400">{lang === 'id' ? '/ 30 hari' : '/ 30 days'}</span>
                         </div>
-                        <span className="text-[10px] text-amber-400/80 font-medium">Bebas komitmen</span>
+                        <span className="text-[10px] text-amber-500 font-medium">{lang === 'id' ? 'Bebas komitmen' : 'No commitment'}</span>
                       </div>
 
-                      {/* Pro Max Tahunan (No negative margin badge collision) */}
-                      <div className="p-3 rounded-2xl bg-slate-950/90 border-2 border-amber-500/60 shadow-lg shadow-amber-500/10 flex flex-col justify-between space-y-2">
+                      {/* Pro Max Tahunan */}
+                      <div className={`p-3 rounded-2xl border-2 flex flex-col justify-between space-y-2 ${
+                        isLight
+                          ? 'bg-amber-50/70 border-amber-400 shadow-sm'
+                          : 'bg-slate-950/90 border-amber-500/60 shadow-lg shadow-amber-500/10'
+                      }`}>
                         <div>
                           <div className="flex items-center justify-between gap-1 mb-1">
-                            <span className="text-[10px] font-bold text-amber-400 block">Tahunan</span>
+                            <span className="text-[10px] font-bold text-amber-500 block">{lang === 'id' ? 'Tahunan' : 'Annual'}</span>
                             <span className="px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-zinc-950 font-black text-[9px] uppercase tracking-tight shrink-0">
-                              Favorit
+                              {lang === 'id' ? 'Favorit' : 'Favorite'}
                             </span>
                           </div>
-                          <span className="text-sm font-extrabold text-amber-300 block">Rp 149.000</span>
-                          <span className="text-[10px] text-slate-400">/ 365 hari (Hemat 57%)</span>
+                          <span className={`text-sm font-extrabold block ${isLight ? 'text-amber-800' : 'text-amber-300'}`}>Rp 149.000</span>
+                          <span className="text-[10px] text-slate-400">{lang === 'id' ? '/ 365 hari (Hemat 57%)' : '/ 365 days (Save 57%)'}</span>
                         </div>
-                        <span className="text-[10px] text-amber-300 font-bold">Paling populer</span>
+                        <span className={`text-[10px] font-bold ${isLight ? 'text-amber-700' : 'text-amber-300'}`}>{lang === 'id' ? 'Paling populer' : 'Most popular'}</span>
                       </div>
 
                       {/* Pro Max Seumur Hidup */}
-                      <div className="p-3 rounded-2xl bg-gradient-to-br from-amber-500/15 via-slate-950 to-orange-500/15 border border-amber-500/50 flex flex-col justify-between space-y-2">
+                      <div className={`p-3 rounded-2xl border flex flex-col justify-between space-y-2 ${
+                        isLight
+                          ? 'bg-orange-50/70 border-orange-300'
+                          : 'bg-gradient-to-br from-amber-500/15 via-slate-950 to-orange-500/15 border-amber-500/50'
+                      }`}>
                         <div>
-                          <span className="text-[10px] font-bold text-orange-400 block">Seumur Hidup</span>
-                          <span className="text-sm font-extrabold text-orange-300 block">Rp 299.000</span>
-                          <span className="text-[10px] text-slate-400">Sekali bayar selamanya</span>
+                          <span className="text-[10px] font-bold text-orange-500 block">{lang === 'id' ? 'Seumur Hidup' : 'Lifetime'}</span>
+                          <span className={`text-sm font-extrabold block ${isLight ? 'text-orange-800' : 'text-orange-300'}`}>Rp 299.000</span>
+                          <span className="text-[10px] text-slate-400">{lang === 'id' ? 'Sekali bayar selamanya' : 'Pay once, own forever'}</span>
                         </div>
-                        <span className="text-[10px] text-amber-300 font-bold">Investasi Terbaik</span>
+                        <span className={`text-[10px] font-bold ${isLight ? 'text-amber-700' : 'text-amber-300'}`}>{lang === 'id' ? 'Investasi Terbaik' : 'Best Investment'}</span>
                       </div>
                     </>
                   ) : (
                     <>
                       {/* Pro Bulanan */}
-                      <div className="p-3 rounded-2xl bg-slate-950/80 border border-slate-800 hover:border-indigo-500/50 transition-all flex flex-col justify-between space-y-2">
+                      <div className={`p-3 rounded-2xl border transition-all flex flex-col justify-between space-y-2 ${
+                        isLight
+                          ? (appTheme === 'organic' || appTheme === 'cute' ? 'bg-[#FAF5EA] border-[#EADCC8]' : appTheme === 'pink' ? 'bg-[#FFF0F5] border-pink-200' : 'bg-white border-slate-200')
+                          : 'bg-slate-950/80 border-slate-800 hover:border-indigo-500/50'
+                      }`}>
                         <div>
-                          <span className="text-[10px] font-bold text-slate-400 block">Bulanan</span>
+                          <span className="text-[10px] font-bold text-slate-400 block">{lang === 'id' ? 'Bulanan' : 'Monthly'}</span>
                           <span className={`text-sm font-extrabold ${primaryTextThemeClass} block`}>Rp 19.000</span>
-                          <span className="text-[10px] text-slate-400">/ 30 hari</span>
+                          <span className="text-[10px] text-slate-400">{lang === 'id' ? '/ 30 hari' : '/ 30 days'}</span>
                         </div>
-                        <span className="text-[10px] text-slate-400 font-medium">Bebas komitmen</span>
+                        <span className="text-[10px] text-slate-400 font-medium">{lang === 'id' ? 'Bebas komitmen' : 'No commitment'}</span>
                       </div>
 
-                      {/* Pro Tahunan (No negative margin badge collision) */}
-                      <div className="p-3 rounded-2xl bg-slate-950/90 border-2 border-indigo-500/60 flex flex-col justify-between space-y-2">
+                      {/* Pro Tahunan */}
+                      <div className={`p-3 rounded-2xl border-2 flex flex-col justify-between space-y-2 ${
+                        isLight
+                          ? 'bg-indigo-50/70 border-indigo-400 shadow-sm'
+                          : 'bg-slate-950/90 border-indigo-500/60'
+                      }`}>
                         <div>
                           <div className="flex items-center justify-between gap-1 mb-1">
-                            <span className="text-[10px] font-bold text-indigo-400 block">Tahunan</span>
+                            <span className="text-[10px] font-bold text-indigo-500 block">{lang === 'id' ? 'Tahunan' : 'Annual'}</span>
                             <span className="px-2 py-0.5 rounded-full bg-indigo-500 text-white font-black text-[9px] uppercase tracking-tight shrink-0">
-                              Hemat 50%
+                              {lang === 'id' ? 'Hemat 50%' : 'Save 50%'}
                             </span>
                           </div>
-                          <span className="text-sm font-extrabold text-indigo-300 block">Rp 99.000</span>
-                          <span className="text-[10px] text-slate-400">/ 365 hari</span>
+                          <span className={`text-sm font-extrabold block ${isLight ? 'text-indigo-800' : 'text-indigo-300'}`}>Rp 99.000</span>
+                          <span className="text-[10px] text-slate-400">{lang === 'id' ? '/ 365 hari' : '/ 365 days'}</span>
                         </div>
-                        <span className="text-[10px] text-indigo-300 font-bold">Paling hemat</span>
+                        <span className={`text-[10px] font-bold ${isLight ? 'text-indigo-700' : 'text-indigo-300'}`}>{lang === 'id' ? 'Paling hemat' : 'Best value'}</span>
                       </div>
 
                       {/* Pro Seumur Hidup */}
-                      <div className="p-3 rounded-2xl bg-slate-950/80 border border-slate-700 flex flex-col justify-between space-y-2">
+                      <div className={`p-3 rounded-2xl border flex flex-col justify-between space-y-2 ${
+                        isLight
+                          ? 'bg-slate-50 border-slate-300'
+                          : 'bg-slate-950/80 border-slate-700'
+                      }`}>
                         <div>
-                          <span className="text-[10px] font-bold text-slate-300 block">Seumur Hidup</span>
+                          <span className="text-[10px] font-bold text-slate-400 block">{lang === 'id' ? 'Seumur Hidup' : 'Lifetime'}</span>
                           <span className={`text-sm font-extrabold ${primaryTextThemeClass} block`}>Rp 199.000</span>
-                          <span className="text-[10px] text-slate-400">Sekali bayar selamanya</span>
+                          <span className="text-[10px] text-slate-400">{lang === 'id' ? 'Sekali bayar selamanya' : 'Pay once, own forever'}</span>
                         </div>
-                        <span className="text-[10px] text-slate-300 font-bold">Permanen</span>
+                        <span className={`text-[10px] font-bold ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>{lang === 'id' ? 'Permanen' : 'Permanent'}</span>
                       </div>
                     </>
                   )}
@@ -6645,20 +6949,28 @@ export default function SettingsScreen({
               </div>
 
               {/* KODE PROMO / VOUCHER CLAIM SECTION */}
-              <div className="p-4 rounded-2xl bg-gradient-to-r from-indigo-950/40 via-slate-950 to-slate-950 border border-indigo-500/30 space-y-3">
+              <div className={`p-4 rounded-2xl border space-y-3 ${
+                isLight
+                  ? (appTheme === 'organic' || appTheme === 'cute'
+                      ? 'bg-gradient-to-r from-[#F4ECDC] via-[#FAF5EA] to-[#FAF5EA] border-[#EADCC8]'
+                      : appTheme === 'pink'
+                        ? 'bg-gradient-to-r from-[#FCE7F3] via-[#FFF0F5] to-[#FFF0F5] border-pink-200'
+                        : 'bg-gradient-to-r from-indigo-50/80 via-white to-white border-indigo-200')
+                  : 'bg-gradient-to-r from-indigo-950/40 via-slate-950 to-slate-950 border-indigo-500/30'
+              }`}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Gift className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span className="font-bold text-xs text-indigo-200">
+                    <span className={`font-bold text-xs ${isLight ? 'text-indigo-900' : 'text-indigo-200'}`}>
                       {lang === 'id' ? 'Klaim Kode Promo / Voucher' : 'Redeem Promo / Voucher Code'}
                     </span>
                   </div>
-                  <span className="text-[10px] font-bold text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+                  <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
                     {lang === 'id' ? 'Gratis 100%' : '100% Free'}
                   </span>
                 </div>
 
-                <p className="text-[11px] text-slate-400 leading-relaxed">
+                <p className={`text-[11px] leading-relaxed ${subTextThemeClass}`}>
                   {lang === 'id'
                     ? 'Punya kode promo atau voucher? Masukkan kode di bawah untuk mengaktifkan lisensi.'
                     : 'Have a promo or voucher code? Enter it below to activate your license.'}
@@ -6676,7 +6988,7 @@ export default function SettingsScreen({
                       if (e.key === 'Enter') handleRedeemPromoFromSettings();
                     }}
                     placeholder={lang === 'id' ? 'Masukkan kode promo...' : 'Enter promo code...'}
-                    className="flex-1 px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-slate-100 text-xs font-mono uppercase tracking-wider focus:outline-none focus:border-amber-400 placeholder:text-slate-500"
+                    className={`flex-1 px-3 py-2.5 rounded-xl text-xs font-mono uppercase tracking-wider focus:outline-none focus:border-amber-400 transition-colors ${inputThemeClass}`}
                   />
                   <button
                     type="button"
@@ -6697,13 +7009,13 @@ export default function SettingsScreen({
                 {promoFeedback && (
                   <div className={`p-2.5 rounded-xl text-xs flex items-center gap-2 ${
                     promoFeedback.type === 'success'
-                      ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-300'
-                      : 'bg-rose-500/15 border border-rose-500/30 text-rose-300'
+                      ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-500'
+                      : 'bg-rose-500/15 border border-rose-500/30 text-rose-500'
                   }`}>
                     {promoFeedback.type === 'success' ? (
-                      <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+                      <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-500" />
                     ) : (
-                      <AlertTriangle className="w-4 h-4 shrink-0 text-rose-400" />
+                      <AlertTriangle className="w-4 h-4 shrink-0 text-rose-500" />
                     )}
                     <span className="text-[11px] leading-tight font-medium">{promoFeedback.message}</span>
                   </div>
@@ -6712,10 +7024,18 @@ export default function SettingsScreen({
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 border-t border-slate-800/80 bg-slate-950/60 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
-              <div className="flex items-center gap-2 text-slate-400 text-[11px]">
-                <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>100% Offline First & Data Milik Anda</span>
+            <div className={`p-4 border-t flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0 ${
+              isLight
+                ? (appTheme === 'organic' || appTheme === 'cute'
+                    ? 'border-[#EADCC8] bg-[#F4ECDC]/90'
+                    : appTheme === 'pink'
+                      ? 'border-pink-200 bg-[#FFF0F5]'
+                      : 'border-slate-200 bg-slate-50')
+                : 'border-slate-800/80 bg-slate-950/60'
+            }`}>
+              <div className={`flex items-center gap-2 text-[11px] ${subTextThemeClass}`}>
+                <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
+                <span>{lang === 'id' ? '100% Offline First & Data Milik Anda' : '100% Offline-First & Your Data'}</span>
               </div>
 
               <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -6726,9 +7046,9 @@ export default function SettingsScreen({
                     playTapSound();
                     onNavigate && onNavigate('account');
                   }}
-                  className="flex-1 sm:flex-initial py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  className={`flex-1 sm:flex-initial py-2.5 px-4 rounded-xl border font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${btnSecondaryThemeClass}`}
                 >
-                  <Crown className="w-3.5 h-3.5 text-amber-400" />
+                  <Crown className="w-3.5 h-3.5 text-amber-500" />
                   <span>{lang === 'id' ? 'Beli via Midtrans / Play Store' : 'Buy via Midtrans / Play'}</span>
                   <ChevronRight size={14} />
                 </button>

@@ -418,12 +418,12 @@ export default function TataWhitePaperModal({
 
                 <div>
                   <h3 className="text-lg font-bold text-stone-900">
-                    D. {isId ? 'Statistik Pengunjung Anonim (Vercel Analytics) & Kendali Penuh' : 'Anonymous Visitor Statistics (Vercel Analytics) & Full User Control'}
+                    D. {isId ? 'Statistik Kunjungan Anonim & Privasi Terjamin' : 'Anonymous Visitor Counts & Guaranteed Privacy'}
                   </h3>
                   <p className="mt-1">
                     {isId
-                      ? 'Tata menggunakan Vercel Analytics yang aktif secara default semata-mata untuk memantau jumlah orang yang membuka website Tata secara agregat. Metrik ini murni menghitung lalu lintas kunjungan web secara anonim tanpa profil pengguna, tanpa pelacak lintas situs, dan sama sekali TIDAK MEMILIKI akses ke catatan, tugas, keuangan, mood, atau data pribadi Anda yang tetap 100% tersimpan lokal di perangkat. Pengguna memiliki kendali penuh untuk mematikan statistik ini kapan saja melalui Pengaturan -> Statistik anonim penggunaan aplikasi.'
-                      : 'Tata utilizes Vercel Analytics enabled by default strictly to monitor the aggregate volume of visitors accessing the Tata website. These metrics purely tally web traffic anonymously without user profiling or cross-site tracking, and possess ZERO technical access to notes, tasks, finances, moods, or private data, which remains 100% locally on your device. Users retain full sovereignty to turn off these statistics at any time via Settings -> Anonymous app usage statistics.'}
+                      ? 'Tata memantau jumlah kunjungan web secara agregat untuk melihat performa lalu lintas secara anonim tanpa merekam profil identitas pribadi pengguna. Seluruh catatan, tugas, keuangan, mood, dan data pribadi Anda tetap 100% tersimpan aman secara lokal di perangkat Anda tanpa akses pihak luar.'
+                      : 'Tata monitors aggregate web visit volume anonymously without recording personal user profiling. All your notes, tasks, finances, moods, and personal data remain 100% securely stored locally on your device without external access.'}
                   </p>
                 </div>
               </div>

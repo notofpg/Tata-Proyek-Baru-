@@ -1007,7 +1007,7 @@ export default function App() {
     return (
       <div className={`w-full h-[100dvh] flex flex-col md:flex-row ${getThemeClass()} font-sans relative overflow-hidden`}>
         {renderAppBackground()}
-        {(activeTheme === 'cool' || activeTheme === 'cute') && (
+        {activeTheme === 'cool' && (
           <div className="absolute inset-0 bg-slate-950/40 z-0 pointer-events-none" />
         )}
         <div className="flex-1 w-full mx-auto max-w-[1920px] relative z-10">
@@ -1024,7 +1024,7 @@ export default function App() {
     return (
       <div className={`w-full h-[100dvh] flex flex-col md:flex-row ${getThemeClass()} font-sans relative overflow-hidden`}>
         {renderAppBackground()}
-        {(activeTheme === 'cool' || activeTheme === 'cute') && (
+        {activeTheme === 'cool' && (
           <div className="absolute inset-0 bg-slate-950/40 z-0 pointer-events-none" />
         )}
         <div className="flex-1 w-full mx-auto max-w-[1920px] relative z-10">
@@ -1042,7 +1042,7 @@ export default function App() {
   return (
     <div className={`w-full h-[100dvh] flex flex-col md:flex-row ${getThemeClass()} font-sans relative overflow-hidden`}>
       {renderAppBackground()}
-      {(activeTheme === 'cool' || activeTheme === 'cute') && (
+      {activeTheme === 'cool' && (
         <div className="absolute inset-0 bg-slate-950/40 z-0 pointer-events-none" />
       )}
       <OfflineIndicator lang={lang} />
@@ -1148,8 +1148,12 @@ export default function App() {
         >
            <Icon3DBell size={24} className="shrink-0 mt-0.5" />
            <div className="flex-1 min-w-0">
-             <h4 className="font-extrabold text-slate-100 text-xs sm:text-sm mb-0.5 truncate">{inAppAlarm.title}</h4>
-             <p className="text-slate-400 text-xs leading-relaxed line-clamp-2">{inAppAlarm.body}</p>
+             <h4 className={`font-extrabold text-xs sm:text-sm mb-0.5 truncate ${appPalette.isDark ? 'text-slate-100' : 'text-[#24170D]'}`}>
+               {inAppAlarm.title}
+             </h4>
+             <p className={`text-xs leading-relaxed line-clamp-2 ${appPalette.isDark ? 'text-slate-400' : 'text-[#7A6456]'}`}>
+               {inAppAlarm.body}
+             </p>
            </div>
            <button 
              onClick={(e) => { 
@@ -1157,7 +1161,7 @@ export default function App() {
                setInAppAlarm(null); 
                stopGlobalAudio(); 
              }} 
-             className="p-1 hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-slate-200 cursor-pointer shrink-0"
+             className={`p-1 rounded-lg transition-colors cursor-pointer shrink-0 ${appPalette.isDark ? 'hover:bg-slate-800 text-slate-400 hover:text-slate-200' : 'hover:bg-amber-900/10 text-stone-500 hover:text-stone-800'}`}
            >
              <Icon3DClose size={16} />
            </button>
@@ -1214,7 +1218,9 @@ export default function App() {
                        ? 'bg-amber-300/40 border border-amber-400/50'
                        : activeTheme === 'wallpaper'
                          ? 'bg-white/20 border border-white/30'
-                         : 'bg-indigo-500/20 border border-indigo-500/30'
+                         : activeTheme === 'simple'
+                           ? 'bg-[#211E1B] border border-[#3D332A]'
+                           : 'bg-indigo-500/20 border border-indigo-500/30'
              } flex items-center justify-center overflow-hidden shadow-inner`}>
                   <img src="/icon.png" alt="Tata Logo" className="w-full h-full object-cover" />
              </div>
@@ -1231,7 +1237,9 @@ export default function App() {
                          ? 'text-slate-900'
                          : activeTheme === 'wallpaper'
                            ? 'text-white'
-                           : 'text-slate-50 group-hover:text-indigo-300'
+                           : activeTheme === 'simple'
+                             ? 'text-stone-100 group-hover:text-amber-200'
+                             : 'text-slate-50 group-hover:text-indigo-300'
              } transition-colors`}>
                 TATA
              </span>
@@ -1921,6 +1929,7 @@ function PinScreen({ correctPin, onUnlock, appTheme, lang }: { correctPin: strin
       return 'border-slate-300 bg-slate-100';
     }
     if (appTheme === 'cool') return 'border-blue-900 bg-[#0E1A38]';
+    if (appTheme === 'simple') return 'border-[#3D332A] bg-[#211E1B]';
     return 'border-slate-700 bg-slate-800/60';
   };
 
