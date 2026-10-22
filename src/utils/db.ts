@@ -6,6 +6,12 @@ const memoryCache: Record<string, string> = {};
 const existingDataKeys = new Set<string>();
 let isStorageHydratedGlobally = false;
 
+function hasMeaningfulValue(value: string | null | undefined): boolean {
+  if (typeof value !== 'string') return !!value;
+  const trimmed = value.trim();
+  return trimmed.length > 0 && trimmed !== '[]' && trimmed !== '{}';
+}
+
 export function isStorageHydrated(): boolean {
   return isStorageHydratedGlobally;
 }
@@ -54,21 +60,15 @@ function getDB(): Promise<IDBDatabase> {
 }
 
 export async function setLargeItem(key: string, value: string): Promise<void> {
-  // Always update memoryCache immediately so synchronous calls (getLargeItemSync) return the freshest data
-  memoryCache[key] = value;
-  if (value && value !== '[]' && value !== '{}') {
+  const normalizedValue = typeof value === 'string' ? value : String(value ?? '');
+
+  memoryCache[key] = normalizedValue;
+  if (hasMeaningfulValue(normalizedValue)) {
     existingDataKeys.add(key);
   }
 
-  // Aturan 2 & 3: Auto-save dan penulisan data besar DILARANG sebelum hydration selesai
   if (!isStorageHydratedGlobally) {
     console.warn(`[Tata Storage] Menolak penulisan "${key}" ke IndexedDB karena storage belum di-hidrasi, namun cache memori telah diperbarui.`);
-    return;
-  }
-
-  // Aturan 3: Jangan menimpa data IndexedDB yang ada dengan data kosong saat status tidak aman
-  if ((value === '[]' || value === '{}' || !value) && existingDataKeys.has(key) && !isStorageHydratedGlobally) {
-    console.warn(`[Tata Storage] Mencegah penulisan data kosong pada "${key}" untuk melindungi data asli.`);
     return;
   }
 
@@ -76,23 +76,27 @@ export async function setLargeItem(key: string, value: string): Promise<void> {
   await new Promise<void>((resolve, reject) => {
     const transaction = db.transaction(STORE_NAME, 'readwrite');
     const store = transaction.objectStore(STORE_NAME);
-    const request = store.put(value, key);
+    const request = store.put(normalizedValue, key);
     request.onsuccess = () => resolve();
     request.onerror = () => reject(request.error);
   });
 
-  // Aturan 6: Hapus salinan lama di localStorage HANYA setelah penulisan ke IndexedDB berhasil ditunggu!
-  if (value.length > 500000 && typeof window !== 'undefined' && window.localStorage) {
+  if (hasMeaningfulValue(normalizedValue) && normalizedValue.length > 500000 && typeof window !== 'undefined' && window.localStorage) {
     try {
       localStorage.removeItem(key);
       const legacyKey = LEGACY_STORAGE_MAP[key];
       if (legacyKey) localStorage.removeItem(legacyKey);
-    } catch (e) {}
+    } catch (e) {
+      console.warn(`[Tata Storage] Gagal membersihkan localStorage legacy untuk "${key}"`, e);
+    }
   }
 }
 
 export async function getLargeItem(key: string): Promise<string | null> {
-  if (memoryCache[key]) return memoryCache[key];
+  if (Object.prototype.hasOwnProperty.call(memoryCache, key) && memoryCache[key] !== undefined) {
+    return memoryCache[key];
+  }
+
   try {
     const db = await getDB();
     return new Promise((resolve, reject) => {
@@ -100,19 +104,23 @@ export async function getLargeItem(key: string): Promise<string | null> {
       const store = transaction.objectStore(STORE_NAME);
       const request = store.get(key);
       request.onsuccess = () => {
-        if (request.result) memoryCache[key] = request.result;
-        resolve(request.result || null);
+        const result = request.result ?? null;
+        if (result !== null) memoryCache[key] = result;
+        resolve(result);
       };
       request.onerror = () => reject(request.error);
     });
   } catch (e) {
-    console.error("IndexedDB get error:", e);
+    console.error('IndexedDB get error:', e);
     return null;
   }
 }
 
 export function getLargeItemSync(key: string): string | null {
-  return memoryCache[key] || null;
+  if (Object.prototype.hasOwnProperty.call(memoryCache, key)) {
+    return memoryCache[key] ?? null;
+  }
+  return null;
 }
 
 export async function deleteLargeItem(key: string): Promise<void> {
@@ -151,7 +159,7 @@ export async function getAllLargeItemsByPrefix(prefix: string): Promise<Record<s
       request.onerror = () => resolve(result);
     });
   } catch (e) {
-    console.error("IndexedDB getAllLargeItemsByPrefix error:", e);
+    console.error('IndexedDB getAllLargeItemsByPrefix error:', e);
     return result;
   }
 }
@@ -161,6 +169,9 @@ export async function setManyLargeItems(items: Record<string, string>): Promise<
   if (keys.length === 0) return;
   for (const k of keys) {
     memoryCache[k] = items[k];
+    if (hasMeaningfulValue(items[k])) {
+      existingDataKeys.add(k);
+    }
   }
   try {
     const db = await getDB();
@@ -174,15 +185,16 @@ export async function setManyLargeItems(items: Record<string, string>): Promise<
       transaction.onerror = () => reject(transaction.error);
     });
   } catch (e) {
-    console.error("IndexedDB setManyLargeItems error:", e);
+    console.error('IndexedDB setManyLargeItems error:', e);
   }
 }
 
 export async function clearAllLargeItems(): Promise<void> {
-  // Clear memory cache completely
   for (const key of Object.keys(memoryCache)) {
     delete memoryCache[key];
   }
+  existingDataKeys.clear();
+
   try {
     const db = await getDB();
     await new Promise<void>((resolve, reject) => {
@@ -193,21 +205,18 @@ export async function clearAllLargeItems(): Promise<void> {
       request.onerror = () => reject(request.error);
     });
   } catch (e) {
-    console.error("IndexedDB clear error:", e);
+    console.error('IndexedDB clear error:', e);
   }
 
-  // Attempt to delete entire database as extra safeguard
   try {
-    indexedDB.deleteDatabase(DB_NAME);
+    if (typeof indexedDB !== 'undefined') {
+      indexedDB.deleteDatabase(DB_NAME);
+    }
   } catch (e) {
-    console.error("IndexedDB delete database error:", e);
+    console.warn('IndexedDB delete database warning:', e);
   }
 }
 
-/**
- * Meminta browser untuk mengunci database IndexedDB agar tidak dihapus otomatis
- * saat memori penyimpanan HP hampir penuh (Storage Eviction Protection).
- */
 export async function requestPersistentStorage(): Promise<boolean> {
   if (typeof navigator === 'undefined' || !navigator.storage || !navigator.storage.persist) {
     return false;
@@ -230,7 +239,6 @@ export async function requestPersistentStorage(): Promise<boolean> {
 
 export async function preloadLargeItems(): Promise<{ success: boolean; migratedCount: number; error?: any }> {
   try {
-    // Request persistent storage protection asynchronously
     requestPersistentStorage().catch(() => {});
 
     const db = await getDB();
@@ -251,17 +259,16 @@ export async function preloadLargeItems(): Promise<{ success: boolean; migratedC
 
       for (const key of LARGE_STORAGE_KEYS) {
         const request = store.get(key);
-        
+
         request.onsuccess = () => {
           let val = request.result;
           if (val) {
             memoryCache[key] = val;
-            if (val !== '[]' && val !== '{}') {
+            if (hasMeaningfulValue(val)) {
               existingDataKeys.add(key);
             }
             finishKey();
           } else {
-            // Cek legacy key di IndexedDB
             const legacyKey = LEGACY_STORAGE_MAP[key];
             if (legacyKey) {
               const legacyReq = store.get(legacyKey);
@@ -269,7 +276,7 @@ export async function preloadLargeItems(): Promise<{ success: boolean; migratedC
                 if (legacyReq.result) {
                   val = legacyReq.result;
                   memoryCache[key] = val;
-                  if (val !== '[]' && val !== '{}') {
+                  if (hasMeaningfulValue(val)) {
                     existingDataKeys.add(key);
                   }
                   store.put(val, key);
@@ -277,7 +284,6 @@ export async function preloadLargeItems(): Promise<{ success: boolean; migratedC
                   finishKey();
                   return;
                 }
-                // Aturan 5: Jika tidak ada di IndexedDB, cari di localStorage lama
                 checkAndMigrateFromLocalStorage(key, legacyKey, store, finishKey);
               };
               legacyReq.onerror = () => {
@@ -297,7 +303,7 @@ export async function preloadLargeItems(): Promise<{ success: boolean; migratedC
       }
 
       transaction.onerror = (e) => {
-        console.error("[Tata Storage] Transaction error during preload:", e);
+        console.error('[Tata Storage] Transaction error during preload:', e);
         reject(e);
       };
     });
@@ -305,7 +311,7 @@ export async function preloadLargeItems(): Promise<{ success: boolean; migratedC
     setStorageHydrated(true);
     return { success: true, migratedCount };
   } catch (e) {
-    console.error("[Tata Storage] IndexedDB preload error:", e);
+    console.error('[Tata Storage] IndexedDB preload error:', e);
     return { success: false, migratedCount: 0, error: e };
   }
 }
@@ -327,18 +333,18 @@ function checkAndMigrateFromLocalStorage(
 
     if (localVal) {
       memoryCache[key] = localVal;
-      if (localVal !== '[]' && localVal !== '{}') {
+      if (hasMeaningfulValue(localVal)) {
         existingDataKeys.add(key);
       }
-      // Pindahkan ke IndexedDB (Aturan 5)
       const putReq = store.put(localVal, key);
       putReq.onsuccess = () => {
-        // Aturan 6: Hapus salinan lama di localStorage HANYA setelah penulisan ke IndexedDB berhasil ditunggu
         if (localVal && localVal.length > 500000 && typeof window !== 'undefined' && window.localStorage) {
           try {
             localStorage.removeItem(key);
             if (legacyKey) localStorage.removeItem(legacyKey);
-          } catch(err) {}
+          } catch (err) {
+            console.warn(`[Tata Storage] LocalStorage cleanup error for "${key}":`, err);
+          }
         }
         onDone();
       };
