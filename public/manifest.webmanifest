@@ -1,0 +1,60 @@
+{
+  "name": "Tata Hidup Mu",
+  "short_name": "Tata",
+  "description": "Offline-first, privacy-focused productivity app with notes, tasks, calendar, finance tracking, and optional stateless AI assistance.",
+  "theme_color": "#020617",
+  "background_color": "#020617",
+  "display": "standalone",
+  "start_url": "/?utm_source=pwa",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Tugas Hari Ini",
+      "short_name": "Tugas",
+      "description": "Buka daftar tugas hari ini",
+      "url": "/?screen=tasks&utm_source=pwa",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Catatan Baru",
+      "short_name": "Catatan",
+      "description": "Buka atau tulis catatan",
+      "url": "/?screen=note-editor&utm_source=pwa",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ]
+}
