@@ -49,8 +49,6 @@ import { safeReadStorage, safeWriteStorage, safeRemoveStorage } from './store-sa
 
 export type ScreenItem = 'home' | 'tasks' | 'search' | 'calendar' | 'finance' | 'settings' | 'note-editor' | 'game' | 'tictactoe' | 'puzzle' | 'tetris' | 'games-hub' | 'memory' | 'space-invaders' | 'ai-companion' | 'account';
 
-// safe app logic
-
 export default function App() {
   const { appPin, isUnlocked, setIsUnlocked, lang, tasks, notes, reminderActive, reminderTime, hasCompletedOnboarding, setHasCompletedOnboarding, isRefreshing, refreshStep, handleRefreshApp, isLiteMode, appVersion, transactions, moods, user, streak, debts, pinRecoveryQuestion, pinRecoveryAnswer, pinHistory, savingsTarget, savingsTargetTitle, savingsBalance, archivedTags, autoBackupFrequency, autoBackupFilenamePrefix, lastAutoBackupTimestamp, setLastAutoBackupTimestamp, autoBackupPin: storeAutoBackupPin, autoBackupPinHistory, createFullBackup, tataAccount } = useAppStore();
   const t = useTranslation(lang);
@@ -58,11 +56,11 @@ export default function App() {
   const [currentScreen, _setCurrentScreen] = useState<ScreenItem>('home');
   const [screenExtra, setScreenExtra] = useState<any>(null);
   const [activeSettingsSection, setActiveSettingsSection] = useState<SettingsSectionType>(null);
-
   const [showAutoBackupModal, setShowAutoBackupModal] = useState(false);
   const [enteredAutoBackupPin, setEnteredAutoBackupPin] = useState('');
   const [enteredAutoBackupPinError, setEnteredAutoBackupPinError] = useState(false);
   const [localToastMessage, setLocalToastMessage] = useState<string | null>(null);
+  const [inAppAlarm, setInAppAlarm] = useState<{ id: number; title: string; body: string; isAlarm?: boolean; noteId?: string } | null>(null);
 
   const appThemeInit = () => {
     const stored = safeReadStorage('tata_theme') as 'dark' | 'light' | 'pink' | 'cool' | 'cute' | 'simple' | 'organic' | 'wallpaper' | null;
@@ -75,7 +73,6 @@ export default function App() {
   };
 
   const [appTheme, setAppTheme] = useState<'dark' | 'light' | 'pink' | 'cool' | 'cute' | 'simple' | 'organic' | 'wallpaper'>(appThemeInit);
-
   const [wallpaperAccent, setWallpaperAccent] = useState<string>(() => safeReadStorage('tata_wallpaper_accent') || 'blue');
 
   useEffect(() => {
@@ -140,7 +137,14 @@ export default function App() {
         const isVisible = document.visibilityState === 'visible';
         if (typeof addDynamicNotif === 'function') {
           try {
-            addDynamicNotif({ title: isMissedBacklog ? `[${lang === 'id' ? 'Terlewat' : 'Missed'}] ${title}` : title, body, type: noteId ? 'note' : isImportant ? 'task' : 'general', targetScreen: noteId ? 'note-editor' : 'tasks', targetId: noteId, priority: isImportant ? 'high' : 'medium' });
+            addDynamicNotif({
+              title: isMissedBacklog ? `[${lang === 'id' ? 'Terlewat' : 'Missed'}] ${title}` : title,
+              body,
+              type: noteId ? 'note' : isImportant ? 'task' : 'general',
+              targetScreen: noteId ? 'note-editor' : 'tasks',
+              targetId: noteId,
+              priority: isImportant ? 'high' : 'medium'
+            });
           } catch (e) {
             console.warn('[Tata App] Failed to push notification badge safely.', e);
           }
@@ -167,5 +171,12 @@ export default function App() {
     return () => unsubscribeBgTimer();
   }, [reminderActive, reminderTime, tasks, lang]);
 
-  return null;
+  return (
+    <div className="min-h-screen w-full flex items-center justify-center bg-slate-950 text-slate-100">
+      <div className="text-center">
+        <div className="text-2xl font-black tracking-tight">Tata</div>
+        <div className="mt-2 text-sm text-slate-400">Booting safely…</div>
+      </div>
+    </div>
+  );
 }
