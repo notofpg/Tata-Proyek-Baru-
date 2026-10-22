@@ -9,21 +9,17 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
-      // ✅ Generate manifest.webmanifest automatically
       outDir: 'dist',
       registerType: 'prompt',
       strategies: 'generateSW',
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
         globIgnores: ['**/node_modules/**/*', 'dist/**/*'],
-        maximumFileSizeToCacheInBytes: 5000000, // 5MB to accommodate single bundle
+        maximumFileSizeToCacheInBytes: 5000000,
         navigateFallback: '/index.html',
-        // ✅ Aggressive cleanup to allow reinstalls
         cleanupOutdatedCaches: true,
-        // ✅ Let user decide when to update
         clientsClaim: false,
         skipWaiting: false,
-        // ✅ Runtime cache for API calls only
         runtimeCaching: [
           {
             urlPattern: /^https:\/\//,
@@ -32,15 +28,15 @@ export default defineConfig({
               cacheName: 'api-cache-v1',
               expiration: {
                 maxEntries: 50,
-                maxAgeSeconds: 86400 // 24 hours
+                maxAgeSeconds: 86400,
               },
               cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          }
+                statuses: [0, 200],
+              },
+            },
+          },
         ],
-        importScripts: ['/sw-custom.js']
+        importScripts: ['/sw-custom.js'],
       },
       includeAssets: [
         'icon.png',
@@ -49,9 +45,8 @@ export default defineConfig({
         'pwa-maskable-512x512.png',
         'apple-touch-icon.png',
         'favicon.png',
-        'sw-custom.js'
+        'sw-custom.js',
       ],
-      // ✅ Proper manifest with version cache busting
       manifest: {
         name: 'Tata Hidup Mu',
         short_name: 'Tata',
@@ -62,38 +57,13 @@ export default defineConfig({
         start_url: '/?utm_source=pwa',
         scope: '/',
         icons: [
-          {
-            src: '/pwa-192x192.png',
-            sizes: '192x192',
-            type: 'image/png',
-            purpose: 'any'
-          },
-          {
-            src: '/pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any'
-          },
-          {
-            src: '/pwa-maskable-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'maskable'
-          },
-          {
-            src: '/icon.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any'
-          }
+          { src: '/pwa-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: '/pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: '/pwa-maskable-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          { src: '/icon.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
         ],
         screenshots: [
-          {
-            src: '/pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            form_factor: 'narrow'
-          }
+          { src: '/pwa-512x512.png', sizes: '512x512', type: 'image/png', form_factor: 'narrow' },
         ],
         shortcuts: [
           {
@@ -101,36 +71,36 @@ export default defineConfig({
             short_name: 'Tugas',
             description: 'Buka daftar tugas hari ini',
             url: '/?screen=tasks&utm_source=pwa',
-            icons: [{ src: '/pwa-192x192.png', sizes: '192x192', type: 'image/png' }]
+            icons: [{ src: '/pwa-192x192.png', sizes: '192x192', type: 'image/png' }],
           },
           {
             name: 'Catatan Baru',
             short_name: 'Catatan',
             description: 'Buka atau tulis catatan',
             url: '/?screen=note-editor&utm_source=pwa',
-            icons: [{ src: '/pwa-192x192.png', sizes: '192x192', type: 'image/png' }]
+            icons: [{ src: '/pwa-192x192.png', sizes: '192x192', type: 'image/png' }],
           },
           {
             name: 'Catatan Keuangan',
             short_name: 'Keuangan',
             description: 'Kelola kas dan cicilan',
             url: '/?screen=finance&utm_source=pwa',
-            icons: [{ src: '/pwa-192x192.png', sizes: '192x192', type: 'image/png' }]
+            icons: [{ src: '/pwa-192x192.png', sizes: '192x192', type: 'image/png' }],
           },
           {
             name: 'Kalender & Agenda',
             short_name: 'Kalender',
             description: 'Cek jadwal dan acara',
             url: '/?screen=calendar&utm_source=pwa',
-            icons: [{ src: '/pwa-192x192.png', sizes: '192x192', type: 'image/png' }]
-          }
-        ]
+            icons: [{ src: '/pwa-192x192.png', sizes: '192x192', type: 'image/png' }],
+          },
+        ],
       },
       devOptions: {
         enabled: false,
-        suppressWarnings: true
-      }
-    })
+        suppressWarnings: true,
+      },
+    }),
   ],
   resolve: {
     alias: {
@@ -140,9 +110,18 @@ export default defineConfig({
   define: {
     'process.env.GOOGLE_CLIENT_ID': JSON.stringify(process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || ''),
   },
+  build: {
+    outDir: 'dist',
+    emptyOutDir: true,
+    sourcemap: false,
+  },
   server: {
     host: '0.0.0.0',
     port: 3000,
     allowedHosts: true,
+  },
+  preview: {
+    host: '0.0.0.0',
+    port: 4173,
   },
 });

@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx server.ts",
     "build": "tsx scripts/generate_pwa_icons_simple.ts && vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --outfile=api/_server.cjs",
-    "start": "tsx server.ts",
+    "start": "vite preview --host 0.0.0.0 --port 4173",
     "preview": "npm run build && npm run start",
     "clean": "rm -rf dist api/_server.cjs",
     "lint": "tsc --noEmit",

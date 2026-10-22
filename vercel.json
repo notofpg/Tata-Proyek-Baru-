@@ -11,9 +11,6 @@
   },
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/index.ts" },
-    { "source": "/manifest.webmanifest", "destination": "/manifest.webmanifest" },
-    { "source": "/sw.js", "destination": "/sw.js" },
-    { "source": "/sw-custom.js", "destination": "/sw-custom.js" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
