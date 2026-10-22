@@ -84,12 +84,8 @@ const TaskTypeTabs = React.memo<{
         onClick={onSelectSekarang}
         className={`flex-1 py-2 px-2.5 text-xs font-bold rounded-xl transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation ${
           !isDiscipline && repeat === 'once'
-            ? isOrganic 
-              ? `${palette.chipActive} shadow-xs font-extrabold`
-              : 'bg-indigo-600 text-white shadow-md'
-            : isOrganic
-            ? `${palette.subText} hover:opacity-90`
-            : 'text-slate-400 hover:text-slate-200'
+            ? `${palette.chipActive} text-white shadow-xs font-extrabold`
+            : `${palette.subText} hover:${palette.titleText}`
         }`}
       >
         {is3D ? <Icon3DNavTasks size={14} /> : <ClipboardList className="w-3.5 h-3.5" />}
@@ -101,12 +97,8 @@ const TaskTypeTabs = React.memo<{
         onClick={onSelectHarian}
         className={`flex-1 py-2 px-2.5 text-xs font-bold rounded-xl transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation ${
           !isDiscipline && repeat === 'daily'
-            ? isOrganic 
-              ? `${palette.chipActive} shadow-xs font-extrabold`
-              : 'bg-violet-600 text-white shadow-md'
-            : isOrganic
-            ? `${palette.subText} hover:opacity-90`
-            : 'text-slate-400 hover:text-slate-200'
+            ? `${palette.chipActive} text-white shadow-xs font-extrabold`
+            : `${palette.subText} hover:${palette.titleText}`
         }`}
       >
         {is3D ? <Icon3DRepeat size={14} /> : <Repeat className="w-3.5 h-3.5" />}
@@ -118,12 +110,8 @@ const TaskTypeTabs = React.memo<{
         onClick={onSelectDisiplin}
         className={`flex-1 py-2 px-2.5 text-xs font-bold rounded-xl transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation ${
           isDiscipline
-            ? isOrganic
-              ? `${palette.chipActive} shadow-xs font-extrabold`
-              : 'bg-gradient-to-r from-orange-500 to-rose-500 text-white shadow-md'
-            : isOrganic
-            ? `${palette.subText} hover:opacity-90`
-            : 'text-slate-400 hover:text-slate-200'
+            ? `${palette.chipActive} text-white shadow-xs font-extrabold`
+            : `${palette.subText} hover:${palette.titleText}`
         }`}
       >
         {is3D ? <Icon3DTarget size={14} /> : <Target className="w-3.5 h-3.5" />}
@@ -154,12 +142,8 @@ const TaskPrioritySelector = React.memo<{
           const isSelected = priority === p;
           const activeClass = 
             isSelected 
-              ? isOrganic
-                ? `${palette.chipActive} font-bold shadow-xs`
-                : p === 'Tinggi' ? 'bg-orange-500/25 text-orange-300 font-bold border border-orange-500/40' : p === 'Sedang' ? 'bg-blue-500/25 text-blue-300 font-bold border border-blue-500/40' : 'bg-slate-700/50 text-slate-200 font-bold border border-slate-600/50'
-              : isOrganic
-              ? `${palette.subText} hover:opacity-90`
-              : 'text-slate-400 hover:text-slate-200';
+              ? `${palette.chipActive} font-bold shadow-xs`
+              : `${palette.subText} hover:opacity-90`;
           return (
             <button
               key={p}
@@ -256,12 +240,8 @@ const TaskDateTimeSection = React.memo<{
                   }}
                   className={`px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all active:scale-95 cursor-pointer touch-manipulation border ${
                     isSelected
-                      ? isOrganic 
-                        ? `${palette.chipActive} shadow-xs` 
-                        : 'bg-indigo-600 text-white border-indigo-500 shadow-sm'
-                      : isOrganic
-                      ? `${palette.chipInactive} hover:opacity-90`
-                      : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200 hover:bg-slate-800'
+                      ? `${palette.chipActive} shadow-xs` 
+                      : `${palette.chipInactive} hover:opacity-90`
                   }`}
                 >
                   {chip.label}
@@ -275,11 +255,7 @@ const TaskDateTimeSection = React.memo<{
             value={date}
             onChange={e => setDate(e.target.value)}
             style={{ colorScheme: palette.isDark ? 'dark' : 'light' }}
-            className={`w-full rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none transition-colors cursor-pointer border ${
-              isOrganic 
-                ? `${palette.taskCard} ${palette.streakBorder} ${palette.titleText}` 
-                : 'bg-slate-950 border-slate-800 text-slate-200 focus:border-indigo-500/60'
-            }`}
+            className={`w-full rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none transition-colors cursor-pointer border ${palette.taskCard} ${palette.streakBorder} ${palette.titleText}`}
           />
         </div>
       )}
@@ -300,11 +276,7 @@ const TaskDateTimeSection = React.memo<{
             value={alarmTime}
             onChange={e => setAlarmTime(e.target.value)}
             style={{ colorScheme: palette.isDark ? 'dark' : 'light' }}
-            className={`w-full rounded-xl pl-3 pr-8 py-2 text-xs font-semibold focus:outline-none transition-colors cursor-pointer border ${
-              isOrganic 
-                ? `${palette.taskCard} ${palette.streakBorder} ${palette.titleText}` 
-                : 'bg-slate-950 border-slate-800 text-slate-200 focus:border-indigo-500/60'
-            }`}
+            className={`w-full rounded-xl pl-3 pr-8 py-2 text-xs font-semibold focus:outline-none transition-colors cursor-pointer border ${palette.taskCard} ${palette.streakBorder} ${palette.titleText}`}
           />
           {alarmTime && (
             <button 
@@ -313,9 +285,7 @@ const TaskDateTimeSection = React.memo<{
                 triggerHaptic('light');
                 setAlarmTime('');
               }}
-              className={`absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 cursor-pointer touch-manipulation ${
-                isOrganic ? `${palette.streakCard} ${palette.subText} hover:${palette.titleText}` : 'bg-slate-800 text-slate-400 hover:text-slate-200'
-              }`}
+              className={`absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 cursor-pointer touch-manipulation ${palette.streakCard} ${palette.subText} hover:${palette.titleText}`}
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -382,12 +352,8 @@ const TaskDisciplineDetailsSection = React.memo<{
                 }}
                 className={`px-2.5 py-1 rounded-xl text-[11px] font-bold whitespace-nowrap transition-all active:scale-95 cursor-pointer touch-manipulation border ${
                   isSelected 
-                    ? isOrganic 
-                      ? `${palette.chipActive} shadow-xs` 
-                      : 'bg-orange-500 text-white border-orange-500 shadow-sm' 
-                    : isOrganic
-                    ? `${palette.chipInactive} hover:opacity-90`
-                    : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                    ? `${palette.chipActive} shadow-xs` 
+                    : `${palette.chipInactive} hover:opacity-90`
                 }`}
               >
                 {preset.label}
@@ -400,22 +366,14 @@ const TaskDisciplineDetailsSection = React.memo<{
           value={targetDate}
           onChange={e => setTargetDate(e.target.value)}
           style={{ colorScheme: palette.isDark ? 'dark' : 'light' }}
-          className={`w-full rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none cursor-pointer border ${
-            isOrganic 
-              ? `${palette.taskCard} ${palette.streakBorder} ${palette.titleText}` 
-              : 'bg-slate-950 border-slate-800 text-slate-200 focus:border-orange-500/50'
-          }`}
+          className={`w-full rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none cursor-pointer border ${palette.taskCard} ${palette.streakBorder} ${palette.titleText}`}
         />
       </div>
 
       {/* Reward & Punishment Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {/* Reward */}
-        <div className={`rounded-2xl p-3.5 space-y-2 border ${
-          isOrganic 
-            ? `${palette.quoteCard} ${palette.quoteBorder}` 
-            : 'bg-amber-500/10 border-amber-500/25'
-        }`}>
+        <div className={`rounded-2xl p-3.5 space-y-2 border ${palette.quoteCard} ${palette.quoteBorder}`}>
           <div className={`flex items-center gap-1.5 font-bold text-xs ${palette.brandText}`}>
             {is3D ? <Icon3DGift size={15} /> : <Gift className="w-3.5 h-3.5 text-amber-400" />}
             <span>{lang === 'id' ? 'Hadiah Keberhasilan' : 'Success Reward'}</span>
@@ -425,11 +383,7 @@ const TaskDisciplineDetailsSection = React.memo<{
             value={reward}
             onChange={e => setReward(e.target.value)}
             placeholder={lang === 'id' ? 'Contoh: Liburan, Beli sepatu baru...' : 'Example: Vacation, Buy shoes...'}
-            className={`w-full rounded-xl px-3 py-2 text-xs focus:outline-none border ${
-              isOrganic 
-                ? `${palette.streakCard} ${palette.streakBorder} ${palette.titleText} placeholder:${palette.subText}` 
-                : 'bg-slate-950/80 border-amber-500/30 text-slate-200 placeholder:text-slate-600 focus:border-amber-400'
-            }`}
+            className={`w-full rounded-xl px-3 py-2 text-xs focus:outline-none border ${palette.streakCard} ${palette.streakBorder} ${palette.titleText} placeholder:${palette.subText}`}
           />
           <p className={`text-[10px] leading-tight ${palette.subText}`}>
             {lang === 'id' ? 'Hadiah saat target tercapai penuh.' : 'Reward upon full achievement.'}
@@ -437,14 +391,8 @@ const TaskDisciplineDetailsSection = React.memo<{
         </div>
 
         {/* Punishment */}
-        <div className={`rounded-2xl p-3.5 space-y-2 border ${
-          isOrganic 
-            ? `${palette.quoteCard} ${palette.quoteBorder}` 
-            : 'bg-rose-500/10 border-rose-500/25'
-        }`}>
-          <div className={`flex items-center gap-1.5 font-bold text-xs ${
-            isOrganic ? 'text-rose-500' : 'text-rose-400'
-          }`}>
+        <div className={`rounded-2xl p-3.5 space-y-2 border ${palette.quoteCard} ${palette.quoteBorder}`}>
+          <div className="flex items-center gap-1.5 font-bold text-xs text-rose-500">
             {is3D ? <Icon3DWarning size={15} /> : <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />}
             <span>{lang === 'id' ? 'Konsekuensi Bolong' : 'Missed Consequence'}</span>
           </div>
@@ -453,11 +401,7 @@ const TaskDisciplineDetailsSection = React.memo<{
             value={punishment}
             onChange={e => setPunishment(e.target.value)}
             placeholder={lang === 'id' ? 'Contoh: Push-up 50x, Sedekah...' : 'Example: 50 pushups, Donate...'}
-            className={`w-full rounded-xl px-3 py-2 text-xs focus:outline-none border ${
-              isOrganic 
-                ? `${palette.streakCard} ${palette.streakBorder} ${palette.titleText} placeholder:${palette.subText}` 
-                : 'bg-slate-950/80 border-rose-500/30 text-slate-200 placeholder:text-slate-600 focus:border-rose-400'
-            }`}
+            className={`w-full rounded-xl px-3 py-2 text-xs focus:outline-none border ${palette.streakCard} ${palette.streakBorder} ${palette.titleText} placeholder:${palette.subText}`}
           />
           <p className={`text-[10px] leading-tight ${palette.subText}`}>
             {lang === 'id' ? 'Wajib dijalani jika ada hari terlewat.' : 'Must execute if a day is missed.'}
@@ -475,11 +419,7 @@ const TaskDisciplineDetailsSection = React.memo<{
           value={motivation}
           onChange={e => setMotivation(e.target.value)}
           placeholder={lang === 'id' ? 'Kenapa target disiplin ini sangat penting bagi hidupmu?' : 'Why is this discipline goal important for your life?'}
-          className={`w-full rounded-xl p-2.5 text-xs focus:outline-none resize-none leading-relaxed border ${
-            isOrganic 
-              ? `${palette.taskCard} ${palette.streakBorder} ${palette.titleText} placeholder:${palette.subText}` 
-              : 'bg-slate-950 border-slate-800 text-slate-200 placeholder:text-slate-600 focus:border-orange-500/50'
-          }`}
+          className={`w-full rounded-xl p-2.5 text-xs focus:outline-none resize-none leading-relaxed border ${palette.taskCard} ${palette.streakBorder} ${palette.titleText} placeholder:${palette.subText}`}
         />
       </div>
     </div>
@@ -640,32 +580,24 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = React.memo(({
       }}
     >
       <div 
-        className={`w-full max-w-lg sm:max-w-xl md:max-w-2xl max-h-[90vh] sm:max-h-[85vh] flex flex-col rounded-3xl shadow-2xl relative animate-in zoom-in-95 duration-150 overflow-hidden border ${
-          isOrganic 
-            ? `${palette.streakCard} ${palette.streakBorder} ${palette.titleText}` 
-            : 'bg-slate-900 border-slate-800 text-slate-100'
-        }`}
+        className={`w-full max-w-lg sm:max-w-xl md:max-w-2xl max-h-[90vh] sm:max-h-[85vh] flex flex-col rounded-3xl shadow-2xl relative animate-in zoom-in-95 duration-150 overflow-hidden border ${palette.cardHero} ${palette.streakBorder} ${palette.titleText}`}
         onClick={(e) => e.stopPropagation()}
       >
         
         {/* Modal Fixed Header */}
-        <div className={`px-4 sm:px-6 pt-4 pb-3 flex-shrink-0 border-b relative z-10 ${
-          isOrganic 
-            ? `${palette.headerBg} ${palette.streakBorder}` 
-            : 'bg-slate-900/95 border-slate-800'
-        }`}>
+        <div className={`px-4 sm:px-6 pt-4 pb-3 flex-shrink-0 border-b relative z-10 ${palette.headerBg} ${palette.streakBorder}`}>
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2.5 min-w-0">
               {isDiscipline ? (
-                <span className={`p-2 rounded-2xl shrink-0 ${isOrganic ? `${palette.cardHero} ${palette.brandText}` : 'bg-orange-500/15 text-orange-400'}`}>
+                <span className={`p-2 rounded-2xl shrink-0 ${palette.cardHero} ${palette.brandText}`}>
                   {is3D ? <Icon3DTarget size={20} /> : <Target className="w-4 h-4 text-orange-400" />}
                 </span>
               ) : repeat === 'daily' ? (
-                <span className={`p-2 rounded-2xl shrink-0 ${isOrganic ? `${palette.streakCard} ${palette.brandText}` : 'bg-violet-500/15 text-violet-400'}`}>
+                <span className={`p-2 rounded-2xl shrink-0 ${palette.streakCard} ${palette.brandText}`}>
                   {is3D ? <Icon3DRepeat size={20} /> : <Repeat className="w-4 h-4 text-violet-400" />}
                 </span>
               ) : (
-                <span className={`p-2 rounded-2xl shrink-0 ${isOrganic ? `${palette.streakCard} ${palette.brandText}` : 'bg-indigo-500/15 text-indigo-400'}`}>
+                <span className={`p-2 rounded-2xl shrink-0 ${palette.streakCard} ${palette.brandText}`}>
                   {is3D ? <Icon3DNavTasks size={20} /> : <ClipboardList className="w-4 h-4 text-indigo-400" />}
                 </span>
               )}
@@ -689,9 +621,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = React.memo(({
                 triggerHaptic('light');
                 onClose();
               }} 
-              className={`p-1.5 rounded-xl cursor-pointer transition-colors touch-manipulation ${
-                isOrganic ? `${palette.subText} hover:${palette.titleText}` : 'text-slate-400 hover:text-slate-200'
-              }`}
+              className={`p-1.5 rounded-xl cursor-pointer transition-colors touch-manipulation ${palette.subText} hover:${palette.titleText}`}
             >
               <X className="w-4 h-4" />
             </button>
@@ -742,21 +672,13 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = React.memo(({
                   ? (lang === 'id' ? 'Contoh: Minum air 2L, Olahraga 15 Menit...' : 'Example: Drink 2L water, Workout 15m...')
                   : (lang === 'id' ? 'Contoh: Selesaikan laporan kantor...' : 'Example: Finish office report...')
               }
-              className={`w-full rounded-2xl px-3.5 py-3 text-sm sm:text-base font-medium transition-colors focus:outline-none resize-none leading-relaxed border select-text ${
-                isOrganic 
-                  ? `${palette.taskCard} ${palette.streakBorder} ${palette.titleText} placeholder:${palette.subText} focus:ring-2 focus:ring-emerald-500/20` 
-                  : 'bg-slate-950 border-slate-800 text-slate-100 placeholder:text-slate-500 focus:border-indigo-500/60 focus:ring-2 focus:ring-indigo-500/20'
-              }`}
+              className={`w-full rounded-2xl px-3.5 py-3 text-sm sm:text-base font-medium transition-colors focus:outline-none resize-none leading-relaxed border select-text ${palette.taskCard} ${palette.streakBorder} ${palette.titleText} placeholder:${palette.subText} focus:ring-2 focus:ring-amber-500/20`}
             />
           </div>
 
           {/* Restart from Beginning Card (Only when editing an existing routine or discipline task) */}
           {editingTask && (repeat === 'daily' || isDiscipline) && onRestartRequest && (
-            <div className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 ${
-              isOrganic 
-                ? `${palette.quoteCard} ${palette.quoteBorder}`
-                : 'bg-amber-500/10 border-amber-500/25'
-            }`}>
+            <div className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 ${palette.quoteCard} ${palette.quoteBorder}`}>
               <div className="space-y-0.5 min-w-0">
                 <h5 className={`text-xs font-bold flex items-center gap-1.5 ${palette.brandText}`}>
                   {is3D ? <Icon3DRotateCcw size={14} /> : <RotateCcw className="w-3.5 h-3.5 text-amber-400" />}
@@ -774,11 +696,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = React.memo(({
                   triggerHaptic('medium');
                   onRestartRequest(editingTask);
                 }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all active:scale-95 cursor-pointer touch-manipulation border ${
-                  isOrganic
-                    ? 'bg-amber-500 text-white border-amber-500 shadow-sm hover:bg-amber-600'
-                    : 'bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30'
-                }`}
+                className="px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all active:scale-95 cursor-pointer touch-manipulation border bg-amber-500 text-white border-amber-500 shadow-sm hover:bg-amber-600"
               >
                 {lang === 'id' ? 'Ulangi Sekarang' : 'Restart Now'}
               </button>
@@ -830,22 +748,14 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = React.memo(({
         </form>
 
         {/* Modal Fixed Sticky Footer */}
-        <div className={`px-4 sm:px-6 py-3.5 flex-shrink-0 border-t flex gap-2.5 pb-[max(1rem,env(safe-area-inset-bottom))] relative z-10 ${
-          isOrganic 
-            ? `${palette.headerBg} ${palette.streakBorder}` 
-            : 'bg-slate-900/95 border-slate-800'
-        }`}>
+        <div className={`px-4 sm:px-6 py-3.5 flex-shrink-0 border-t flex gap-2.5 pb-[max(1rem,env(safe-area-inset-bottom))] relative z-10 ${palette.headerBg} ${palette.streakBorder}`}>
           <button
             type="button"
             onClick={() => {
               triggerHaptic('light');
               onClose();
             }}
-            className={`flex-1 py-3 rounded-2xl font-bold text-xs transition-all active:scale-95 cursor-pointer touch-manipulation border ${
-              isOrganic 
-                ? `${palette.chipInactive} ${palette.subText}` 
-                : 'border-slate-800 bg-slate-800/80 hover:bg-slate-800 text-slate-300'
-            }`}
+            className={`flex-1 py-3 rounded-2xl font-bold text-xs transition-all active:scale-95 cursor-pointer touch-manipulation border ${palette.chipInactive} ${palette.subText}`}
           >
             {lang === 'id' ? 'Batal' : 'Cancel'}
           </button>
@@ -855,16 +765,8 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = React.memo(({
             disabled={!title.trim()}
             className={`flex-1 py-3 rounded-2xl font-bold text-xs transition-all shadow-lg active:scale-95 cursor-pointer touch-manipulation flex items-center justify-center gap-1.5 ${
               title.trim()
-                ? isOrganic 
-                  ? `${palette.brandBg} shadow-xs text-white` 
-                  : isDiscipline 
-                  ? 'bg-gradient-to-r from-orange-500 to-rose-500 text-white shadow-orange-500/20 hover:opacity-95'
-                  : repeat === 'daily'
-                  ? 'bg-violet-600 hover:bg-violet-500 text-white shadow-violet-600/20'
-                  : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20'
-                : isOrganic
-                ? 'opacity-40 cursor-not-allowed bg-slate-400 text-slate-200'
-                : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                ? `${palette.brandBg} shadow-xs text-white`
+                : 'opacity-40 cursor-not-allowed bg-slate-400/30 text-slate-400'
             }`}
           >
             <Check className="w-3.5 h-3.5 stroke-[3]" />

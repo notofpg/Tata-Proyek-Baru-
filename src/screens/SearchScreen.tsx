@@ -35,15 +35,16 @@ export default function SearchScreen({
     unlockNoteForSession, lockNoteForSession
   } = store;
 
-  const isLite = appTheme === 'lite' || appVersion === 'lite' || isLiteMode;
-  const isOrganic = !isLite && (appVersion === 'organic' || appVersion === 'pro_max' || appTheme === 'organic');
-  const is3D = isOrganic;
+  const storedTheme = typeof window !== 'undefined' ? localStorage.getItem('tata_theme') : null;
+  const effectiveTheme = appTheme || storedTheme || 'dark';
 
   const palette = useMemo(() => {
-    const storedTheme = typeof window !== 'undefined' ? localStorage.getItem('tata_theme') : null;
-    const effectiveTheme = appTheme || storedTheme || 'organic';
     return getOrganicThemePalette(effectiveTheme);
-  }, [appTheme]);
+  }, [effectiveTheme]);
+
+  const isLite = effectiveTheme === 'lite' || appVersion === 'lite' || isLiteMode;
+  const is3D = !isLite && (appVersion === 'organic' || appVersion === 'pro_max');
+  const isOrganic = !isLite && ['organic', 'pro_max', 'cute', 'warm'].includes(effectiveTheme);
 
   const effectiveNotePin = notePin || appPin;
   const t = useTranslation(lang);
@@ -203,29 +204,25 @@ export default function SearchScreen({
       });
     }
 
-    // In Organic Mode: Smart sorting (pinned first, then sortOrder)
-    if (isOrganic) {
-      const copy = [...list];
-      copy.sort((a, b) => {
-        if (activeFilter !== 'archive') {
-          if (a.pinned && !b.pinned) return -1;
-          if (!a.pinned && b.pinned) return 1;
-        }
+    // Smart sorting (pinned first, then sortOrder)
+    const copy = [...list];
+    copy.sort((a, b) => {
+      if (activeFilter !== 'archive') {
+        if (a.pinned && !b.pinned) return -1;
+        if (!a.pinned && b.pinned) return 1;
+      }
 
-        if (sortOrder === 'oldest') {
-          return (a.date || '').localeCompare(b.date || '');
-        }
-        if (sortOrder === 'title_asc') {
-          return (a.title || '').localeCompare(b.title || '');
-        }
-        // 'newest' (default)
-        return (b.date || '').localeCompare(a.date || '');
-      });
-      return copy;
-    }
-
-    return list;
-  }, [activeNotes, archivedNotes, activeFilter, searchQuery, isOrganic, sortOrder]);
+      if (sortOrder === 'oldest') {
+        return (a.date || '').localeCompare(b.date || '');
+      }
+      if (sortOrder === 'title_asc') {
+        return (a.title || '').localeCompare(b.title || '');
+      }
+      // 'newest' (default)
+      return (b.date || '').localeCompare(a.date || '');
+    });
+    return copy;
+  }, [activeNotes, archivedNotes, activeFilter, searchQuery, sortOrder]);
 
   const handleTogglePinNote = (e: React.MouseEvent, note: Note) => {
     e.stopPropagation();
@@ -245,8 +242,8 @@ export default function SearchScreen({
 
   // Render Note Card (Grid View or Default)
   const renderNoteCard = (note: Note) => {
-    // List View for Organic Mode
-    if (isOrganic && viewMode === 'list') {
+    // List View
+    if (viewMode === 'list') {
       return (
         <div
           key={`note-${note.id}`}
@@ -412,9 +409,7 @@ export default function SearchScreen({
               type="button"
               onClick={(e) => handleToggleNoteLock(e, note)}
               className={`flex items-center gap-1.5 py-2 px-2.5 rounded-xl text-xs font-semibold my-1 transition-colors cursor-pointer text-left w-full border ${
-                isOrganic 
-                  ? `${palette.streakCard} ${palette.streakBorder} ${palette.titleText}` 
-                  : 'bg-amber-500/10 border-amber-500/20 hover:bg-amber-500/20 text-amber-400'
+                `${palette.streakCard} ${palette.streakBorder} ${palette.titleText}`
               }`}
               title={lang === 'id' ? 'Klik untuk membuka kunci catatan ini' : 'Click to unlock this note'}
             >
@@ -431,9 +426,7 @@ export default function SearchScreen({
 
           {note.reminder && (
             <div className={`flex items-center gap-1.5 mt-2.5 px-2 py-0.5 rounded-md w-fit text-[10px] font-bold border ${
-              isOrganic 
-                ? `${palette.streakCard} ${palette.streakBorder} ${palette.titleText}` 
-                : 'bg-indigo-500/10 border-indigo-500/10 text-indigo-400'
+              `${palette.streakCard} ${palette.streakBorder} ${palette.titleText}`
             }`}>
               {is3D ? <Icon3DClock size={12} /> : <Bell className="w-3 h-3 animate-pulse" />}
               <span>{formatReminderDate(note.reminder, lang)}</span>

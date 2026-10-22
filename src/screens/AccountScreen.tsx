@@ -59,10 +59,12 @@ export default function AccountScreen({ appTheme, onBack, onNavigate }: AccountS
     redeemPromoCode, activateTataTrial, isAccountPremium, fetchTataAccountProfile, checkPromoCode
   } = store;
   
-  const palette = React.useMemo(() => getOrganicThemePalette(appTheme), [appTheme]);
-  const isLite = appTheme === 'lite' || appVersion === 'lite' || isLiteMode;
+  const storedTheme = typeof window !== 'undefined' ? localStorage.getItem('tata_theme') : null;
+  const effectiveTheme = appTheme || storedTheme || 'dark';
+  const palette = React.useMemo(() => getOrganicThemePalette(effectiveTheme), [effectiveTheme]);
+  const isLite = effectiveTheme === 'lite' || appVersion === 'lite' || isLiteMode;
   const isDark = palette.isDark;
-  const isOrganic = !isLite && ['organic', 'pro_max'].includes(appTheme || (typeof window !== 'undefined' ? localStorage.getItem('tata_theme') : '') || '');
+  const isOrganic = !isLite && ['organic', 'pro_max', 'cute', 'warm'].includes(effectiveTheme);
 
   // 6-Day Trial Calculation
   const isTrialActive = Boolean(

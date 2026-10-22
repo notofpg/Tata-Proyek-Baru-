@@ -86,12 +86,10 @@ const QuickTaskBar = React.memo<{
     <form 
       onSubmit={handleSubmit}
       className={`flex items-center gap-2 p-1.5 pl-3.5 rounded-2xl border transition-all shadow-xs select-text ${
-        isOrganic 
-          ? `${organicPalette.searchContainer} ${organicPalette.searchContainerActive}` 
-          : 'bg-slate-900/80 border-slate-800'
-      }`}
+        organicPalette.searchContainer
+      } ${organicPalette.searchContainerActive}`}
     >
-      <div className={`shrink-0 pointer-events-none ${isOrganic ? organicPalette.brandText : 'text-slate-400'}`}>
+      <div className={`shrink-0 pointer-events-none ${organicPalette.brandText}`}>
         {icon}
       </div>
       <input
@@ -103,14 +101,14 @@ const QuickTaskBar = React.memo<{
         autoCorrect="off"
         spellCheck="false"
         className={`flex-1 bg-transparent text-xs sm:text-sm font-medium focus:outline-none placeholder:opacity-60 select-text ${
-          isOrganic ? `${organicPalette.titleText} placeholder:${organicPalette.subText}` : 'text-slate-200 placeholder:text-slate-500'
+          organicPalette.searchInput
         }`}
       />
       {text.trim() ? (
         <button
           type="submit"
           className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-xs cursor-pointer touch-manipulation flex items-center gap-1 shrink-0 ${
-            isOrganic ? `${organicPalette.chipActive} text-white` : (buttonColorClass || 'bg-indigo-600 text-white')
+            buttonColorClass || `${organicPalette.chipActive} text-white`
           }`}
           title={lang === 'id' ? 'Tambah tugas cepat' : 'Add simple task'}
         >
@@ -124,9 +122,7 @@ const QuickTaskBar = React.memo<{
           onOpenAdvanced();
         }}
         className={`px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer touch-manipulation border flex items-center gap-1.5 shrink-0 ${
-          isOrganic 
-            ? `${organicPalette.streakCard} ${organicPalette.streakBorder} ${organicPalette.subText} hover:${organicPalette.titleText}` 
-            : 'bg-slate-800 text-slate-300 hover:text-white border-slate-700'
+          `${organicPalette.streakCard} ${organicPalette.streakBorder} ${organicPalette.subText} hover:${organicPalette.titleText}`
         }`}
         title={lang === 'id' ? 'Tambah dengan detail lengkap (Tanggal, Jam, Prioritas, Disiplin)' : 'Add with details (Date, Time, Priority)'}
       >
@@ -164,14 +160,14 @@ export default function TasksScreen({
     isLiteMode 
   } = useAppStore();
   
-  const isLite = appTheme === 'lite' || appVersion === 'lite' || isLiteMode;
-  const isOrganic = !isLite && (appVersion === 'organic' || appVersion === 'pro_max' || appTheme === 'organic' || appTheme === 'pro_max');
-  const is3D = isOrganic;
+  const storedTheme = typeof window !== 'undefined' ? localStorage.getItem('tata_theme') : null;
+  const effectiveTheme = appTheme || storedTheme || 'dark';
   const organicPalette = useMemo(() => {
-    const storedTheme = typeof window !== 'undefined' ? localStorage.getItem('tata_theme') : null;
-    const effectiveTheme = appTheme || storedTheme || (isOrganic ? 'organic' : 'dark');
     return getOrganicThemePalette(effectiveTheme);
-  }, [appTheme, isOrganic]);
+  }, [effectiveTheme]);
+  const isLite = effectiveTheme === 'lite' || appVersion === 'lite' || isLiteMode;
+  const is3D = !isLite && (appVersion === 'organic' || appVersion === 'pro_max');
+  const isOrganic = !isLite && ['organic', 'pro_max', 'cute', 'warm'].includes(effectiveTheme);
   const [activeTab, setActiveTab] = useState<'Sekarang' | 'Harian' | 'Disiplin'>('Sekarang');
   const tasksScrollRef = useRef<HTMLElement>(null);
 
@@ -536,12 +532,8 @@ export default function TasksScreen({
                   onClick={() => setShowFilterMenu(!showFilterMenu)}
                   className={`flex items-center gap-1.5 px-3 py-2 min-h-[38px] rounded-xl text-xs font-semibold border transition-all cursor-pointer touch-manipulation active:scale-95 ${
                     priorityFilter !== 'semua'
-                      ? isOrganic
-                        ? `${organicPalette.chipActive} shadow-xs`
-                        : 'bg-indigo-500/20 border-indigo-500/40 text-indigo-300'
-                      : isOrganic
-                      ? `${organicPalette.streakCard} ${organicPalette.streakBorder} ${organicPalette.titleText} hover:opacity-90`
-                      : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
+                      ? `${organicPalette.chipActive} text-white shadow-xs`
+                      : `${organicPalette.streakCard} ${organicPalette.streakBorder} ${organicPalette.titleText} hover:opacity-90`
                   }`}
                   title={lang === 'id' ? 'Filter Prioritas' : 'Filter Priority'}
                 >
@@ -550,16 +542,14 @@ export default function TasksScreen({
                     {priorityFilter === 'semua' ? (lang === 'id' ? 'Filter' : 'Filter') : (priorityFilter === 'Tinggi' ? (lang === 'id' ? 'Wajib' : 'High') : priorityFilter)}
                   </span>
                   {priorityFilter !== 'semua' && (
-                    <span className={`w-1.5 h-1.5 rounded-full ${isOrganic ? 'bg-[#D66532]' : 'bg-indigo-400'}`} />
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
                   )}
                 </button>
 
                 {showFilterMenu && (
                   <div 
                     className={`absolute right-0 top-full mt-1.5 w-40 border rounded-2xl shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150 ${
-                      isOrganic 
-                        ? `${organicPalette.cardHero} ${organicPalette.cardHeroBorder}` 
-                        : 'bg-slate-900 border-slate-800'
+                      `${organicPalette.cardHero} ${organicPalette.cardHeroBorder}`
                     }`}
                   >
                     {(['semua', 'Tinggi', 'Sedang', 'Rendah'] as const).map(p => {
@@ -575,12 +565,8 @@ export default function TasksScreen({
                           }}
                           className={`w-full text-left px-3 py-2.5 min-h-[38px] rounded-xl text-xs font-medium transition-colors flex items-center justify-between cursor-pointer touch-manipulation ${
                             isSelected 
-                              ? isOrganic
-                                ? `${organicPalette.chipActive} text-white font-bold`
-                                : 'bg-indigo-600 text-white font-bold' 
-                              : isOrganic
-                              ? `${organicPalette.titleText} hover:bg-black/5 dark:hover:bg-white/5`
-                              : 'text-slate-300 hover:bg-slate-800'
+                              ? `${organicPalette.chipActive} text-white font-bold`
+                              : `${organicPalette.titleText} hover:bg-black/5 dark:hover:bg-white/5`
                           }`}
                         >
                           <span>{label}</span>
@@ -598,12 +584,10 @@ export default function TasksScreen({
                 onClick={toggleSort}
                 title={sortBy === 'waktu' ? (lang === 'id' ? 'Urutkan: Waktu' : 'Sort: Time') : (lang === 'id' ? 'Urutkan: Prioritas' : 'Sort: Priority')}
                 className={`flex items-center gap-1.5 px-3 py-2 min-h-[38px] rounded-xl text-xs font-semibold border transition-all cursor-pointer touch-manipulation active:scale-95 ${
-                  isOrganic 
-                    ? `${organicPalette.streakCard} ${organicPalette.streakBorder} ${organicPalette.titleText} hover:opacity-90` 
-                    : 'bg-slate-900 border-slate-800 hover:border-slate-700 text-slate-300'
+                  `${organicPalette.streakCard} ${organicPalette.streakBorder} ${organicPalette.titleText} hover:opacity-90`
                 }`}
               >
-                {is3D ? <Icon3DClock size={15} /> : <Clock className={`w-3.5 h-3.5 ${isOrganic ? 'text-amber-600 dark:text-amber-400' : 'text-indigo-400'}`} />}
+                {is3D ? <Icon3DClock size={15} /> : <Clock className={`w-3.5 h-3.5 ${organicPalette.brandText}`} />}
                 <span className="text-[11px] font-medium hidden sm:inline">{sortBy === 'waktu' ? (lang === 'id' ? 'Waktu' : 'Time') : (lang === 'id' ? 'Prioritas' : 'Priority')}</span>
               </button>
 
@@ -612,16 +596,14 @@ export default function TasksScreen({
                 type="button"
                 onClick={() => setShowTrashModal(true)}
                 className={`relative p-2 min-w-[38px] min-h-[38px] flex items-center justify-center rounded-xl border transition-colors cursor-pointer touch-manipulation active:scale-95 ${
-                  isOrganic 
-                    ? `${organicPalette.streakCard} ${organicPalette.streakBorder} ${organicPalette.titleText} hover:opacity-90` 
-                    : 'text-slate-400 hover:text-slate-200 bg-slate-900 border-slate-800 hover:border-slate-700'
+                  `${organicPalette.streakCard} ${organicPalette.streakBorder} ${organicPalette.titleText} hover:opacity-90`
                 }`}
                 title={lang === 'id' ? 'Tempat Sampah' : 'Trash'}
               >
                 {is3D ? <Icon3DTrash size={16} /> : <Trash2 className="w-3.5 h-3.5" />}
                 {deletedTasks.length > 0 && (
                   <span className={`absolute -top-1 -right-1 w-3.5 h-3.5 bg-rose-500 text-white rounded-full text-[8px] font-bold flex items-center justify-center ring-2 ${
-                    organicPalette.isDark ? 'ring-slate-950' : 'ring-[#FAF5EA]'
+                    organicPalette.isDark ? 'ring-slate-950' : 'ring-white'
                   }`}>
                     {deletedTasks.length}
                   </span>
@@ -632,9 +614,9 @@ export default function TasksScreen({
 
           {/* Segmented Tab Navigation: Sleek, Tactile & Smooth Animation */}
           <nav aria-label="Task category tabs" className={`flex p-1 rounded-2xl gap-1 relative shadow-inner border transition-colors ${
-            isOrganic 
-              ? `${organicPalette.streakCard} ${organicPalette.streakBorder}` 
-              : 'bg-slate-950/80 border-slate-800/80'
+            appTheme === 'wallpaper'
+              ? 'bg-slate-950/40 border-white/10'
+              : `${organicPalette.streakCard} ${organicPalette.streakBorder}`
           }`}>
             <button
               type="button"
@@ -644,12 +626,8 @@ export default function TasksScreen({
               }}
               className={`flex-1 py-2 sm:py-2.5 min-h-[38px] sm:min-h-[40px] text-xs font-bold rounded-xl transition-all duration-300 ease-out flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation relative active:scale-95 ${
                 activeTab === 'Sekarang'
-                  ? isOrganic 
-                    ? `${organicPalette.chipActive} text-white shadow-xs font-bold`
-                    : 'bg-indigo-600 text-white shadow-md'
-                  : isOrganic
-                  ? `${organicPalette.subText} hover:${organicPalette.titleText}`
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? `${organicPalette.chipActive} text-white shadow-xs font-bold`
+                  : `${organicPalette.subText} hover:${organicPalette.titleText}`
               }`}
             >
               {is3D ? <Icon3DNavTasks size={15} /> : <ClipboardList className="w-3.5 h-3.5" />}
@@ -658,9 +636,7 @@ export default function TasksScreen({
                 <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold transition-all ${
                   activeTab === 'Sekarang' 
                     ? 'bg-white/25 text-white' 
-                    : isOrganic
-                    ? `${organicPalette.taskCard} ${organicPalette.streakBorder} border ${organicPalette.brandText}`
-                    : 'bg-slate-800 text-slate-400'
+                    : `${organicPalette.taskCard} ${organicPalette.streakBorder} border ${organicPalette.brandText}`
                 }`}>
                   {activeNowTasksCount}
                 </span>
@@ -675,12 +651,8 @@ export default function TasksScreen({
               }}
               className={`flex-1 py-2 sm:py-2.5 min-h-[38px] sm:min-h-[40px] text-xs font-bold rounded-xl transition-all duration-300 ease-out flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation relative active:scale-95 ${
                 activeTab === 'Harian'
-                  ? isOrganic 
-                    ? `${organicPalette.chipActive} text-white shadow-xs font-bold`
-                    : 'bg-violet-600 text-white shadow-md'
-                  : isOrganic
-                  ? `${organicPalette.subText} hover:${organicPalette.titleText}`
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? `${organicPalette.chipActive} text-white shadow-xs font-bold`
+                  : `${organicPalette.subText} hover:${organicPalette.titleText}`
               }`}
             >
               {is3D ? <Icon3DRepeat size={15} /> : <Repeat className="w-3.5 h-3.5" />}
@@ -689,9 +661,7 @@ export default function TasksScreen({
                 <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold transition-all ${
                   activeTab === 'Harian' 
                     ? 'bg-white/25 text-white' 
-                    : isOrganic
-                    ? `${organicPalette.taskCard} ${organicPalette.streakBorder} border ${organicPalette.brandText}`
-                    : 'bg-slate-800 text-slate-400'
+                    : `${organicPalette.taskCard} ${organicPalette.streakBorder} border ${organicPalette.brandText}`
                 }`}>
                   {dailyPendingTasks.length}
                 </span>
@@ -708,12 +678,8 @@ export default function TasksScreen({
               }}
               className={`flex-1 py-2 sm:py-2.5 min-h-[38px] sm:min-h-[40px] text-xs font-bold rounded-xl transition-all duration-300 ease-out flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation relative active:scale-95 ${
                 activeTab === 'Disiplin'
-                  ? isOrganic 
-                    ? `${organicPalette.chipActive} text-white shadow-xs font-bold`
-                    : 'bg-gradient-to-r from-orange-500 to-rose-500 text-white shadow-md'
-                  : isOrganic
-                  ? `${organicPalette.subText} hover:${organicPalette.titleText}`
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? `${organicPalette.chipActive} text-white shadow-xs font-bold`
+                  : `${organicPalette.subText} hover:${organicPalette.titleText}`
               }`}
             >
               {is3D ? <Icon3DTarget size={15} /> : <Target className="w-3.5 h-3.5" />}
@@ -826,14 +792,10 @@ export default function TasksScreen({
                 </div>
               ) : overdueTasks.length === 0 && (
                 <div className={`p-5 rounded-2xl sm:rounded-3xl border border-dashed text-center flex flex-col items-center justify-center gap-2 transition-all ${
-                  isOrganic 
-                    ? `${organicPalette.taskCard} ${organicPalette.taskCardBorder}` 
-                    : 'bg-slate-900/40 border-slate-800/80'
+                  `${organicPalette.taskCard} ${organicPalette.taskCardBorder}`
                 }`}>
                   <div className={`w-9 h-9 rounded-xl flex items-center justify-center border ${
-                    isOrganic 
-                      ? `${organicPalette.streakCard} ${organicPalette.streakBorder} ${organicPalette.brandText}` 
-                      : 'bg-slate-800/60 border-slate-700 text-slate-400'
+                    `${organicPalette.streakCard} ${organicPalette.streakBorder} ${organicPalette.brandText}`
                   }`}>
                     {is3D ? <Icon3DNavTasks size={18} /> : <CalendarIcon className="w-4 h-4 text-indigo-400" />}
                   </div>
@@ -856,9 +818,7 @@ export default function TasksScreen({
                   }`}>
                     <span>{t('upcomingTasks') || (lang === 'id' ? 'Mendatang' : 'Upcoming')}</span>
                     <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded-md ${
-                      isOrganic 
-                        ? `${organicPalette.streakCard} ${organicPalette.subText} border ${organicPalette.streakBorder}` 
-                        : 'bg-slate-800 text-slate-400'
+                      `${organicPalette.streakCard} ${organicPalette.subText} border ${organicPalette.streakBorder}`
                     }`}>
                       {upcomingTasks.length}
                     </span>
@@ -895,9 +855,7 @@ export default function TasksScreen({
                   }`}>
                     <span>{t('anytimeTasks') || (lang === 'id' ? 'Kapan Saja' : 'Anytime')}</span>
                     <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded-md ${
-                      isOrganic 
-                        ? `${organicPalette.streakCard} ${organicPalette.subText} border ${organicPalette.streakBorder}` 
-                        : 'bg-slate-800 text-slate-400'
+                      `${organicPalette.streakCard} ${organicPalette.subText} border ${organicPalette.streakBorder}`
                     }`}>
                       {noDateTasks.length}
                     </span>
@@ -935,9 +893,7 @@ export default function TasksScreen({
                     setShowCompleted(!showCompleted);
                   }}
                   className={`w-full flex items-center justify-between py-2 px-3 rounded-xl text-xs font-semibold transition-all active:scale-98 cursor-pointer touch-manipulation border ${
-                    isOrganic 
-                      ? `${organicPalette.streakCard} ${organicPalette.streakBorder} ${organicPalette.titleText} hover:opacity-90` 
-                      : 'bg-slate-900/40 hover:bg-slate-900/80 border-slate-800/60 text-slate-400'
+                    `${organicPalette.streakCard} ${organicPalette.streakBorder} ${organicPalette.titleText} hover:opacity-90`
                   }`}
                 >
                   <div className="flex items-center gap-2">
@@ -1689,22 +1645,16 @@ const TaskCard = React.memo<TaskCardProps>(({
   return (
     <div
       className={`px-3.5 py-3 sm:px-4 sm:py-3.5 rounded-2xl flex items-center gap-3 transition-all group border shadow-2xs touch-manipulation ${
-        isOrganic 
-          ? task.deleted
-            ? `${palette.streakCard} ${palette.streakBorder} opacity-60`
-            : task.completed
-            ? `${palette.taskCardDone} ${palette.taskCardDoneBorder} opacity-75`
-            : `${palette.taskCard} ${palette.taskCardBorder} hover:${palette.taskCardHoverBorder} hover:shadow-xs`
-          : task.deleted 
-          ? "bg-slate-950/40 border-slate-900 opacity-60" 
+        task.deleted
+          ? `${palette.streakCard} ${palette.streakBorder} opacity-60`
           : task.completed
-          ? "bg-slate-900/40 border-slate-800/60 opacity-75"
-          : "bg-slate-900/80 border-slate-800 hover:border-slate-700/80 hover:bg-slate-900"
+          ? `${palette.taskCardDone} ${palette.taskCardDoneBorder} opacity-75`
+          : `${palette.taskCard} ${palette.taskCardBorder} hover:${palette.taskCardHoverBorder} hover:shadow-xs`
       }`}
     >
       {/* 1. Custom Tactile Checkbox */}
       {task.deleted ? (
-        <div className="flex-none p-1 text-slate-500">
+        <div className={`flex-none p-1 ${palette.subText}`}>
           {is3D ? <Icon3DTrash size={18} /> : <Trash2 className="w-4 h-4" />}
         </div>
       ) : (
@@ -1729,14 +1679,8 @@ const TaskCard = React.memo<TaskCardProps>(({
           ) : (
             <div className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all ${
               task.completed 
-                ? isOrganic
-                  ? `${palette.actionBtn} border-transparent text-white shadow-xs`
-                  : task.repeat === 'daily'
-                  ? 'border-violet-500 bg-violet-500 shadow-sm shadow-violet-500/30'
-                  : 'border-indigo-500 bg-indigo-500 shadow-sm shadow-indigo-500/30' 
-                : isOrganic
-                ? `${palette.streakBorder} ${palette.taskCard} group-hover:border-emerald-500`
-                : 'border-slate-700 bg-slate-950/60 group-hover:border-indigo-500/70'
+                ? `${palette.chipActive} text-white shadow-xs`
+                : `${palette.streakBorder} ${palette.taskCard} group-hover:border-emerald-500`
             }`}>
               {task.completed && (
                 <Check className="w-3.5 h-3.5 text-white stroke-[3]" />
@@ -1766,9 +1710,7 @@ const TaskCard = React.memo<TaskCardProps>(({
             <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-md ${
               dueDateInfo.overdue
                 ? 'text-rose-500 bg-rose-500/15 border border-rose-500/25 font-bold'
-                : isOrganic 
-                ? `${palette.subText} ${palette.streakCard} border ${palette.streakBorder}`
-                : 'text-slate-400 bg-slate-800/80 border border-slate-700/50'
+                : `${palette.subText} ${palette.streakCard} border ${palette.streakBorder}`
             }`}>
               {dueDateInfo.display}
             </span>
@@ -1777,9 +1719,7 @@ const TaskCard = React.memo<TaskCardProps>(({
           {/* Alarm Time */}
           {task.alarmTime && (
             <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md flex items-center gap-1 border ${
-              isOrganic 
-                ? `${palette.brandText} ${palette.streakCard} border ${palette.streakBorder}`
-                : 'text-indigo-300 bg-indigo-500/15 border-indigo-500/20'
+              `${palette.brandText} ${palette.streakCard} border ${palette.streakBorder}`
             }`}>
               {is3D ? <Icon3DClock size={10} /> : <Bell className="w-2.5 h-2.5 text-indigo-400" />}
               <span>{task.alarmTime}</span>
@@ -1788,19 +1728,13 @@ const TaskCard = React.memo<TaskCardProps>(({
 
           {/* Priority Pill */}
           {isHigh && (
-            <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md border ${
-              isOrganic
-                ? 'text-rose-600 bg-rose-500/10 border-rose-500/25'
-                : 'text-orange-400 bg-orange-500/10 border-orange-500/25'
-            }`}>
+            <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md border text-rose-600 bg-rose-500/10 border-rose-500/25">
               {lang === 'id' ? 'Wajib' : 'High'}
             </span>
           )}
           {isMed && (
             <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md border ${
-              isOrganic
-                ? `${palette.brandText} ${palette.streakCard} border ${palette.streakBorder}`
-                : 'text-blue-400 bg-blue-500/10 border-blue-500/25'
+              `${palette.brandText} ${palette.streakCard} border ${palette.streakBorder}`
             }`}>
               {lang === 'id' ? 'Sedang' : 'Medium'}
             </span>
@@ -1811,20 +1745,14 @@ const TaskCard = React.memo<TaskCardProps>(({
             <>
               {dailyStats.completed > 0 && (
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border flex items-center gap-1 ${
-                  isOrganic 
-                    ? `${palette.streakCard} ${palette.streakBorder} text-emerald-600` 
-                    : 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
+                  `${palette.streakCard} ${palette.streakBorder} text-emerald-600 dark:text-emerald-400`
                 }`}>
                   <Check className="w-2.5 h-2.5 stroke-[3]" />
                   <span>{dailyStats.completed} {lang === 'id' ? 'hari' : 'days'}</span>
                 </span>
               )}
               {dailyStats.missed > 0 && (
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border flex items-center gap-1 ${
-                  isOrganic 
-                    ? 'bg-rose-500/10 text-rose-600 border-rose-500/25' 
-                    : 'text-rose-400 bg-rose-500/10 border-rose-500/20'
-                }`}>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg border flex items-center gap-1 bg-rose-500/10 text-rose-600 border-rose-500/25">
                   <span>{dailyStats.missed} {lang === 'id' ? 'terlewat' : 'missed'}</span>
                 </span>
               )}

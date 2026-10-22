@@ -445,21 +445,23 @@ export default function FinanceScreen({ appTheme, onBack, onNavigate, extra }: {
     isLiteMode
   } = useAppStore();
 
-  const isLite = appTheme === 'lite' || appVersion === 'lite' || isLiteMode;
-  const isOrganic = !isLite && ['organic', 'pro_max'].includes(appTheme || (typeof window !== 'undefined' ? localStorage.getItem('tata_theme') : '') || '');
-  const is3D = !isLite && (appVersion === 'organic' || appVersion === 'pro_max' || isOrganic);
+  const storedTheme = typeof window !== 'undefined' ? localStorage.getItem('tata_theme') : null;
+  const effectiveTheme = appTheme || storedTheme || 'dark';
 
   const palette = useMemo(() => {
-    const storedTheme = typeof window !== 'undefined' ? localStorage.getItem('tata_theme') : null;
-    const effectiveTheme = appTheme || storedTheme || 'dark';
     return getOrganicThemePalette(effectiveTheme);
-  }, [appTheme]);
+  }, [effectiveTheme]);
 
-  const isLight = !palette.isDark && appTheme !== 'wallpaper';
-  const isCute = appTheme === 'cute' || appTheme === 'organic' || appTheme === 'warm';
-  const isPink = appTheme === 'pink';
+  const isLite = effectiveTheme === 'lite' || appVersion === 'lite' || isLiteMode;
+  const isOrganic = !isLite && ['organic', 'pro_max', 'cute', 'warm'].includes(effectiveTheme);
+  const is3D = !isLite && (appVersion === 'organic' || appVersion === 'pro_max');
+  const isLight = !palette.isDark && effectiveTheme !== 'wallpaper';
+  const isCute = effectiveTheme === 'cute' || effectiveTheme === 'organic' || effectiveTheme === 'warm';
+  const isPink = effectiveTheme === 'pink';
+  const isSimple = effectiveTheme === 'simple';
+  const isCool = effectiveTheme === 'cool';
 
-  const themeCardBg = appTheme === 'wallpaper'
+  const themeCardBg = effectiveTheme === 'wallpaper'
     ? 'bg-slate-950/70 border-white/10 text-white backdrop-blur-xl'
     : isLight
       ? (isCute
@@ -467,9 +469,13 @@ export default function FinanceScreen({ appTheme, onBack, onNavigate, extra }: {
           : isPink
             ? 'bg-[#FFF0F5] border-pink-200 text-[#500724] shadow-xs'
             : 'bg-white border-slate-200 text-slate-900 shadow-xs')
-      : 'bg-slate-900 border-slate-800/80 text-slate-100 shadow-sm';
+      : isSimple
+        ? 'bg-[#1C1B17] border-stone-800 text-stone-100 shadow-sm'
+        : isCool
+          ? 'bg-[#0D1836] border-[#1E3A8A]/70 text-slate-100 shadow-sm'
+          : 'bg-slate-900 border-slate-800/80 text-slate-100 shadow-sm';
 
-  const themeInnerCardBg = appTheme === 'wallpaper'
+  const themeInnerCardBg = effectiveTheme === 'wallpaper'
     ? 'bg-slate-900/60 border-white/10 text-white'
     : isLight
       ? (isCute
@@ -477,9 +483,13 @@ export default function FinanceScreen({ appTheme, onBack, onNavigate, extra }: {
           : isPink
             ? 'bg-[#FCE7F3]/70 border-pink-200 text-[#500724]'
             : 'bg-slate-50 border-slate-200 text-slate-900')
-      : 'bg-slate-950/60 border-slate-800/80 text-slate-100';
+      : isSimple
+        ? 'bg-[#26241F] border-stone-800 text-stone-100'
+        : isCool
+          ? 'bg-[#13234A] border-[#1E3A8A] text-slate-100'
+          : 'bg-slate-950/60 border-slate-800/80 text-slate-100';
 
-  const themeInputBg = appTheme === 'wallpaper'
+  const themeInputBg = effectiveTheme === 'wallpaper'
     ? 'bg-slate-900/80 border-white/20 text-white placeholder-slate-400 focus:border-indigo-400'
     : isLight
       ? (isCute
@@ -487,9 +497,13 @@ export default function FinanceScreen({ appTheme, onBack, onNavigate, extra }: {
           : isPink
             ? 'bg-white border-pink-200 text-[#500724] placeholder-pink-300 focus:border-pink-400'
             : 'bg-white border-slate-200 text-slate-900 placeholder-slate-400 focus:border-indigo-500')
-      : 'bg-slate-950 border-slate-800 text-slate-100 placeholder-slate-500 focus:border-indigo-500/50';
+      : isSimple
+        ? 'bg-[#141310] border-stone-800 text-stone-100 placeholder-stone-500 focus:border-emerald-500'
+        : isCool
+          ? 'bg-[#0A1329] border-[#1E3A8A] text-white placeholder-blue-300/50 focus:border-cyan-400'
+          : 'bg-slate-950 border-slate-800 text-slate-100 placeholder-slate-500 focus:border-indigo-500/50';
 
-  const themeSubText = appTheme === 'wallpaper'
+  const themeSubText = effectiveTheme === 'wallpaper'
     ? 'text-slate-300'
     : isLight
       ? (isCute
@@ -497,9 +511,13 @@ export default function FinanceScreen({ appTheme, onBack, onNavigate, extra }: {
           : isPink
             ? 'text-[#9D3C65]'
             : 'text-slate-500')
-    : 'text-slate-400';
+      : isSimple
+        ? 'text-stone-400'
+        : isCool
+          ? 'text-blue-200/80'
+          : 'text-slate-400';
 
-  const themePrimaryText = appTheme === 'wallpaper'
+  const themePrimaryText = effectiveTheme === 'wallpaper'
     ? 'text-white'
     : isLight
       ? (isCute
@@ -507,13 +525,21 @@ export default function FinanceScreen({ appTheme, onBack, onNavigate, extra }: {
           : isPink
             ? 'text-[#500724]'
             : 'text-slate-900')
-    : 'text-slate-100';
+      : isSimple
+        ? 'text-stone-100'
+        : isCool
+          ? 'text-white'
+          : 'text-slate-100';
 
   const themeBorder = isLight 
     ? (isCute ? 'border-[#EADCC8]' : isPink ? 'border-pink-200' : 'border-slate-200')
-    : 'border-slate-800';
+    : isSimple
+      ? 'border-stone-800'
+      : isCool
+        ? 'border-[#1E3A8A]'
+        : 'border-slate-800';
 
-  const themeTabContainer = appTheme === 'wallpaper'
+  const themeTabContainer = effectiveTheme === 'wallpaper'
     ? 'bg-slate-950/60 border-white/10'
     : isLight
       ? (isCute
@@ -521,13 +547,25 @@ export default function FinanceScreen({ appTheme, onBack, onNavigate, extra }: {
           : isPink
             ? 'bg-pink-100/70 border-pink-200'
             : 'bg-slate-100 border-slate-200')
-    : 'bg-slate-900 border-slate-800';
+      : isSimple
+        ? 'bg-[#161412] border-stone-800'
+        : isCool
+          ? 'bg-[#0E1A38] border-[#1D3268]'
+          : 'bg-slate-900 border-slate-800';
 
   const themeBtnSecondary = isLight
-    ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
-    : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700/60';
+    ? (isCute
+        ? 'bg-[#FAF5EA] hover:bg-[#F2E7D5] text-[#2B1E14] border-[#EADCC8]'
+        : isPink
+          ? 'bg-[#FFF0F5] hover:bg-[#FCE7F3] text-[#500724] border-pink-200'
+          : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200')
+    : isSimple
+      ? 'bg-[#26241F] hover:bg-[#322F29] text-stone-200 border-stone-800'
+      : isCool
+        ? 'bg-[#13234A] hover:bg-[#182C5D] text-blue-200 border-[#1E3A8A]'
+        : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700/60';
 
-  const themeModalBg = appTheme === 'wallpaper'
+  const themeModalBg = effectiveTheme === 'wallpaper'
     ? 'bg-slate-950/95 border-white/20 text-white backdrop-blur-2xl shadow-2xl'
     : isLight
       ? (isCute
@@ -535,9 +573,13 @@ export default function FinanceScreen({ appTheme, onBack, onNavigate, extra }: {
           : isPink
             ? 'bg-[#FFF0F5] border-pink-200 text-[#500724] shadow-2xl'
             : 'bg-white border-slate-200 text-slate-900 shadow-2xl')
-      : 'bg-slate-900 border-slate-800 text-slate-100 shadow-2xl';
+      : isSimple
+        ? 'bg-[#1C1B17] border-stone-800 text-stone-100 shadow-2xl'
+        : isCool
+          ? 'bg-[#0D1836] border-[#1E3A8A] text-slate-100 shadow-2xl'
+          : 'bg-slate-900 border-slate-800 text-slate-100 shadow-2xl';
 
-  const themeModalHeader = appTheme === 'wallpaper'
+  const themeModalHeader = effectiveTheme === 'wallpaper'
     ? 'bg-slate-950/80 border-white/10'
     : isLight
       ? (isCute
@@ -545,7 +587,11 @@ export default function FinanceScreen({ appTheme, onBack, onNavigate, extra }: {
           : isPink
             ? 'bg-[#FCE7F3] border-pink-200'
             : 'bg-slate-50 border-slate-200')
-      : 'bg-slate-900 border-slate-800';
+      : isSimple
+        ? 'bg-[#161412] border-stone-800'
+        : isCool
+          ? 'bg-[#0A1329] border-[#1E3A8A]'
+          : 'bg-slate-900 border-slate-800';
 
   const t = useTranslation(lang);
 
@@ -1734,11 +1780,11 @@ export default function FinanceScreen({ appTheme, onBack, onNavigate, extra }: {
 
   return (
     <div className={`flex-1 h-full flex flex-col relative overflow-hidden transition-colors ${
-      appTheme === 'wallpaper' ? 'bg-transparent text-white' : `${palette.rootText}`
+      effectiveTheme === 'wallpaper' ? 'bg-transparent text-white' : `${palette.rootText}`
     }`}>
       {/* Header */}
       <div className={`flex-none px-4 sm:px-6 pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-3 border-b backdrop-blur-md z-20 flex justify-between items-center shrink-0 shadow-sm transition-colors ${
-        appTheme === 'wallpaper'
+        effectiveTheme === 'wallpaper'
           ? 'bg-slate-950/40 border-white/10 text-white backdrop-blur-xl'
           : `${palette.headerBg} ${palette.headerBorder}`
       }`}>
@@ -1746,7 +1792,9 @@ export default function FinanceScreen({ appTheme, onBack, onNavigate, extra }: {
           <button 
             onClick={handleSmartBack} 
             className={`p-2 -ml-2 rounded-xl transition-colors shrink-0 cursor-pointer ${
-              palette.isDark ? 'text-indigo-400 hover:bg-slate-800' : 'text-indigo-600 hover:bg-black/5'
+              effectiveTheme === 'wallpaper'
+                ? 'text-white hover:bg-white/10'
+                : `${palette.subText} hover:${palette.titleText} hover:bg-black/5 dark:hover:bg-white/5`
             }`}
             title={lang === 'id' ? 'Kembali' : 'Back'}
           >
@@ -1754,7 +1802,7 @@ export default function FinanceScreen({ appTheme, onBack, onNavigate, extra }: {
           </button>
           <div className="flex flex-col justify-center min-w-0">
             <h2 className={`text-base sm:text-xl font-black tracking-tight leading-none truncate ${
-              palette.isDark ? 'text-indigo-400' : 'text-indigo-600'
+              effectiveTheme === 'wallpaper' ? 'text-white' : palette.titleText
             }`}>
               {t('financeMenu') as string}
             </h2>

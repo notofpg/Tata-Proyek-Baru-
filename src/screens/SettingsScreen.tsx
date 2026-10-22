@@ -1412,69 +1412,129 @@ export default function SettingsScreen({
             ? 'text-slate-900'
             : 'text-slate-200';
 
-  const cardThemeClass = isLight
-    ? (appTheme === 'organic' || appTheme === 'cute'
-        ? 'bg-[#FAF5EA] border border-[#EADCC8] rounded-2xl shadow-xs'
-        : appTheme === 'pink'
-          ? 'bg-[#FFF0F5] border border-pink-200 rounded-2xl shadow-xs'
-          : 'bg-white border border-slate-200 rounded-2xl shadow-xs')
-    : 'bg-slate-900 border border-slate-800 rounded-2xl shadow-sm';
+  const cardThemeClass = appTheme === 'wallpaper'
+    ? 'bg-slate-950/60 border border-white/10 backdrop-blur-xl text-white rounded-2xl'
+    : isLight
+      ? (appTheme === 'organic' || appTheme === 'cute'
+          ? 'bg-[#FAF5EA] border border-[#EADCC8] rounded-2xl shadow-xs'
+          : appTheme === 'pink'
+            ? 'bg-[#FFF0F5] border border-pink-200 rounded-2xl shadow-xs'
+            : 'bg-white border border-slate-200 rounded-2xl shadow-xs')
+      : appTheme === 'simple'
+        ? 'bg-[#1C1B17] border border-stone-800 rounded-2xl text-stone-100 shadow-sm'
+        : appTheme === 'cool'
+          ? 'bg-[#0D1836] border border-[#1E3A8A]/70 rounded-2xl text-slate-100 shadow-sm'
+          : 'bg-slate-900 border border-slate-800 rounded-2xl shadow-sm';
 
-  const cardGroupThemeClass = isLight
-    ? (appTheme === 'organic' || appTheme === 'cute'
-        ? 'bg-[#FAF5EA] border border-[#EADCC8] rounded-2xl overflow-hidden divide-y divide-[#EADCC8]/80 shadow-xs'
-        : appTheme === 'pink'
-          ? 'bg-[#FFF0F5] border border-pink-200 rounded-2xl overflow-hidden divide-y divide-pink-200/80 shadow-xs'
-          : 'bg-white border border-slate-200 rounded-2xl overflow-hidden divide-y divide-slate-100 shadow-xs')
-    : 'bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden divide-y divide-slate-800/60 shadow-sm';
+  const cardGroupThemeClass = appTheme === 'wallpaper'
+    ? 'bg-slate-950/60 border border-white/10 backdrop-blur-xl rounded-2xl overflow-hidden divide-y divide-white/10'
+    : isLight
+      ? (appTheme === 'organic' || appTheme === 'cute'
+          ? 'bg-[#FAF5EA] border border-[#EADCC8] rounded-2xl overflow-hidden divide-y divide-[#EADCC8]/80 shadow-xs'
+          : appTheme === 'pink'
+            ? 'bg-[#FFF0F5] border border-pink-200 rounded-2xl overflow-hidden divide-y divide-pink-200/80 shadow-xs'
+            : 'bg-white border border-slate-200 rounded-2xl overflow-hidden divide-y divide-slate-100 shadow-xs')
+      : appTheme === 'simple'
+        ? 'bg-[#1C1B17] border border-stone-800 rounded-2xl overflow-hidden divide-y divide-stone-800 shadow-sm'
+        : appTheme === 'cool'
+          ? 'bg-[#0D1836] border border-[#1E3A8A]/70 rounded-2xl overflow-hidden divide-y divide-[#1E3A8A]/50 shadow-sm'
+          : 'bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden divide-y divide-slate-800/60 shadow-sm';
 
-  const innerCardThemeClass = isLight
-    ? (appTheme === 'organic' || appTheme === 'cute'
-        ? 'bg-[#F4ECDC] border border-[#EADCC8]'
-        : appTheme === 'pink'
-          ? 'bg-[#FCE7F3] border border-pink-200'
-          : 'bg-slate-50 border border-slate-200')
-    : 'bg-slate-950/70 border border-slate-800';
+  const innerCardThemeClass = appTheme === 'wallpaper'
+    ? 'bg-slate-900/40 border border-white/10 backdrop-blur-md text-white'
+    : isLight
+      ? (appTheme === 'organic' || appTheme === 'cute'
+          ? 'bg-[#F4ECDC] border border-[#EADCC8]'
+          : appTheme === 'pink'
+            ? 'bg-[#FCE7F3] border border-pink-200'
+            : 'bg-slate-50 border border-slate-200')
+      : appTheme === 'simple'
+        ? 'bg-[#26241F] border border-stone-800 text-stone-100'
+        : appTheme === 'cool'
+          ? 'bg-[#13234A] border border-[#1E3A8A] text-slate-100'
+          : 'bg-slate-950/70 border border-slate-800';
 
-  const inputThemeClass = isLight
-    ? (appTheme === 'organic' || appTheme === 'cute'
-        ? 'bg-white/80 border border-[#EADCC8] text-[#38230F] placeholder-[#A89078]'
-        : appTheme === 'pink'
-          ? 'bg-white/80 border border-pink-200 text-[#500724] placeholder-pink-300'
-          : 'bg-white border border-slate-200 text-slate-900 placeholder-slate-400')
-    : 'bg-slate-950/70 border border-slate-800 text-slate-100 placeholder-slate-500';
+  const inputThemeClass = appTheme === 'wallpaper'
+    ? 'bg-slate-900/60 border border-white/20 text-white placeholder-slate-400 focus:border-indigo-400'
+    : isLight
+      ? (appTheme === 'organic' || appTheme === 'cute'
+          ? 'bg-white/80 border border-[#EADCC8] text-[#38230F] placeholder-[#A89078]'
+          : appTheme === 'pink'
+            ? 'bg-white/80 border border-pink-200 text-[#500724] placeholder-pink-300'
+            : 'bg-white border border-slate-200 text-slate-900 placeholder-slate-400')
+      : appTheme === 'simple'
+        ? 'bg-[#141310] border border-stone-800 text-stone-100 placeholder-stone-500 focus:border-emerald-500'
+        : appTheme === 'cool'
+          ? 'bg-[#0A1329] border border-[#1E3A8A] text-white placeholder-blue-300/50 focus:border-cyan-400'
+          : 'bg-slate-950/70 border border-slate-800 text-slate-100 placeholder-slate-500';
 
-  const subTextThemeClass = isLight
-    ? (appTheme === 'organic' ? 'text-[#7D6A58]' : appTheme === 'cute' ? 'text-[#7A5B3E]' : appTheme === 'pink' ? 'text-[#9D3C65]' : 'text-slate-500')
-    : 'text-slate-400';
+  const subTextThemeClass = appTheme === 'wallpaper'
+    ? 'text-slate-300'
+    : isLight
+      ? (appTheme === 'organic' ? 'text-[#7D6A58]' : appTheme === 'cute' ? 'text-[#7A5B3E]' : appTheme === 'pink' ? 'text-[#9D3C65]' : 'text-slate-500')
+      : appTheme === 'simple'
+        ? 'text-stone-400'
+        : appTheme === 'cool'
+          ? 'text-blue-200/80'
+          : 'text-slate-400';
 
-  const primaryTextThemeClass = isLight
-    ? (appTheme === 'organic' ? 'text-[#2B1E14]' : appTheme === 'cute' ? 'text-[#38230F]' : appTheme === 'pink' ? 'text-[#500724]' : 'text-slate-900')
-    : 'text-slate-100';
+  const primaryTextThemeClass = appTheme === 'wallpaper'
+    ? 'text-white'
+    : isLight
+      ? (appTheme === 'organic' ? 'text-[#2B1E14]' : appTheme === 'cute' ? 'text-[#38230F]' : appTheme === 'pink' ? 'text-[#500724]' : 'text-slate-900')
+      : appTheme === 'simple'
+        ? 'text-stone-100'
+        : appTheme === 'cool'
+          ? 'text-white'
+          : 'text-slate-100';
 
-  const borderThemeClass = isLight
-    ? (appTheme === 'organic' || appTheme === 'cute' ? 'border-[#EADCC8]' : appTheme === 'pink' ? 'border-pink-200' : 'border-slate-200')
-    : 'border-slate-800/80';
+  const borderThemeClass = appTheme === 'wallpaper'
+    ? 'border-white/10'
+    : isLight
+      ? (appTheme === 'organic' || appTheme === 'cute' ? 'border-[#EADCC8]' : appTheme === 'pink' ? 'border-pink-200' : 'border-slate-200')
+      : appTheme === 'simple'
+        ? 'border-stone-800'
+        : appTheme === 'cool'
+          ? 'border-[#1E3A8A]'
+          : 'border-slate-800/80';
 
-  const modalThemeClass = isLight
-    ? (appTheme === 'organic' || appTheme === 'cute'
-        ? 'bg-[#FAF5EA] border-[#EADCC8] text-[#2B1E14]'
-        : appTheme === 'pink'
-          ? 'bg-[#FFF0F5] border-pink-200 text-[#500724]'
-          : 'bg-white border-slate-200 text-slate-900')
-    : 'bg-slate-900 border-slate-800 text-slate-100';
+  const modalThemeClass = appTheme === 'wallpaper'
+    ? 'bg-slate-950/95 border border-white/20 text-white backdrop-blur-2xl shadow-2xl'
+    : isLight
+      ? (appTheme === 'organic' || appTheme === 'cute'
+          ? 'bg-[#FAF5EA] border-[#EADCC8] text-[#2B1E14]'
+          : appTheme === 'pink'
+            ? 'bg-[#FFF0F5] border-pink-200 text-[#500724]'
+            : 'bg-white border-slate-200 text-slate-900')
+      : appTheme === 'simple'
+        ? 'bg-[#1C1B17] border border-stone-800 text-stone-100'
+        : appTheme === 'cool'
+          ? 'bg-[#0D1836] border border-[#1E3A8A] text-slate-100'
+          : 'bg-slate-900 border-slate-800 text-slate-100';
 
-  const modalHeaderThemeClass = isLight
-    ? (appTheme === 'organic' || appTheme === 'cute'
-        ? 'bg-[#F4ECDC] border-[#EADCC8]'
-        : appTheme === 'pink'
-          ? 'bg-[#FCE7F3] border-pink-200'
-          : 'bg-slate-50 border-slate-200')
-    : 'bg-slate-950/80 border-slate-800';
+  const modalHeaderThemeClass = appTheme === 'wallpaper'
+    ? 'bg-slate-950/80 border-b border-white/10'
+    : isLight
+      ? (appTheme === 'organic' || appTheme === 'cute'
+          ? 'bg-[#F4ECDC] border-[#EADCC8]'
+          : appTheme === 'pink'
+            ? 'bg-[#FCE7F3] border-pink-200'
+            : 'bg-slate-50 border-slate-200')
+      : appTheme === 'simple'
+        ? 'bg-[#161412] border-b border-stone-800'
+        : appTheme === 'cool'
+          ? 'bg-[#0A1329] border-b border-[#1E3A8A]'
+          : 'bg-slate-950/80 border-b border-slate-800';
 
-  const btnSecondaryThemeClass = isLight
-    ? 'bg-black/5 hover:bg-black/10 border-slate-200 text-slate-700'
-    : 'bg-slate-800/60 hover:bg-slate-800 border-slate-700/60 text-slate-300';
+  const btnSecondaryThemeClass = appTheme === 'wallpaper'
+    ? 'bg-white/10 hover:bg-white/20 border border-white/20 text-white'
+    : isLight
+      ? 'bg-black/5 hover:bg-black/10 border border-slate-200 text-slate-700'
+      : appTheme === 'simple'
+        ? 'bg-[#26241F] hover:bg-[#322F29] border border-stone-800 text-stone-200'
+        : appTheme === 'cool'
+          ? 'bg-[#13234A] hover:bg-[#182C5D] border border-[#1E3A8A] text-blue-200'
+          : 'bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 text-slate-300';
 
   const toggleBtnThemeClass = isLight
     ? (appTheme === 'organic' || appTheme === 'cute'

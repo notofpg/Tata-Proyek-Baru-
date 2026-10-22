@@ -153,16 +153,17 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
   }, [notes]);
   const currentNoteIdRef = useRef(note.id);
 
-  const isLite = appTheme === 'lite' || appVersion === 'lite' || isLiteMode;
-  const isOrganic = !isLite && (appVersion === 'organic' || appVersion === 'pro_max' || appTheme === 'organic' || appTheme === 'pro_max');
-  const is3D = isOrganic;
-  const effectiveNotePin = notePin || appPin;
+  const storedTheme = typeof window !== 'undefined' ? localStorage.getItem('tata_theme') : null;
+  const effectiveTheme = appTheme || storedTheme || 'dark';
 
   const palette = useMemo(() => {
-    const storedTheme = typeof window !== 'undefined' ? localStorage.getItem('tata_theme') : null;
-    const effectiveTheme = appTheme || storedTheme || (isOrganic ? 'organic' : 'dark');
     return getOrganicThemePalette(effectiveTheme);
-  }, [appTheme, isOrganic]);
+  }, [effectiveTheme]);
+
+  const isLite = effectiveTheme === 'lite' || appVersion === 'lite' || isLiteMode;
+  const is3D = !isLite && (appVersion === 'organic' || appVersion === 'pro_max');
+  const isOrganic = !isLite && ['organic', 'pro_max', 'cute', 'warm'].includes(effectiveTheme);
+  const effectiveNotePin = notePin || appPin;
 
   const t = useTranslation(lang);
   const titleRef = useRef(note.title || '');
@@ -1508,22 +1509,24 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
     <div className={`flex flex-col h-full font-sans transition-colors ${palette.rootText}`}>
       {/* Top Bar */}
       <div className={`flex-none min-h-[4rem] pt-[calc(env(safe-area-inset-top,0px)+0.5rem)] pb-2 border-b backdrop-blur-md px-4 flex items-center justify-between transition-colors ${
-        appTheme === 'wallpaper'
+        effectiveTheme === 'wallpaper'
           ? 'bg-slate-950/40 border-white/10 text-white backdrop-blur-xl'
-          : isOrganic
-            ? `${palette.headerBg} ${palette.headerBorder} ${palette.titleText}`
-            : 'bg-slate-900/95 border-slate-800 text-slate-200'
+          : `${palette.headerBg} ${palette.headerBorder} ${palette.titleText}`
       }`}>
         <button
           onClick={handleBack}
-          className={`p-3 -ml-2 transition-colors cursor-pointer ${isOrganic ? `${palette.subText} hover:${palette.titleText}` : 'text-slate-400 hover:text-slate-50'}`}
+          className={`p-3 -ml-2 rounded-xl transition-colors cursor-pointer ${
+            effectiveTheme === 'wallpaper'
+              ? 'text-white hover:bg-white/10'
+              : `${palette.subText} hover:${palette.titleText} hover:bg-black/5 dark:hover:bg-white/5`
+          }`}
         >
           {is3D ? <Icon3DArrowLeft size={24} /> : <ArrowLeft className="w-6 h-6" />}
         </button>
         <div className="flex items-center gap-3 sm:gap-4">
           {isSaving ? (
             <div className={`flex items-center justify-center gap-2 px-4 py-2 rounded-full mr-2 border ${
-              isOrganic ? `${palette.streakCard} ${palette.streakBorder}` : 'bg-amber-500/10 border-amber-500/20'
+              `${palette.streakCard} ${palette.streakBorder}`
             }`}>
               <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
               <span className={`text-xs font-bold uppercase tracking-widest ${palette.subText}`}>
@@ -1534,9 +1537,7 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
             <button 
               onClick={() => saveNote(false)}
               className={`flex items-center justify-center gap-2 px-4 py-2 rounded-full transition-all cursor-pointer mr-2 shadow-md ${
-                isOrganic 
-                  ? `${palette.brandBg} active:scale-95` 
-                  : 'bg-indigo-500 hover:bg-indigo-600 text-white border border-indigo-400 shadow-indigo-500/20'
+                `${palette.brandBg} active:scale-95`
               }`}
             >
               <span className="text-sm font-bold uppercase tracking-widest text-white">
@@ -1545,9 +1546,7 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
             </button>
           ) : (
             <div className={`flex items-center justify-center gap-2 px-4 py-2 rounded-full mr-2 border ${
-              isOrganic 
-                ? `${palette.streakCard} ${palette.streakBorder} text-emerald-600 dark:text-emerald-400` 
-                : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+              `${palette.streakCard} ${palette.streakBorder} text-emerald-600 dark:text-emerald-400`
             }`}>
               <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
               <span className="text-xs font-bold uppercase tracking-widest">
@@ -1560,9 +1559,7 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
             className={`p-2.5 rounded-xl transition-all cursor-pointer ${
               isLocked 
                 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' 
-                : isOrganic 
-                  ? `${palette.subText} hover:${palette.titleText} hover:bg-black/5 dark:hover:bg-white/5` 
-                  : 'hover:text-amber-400 text-slate-400 hover:bg-slate-800'
+                : `${palette.subText} hover:${palette.titleText} hover:bg-black/5 dark:hover:bg-white/5`
             }`}
             title={isLocked ? (lang === 'id' ? 'Catatan Terkunci dengan PIN' : 'Note Locked with PIN') : (lang === 'id' ? 'Kunci Catatan dengan PIN' : 'Lock Note with PIN')}
           >
@@ -1584,7 +1581,7 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
               onBack();
             }}
             className={`p-3 transition-colors cursor-pointer relative group ${
-              isOrganic ? `${palette.subText} hover:${palette.titleText}` : 'text-slate-400 hover:text-indigo-400'
+              `${palette.subText} hover:${palette.titleText}`
             }`}
             title={note.isArchived ? (lang === 'id' ? 'Batal Arsipkan' : 'Unarchive') : (lang === 'id' ? 'Arsipkan' : 'Archive')}
           >
@@ -1598,7 +1595,7 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
           </button>
           <button
             className={`p-3 -mr-2 transition-colors cursor-pointer ${
-              isOrganic ? `${palette.subText} hover:text-rose-500` : 'text-slate-400 hover:text-red-400'
+              `${palette.subText} hover:text-rose-500`
             }`}
             onClick={() => setShowDeleteConfirm(true)}
           >
@@ -1622,7 +1619,7 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
           {/* Tata AI Permission Badge */}
           {sharedWithAI && (
             <div className={`flex items-center gap-1.5 px-3 py-1 border rounded-full w-fit mb-4 text-[10px] font-bold animate-in fade-in duration-200 ${
-              isOrganic ? `${palette.streakCard} ${palette.streakBorder} text-emerald-600 dark:text-emerald-400` : 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400'
+              `${palette.streakCard} ${palette.streakBorder} text-emerald-600 dark:text-emerald-400`
             }`}>
               {is3D ? <Icon3DTataAI size={14} /> : <Bot size={11} />}
               <span>{lang === 'id' ? 'Telah Masuk Tata AI' : 'Shared with Tata AI'}</span>
@@ -1636,7 +1633,7 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
                 <div
                   key={tag}
                   className={`flex items-center gap-1 px-3 py-1.5 rounded-lg border group ${
-                    isOrganic ? `${palette.noteTagBadge} ${palette.streakBorder}` : 'bg-indigo-500/10 border-indigo-500/20'
+                    `${palette.noteTagBadge} ${palette.streakBorder}`
                   }`}
                 >
                   <span className="text-[10px] font-bold uppercase tracking-wider">
@@ -1660,7 +1657,7 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
                     onBlur={handleAddTagSubmit}
                     placeholder={t('tagNamePlaceholder')}
                     className={`h-7 w-24 px-2 rounded-lg text-[10px] outline-none border ${
-                      isOrganic ? `${palette.searchContainer} ${palette.searchInput}` : 'bg-slate-900 border-indigo-500 text-slate-50'
+                      `${palette.searchContainer} ${palette.searchInput}`
                     }`}
                   />
                 </form>
@@ -1668,9 +1665,7 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
                 <button
                   onClick={() => setIsAddingTag(true)}
                   className={`h-7 px-3 flex items-center justify-center rounded-lg border border-dashed text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${
-                    isOrganic 
-                      ? `${palette.streakBorder} ${palette.subText} hover:${palette.titleText}` 
-                      : 'border-slate-700 text-slate-400 hover:border-slate-500'
+                    `${palette.streakBorder} ${palette.subText} hover:${palette.titleText}`
                   }`}
                 >
                   + Tag
@@ -1687,9 +1682,7 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
                       key={tag}
                       onClick={() => handleAddExistingTag(tag)}
                       className={`px-2 py-1 rounded-md border text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${
-                        isOrganic 
-                          ? `${palette.streakCard} ${palette.streakBorder} ${palette.subText} hover:${palette.titleText}` 
-                          : 'border-slate-800 bg-slate-900/80 text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                        `${palette.streakCard} ${palette.streakBorder} ${palette.subText} hover:${palette.titleText}`
                       }`}
                     >
                       +{tag.replace("#", "")}
@@ -1791,10 +1784,8 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
               <button
                 type="button"
                 onClick={handleCopyText}
-                className={`px-2.5 py-1.5 rounded-lg transition-all text-[11px] font-bold shrink-0 flex items-center gap-1 cursor-pointer ${
-                  isOrganic 
-                    ? `${palette.chipInactive} ${palette.subText} hover:${palette.titleText}` 
-                    : 'bg-slate-800 hover:bg-slate-750 text-slate-300 hover:text-white'
+                className={`px-2.5 py-1.5 rounded-lg transition-all text-[11px] font-bold shrink-0 flex items-center gap-1 cursor-pointer border ${
+                  `${palette.streakCard} ${palette.streakBorder} ${palette.subText} hover:${palette.titleText}`
                 }`}
                 title={lang === 'id' ? 'Salin Semua Teks' : 'Copy All Text'}
               >
@@ -1808,10 +1799,8 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
               <button
                 type="button"
                 onClick={handleExportTxt}
-                className={`px-2.5 py-1.5 rounded-lg transition-all text-[11px] font-bold shrink-0 flex items-center gap-1 cursor-pointer ${
-                  isOrganic 
-                    ? `${palette.chipInactive} ${palette.subText} hover:${palette.titleText}` 
-                    : 'bg-slate-800 hover:bg-slate-750 text-slate-300 hover:text-white'
+                className={`px-2.5 py-1.5 rounded-lg transition-all text-[11px] font-bold shrink-0 flex items-center gap-1 cursor-pointer border ${
+                  `${palette.streakCard} ${palette.streakBorder} ${palette.subText} hover:${palette.titleText}`
                 }`}
                 title={lang === 'id' ? 'Ekspor ke File Teks (.txt)' : 'Export to Text (.txt)'}
               >
@@ -2012,9 +2001,7 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
                 setShowReminderModal(true);
               }}
               className={`p-2 rounded-xl border transition-all cursor-pointer ${
-                isOrganic 
-                  ? `${palette.streakCard} ${palette.streakBorder} ${reminder ? palette.brandText : palette.subText} hover:${palette.titleText}` 
-                  : reminder ? 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20' : 'hover:text-indigo-400 text-slate-400 border-transparent hover:bg-slate-800'
+                `${palette.streakCard} ${palette.streakBorder} ${reminder ? palette.brandText : palette.subText} hover:${palette.titleText}`
               }`}
               title={t('setReminder')}
             >
@@ -2033,13 +2020,9 @@ export default function NoteEditorScreen({ note, onBack, onNavigate, appTheme }:
                 setShowGiveToAIModal(true);
               }}
               className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-xl text-xs font-semibold cursor-pointer transition-all ${
-                isOrganic
-                  ? sharedWithAI 
-                    ? `${palette.streakCard} ${palette.streakBorder} text-emerald-600 dark:text-emerald-400 font-bold`
-                    : `${palette.chipInactive} ${palette.subText} hover:${palette.titleText}`
-                  : sharedWithAI 
-                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20' 
-                    : 'bg-slate-800/60 border-slate-700/60 text-slate-400 hover:bg-slate-700/60 hover:text-slate-200'
+                sharedWithAI 
+                  ? `${palette.streakCard} ${palette.streakBorder} text-emerald-600 dark:text-emerald-400 font-bold`
+                  : `${palette.chipInactive} ${palette.subText} hover:${palette.titleText}`
               }`}
               title={lang === 'id' ? 'Pengaturan Akses Tata AI' : 'Tata AI Access Settings'}
             >
